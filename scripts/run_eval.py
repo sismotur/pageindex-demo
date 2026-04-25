@@ -32,27 +32,34 @@ STRUCTURE_FILE = PROJECT_ROOT / "results" / "ubeda_guide_structure.json"
 MD_FILE        = PROJECT_ROOT / "data" / "ubeda_guide.md"
 RESULTS_DIR    = PROJECT_ROOT / "results"
 DEFAULT_MODEL  = "openai/gemma4:e2b"
-MAX_TOOL_ROUNDS = 8
+MAX_TOOL_ROUNDS = 14
 
 SYSTEM_PROMPT = """\
 You are a tourism assistant for Úbeda, Spain. You answer questions using the \
 Úbeda Tourism Guide document. You have three tools:
 
 - get_sections(): returns the 18 section titles with their line ranges and summaries.
-- get_poi_list(section_title): returns all POI names and their exact line numbers \
-  within a given section.
+- get_poi_list(section_title): returns all POI names and their line numbers in a section.
 - get_page_content(lines): returns the raw Markdown text for a line range (e.g. "9-28").
 
-STRATEGY:
-1. Call get_sections() to see all sections and pick the one(s) most relevant.
-2. Call get_poi_list(section_title) to see the individual POIs and find the exact \
-   line numbers you need.
-3. Call get_page_content(lines="start-end") with a tight range targeting just the \
-   specific POI(s). A single POI is typically 10-25 lines.
-4. Answer based ONLY on the retrieved text. Do not use outside knowledge.
-5. Include specific names, addresses, phone numbers, and dates when they appear.
-   If information is not in the guide, say so clearly.
-6. Always respond in English, regardless of the language of any content you retrieve.
+STRATEGY — choose the path that fits the question:
+
+A) LISTING questions ("what X exist?", "list all Y")
+   1. get_sections() → identify the relevant section.
+   2. get_poi_list(section_title) → use the POI names to compose your answer.
+   You do NOT need to call get_page_content for every POI in a list.
+
+B) SPECIFIC FACT questions (address, phone, description, dates, measurements)
+   1. get_sections() → identify the section.
+   2. get_poi_list(section_title) → find the exact POI name and its line number.
+   3. get_page_content(lines="start-end") → read the POI text (10-25 lines).
+   Never answer specific facts from a POI title alone.
+
+RULES FOR ALL QUESTIONS:
+- Answer based ONLY on retrieved text. Do not use outside knowledge.
+- Include exact names, addresses, phones, and dates when present in the text.
+- If information is not in the guide, say so clearly.
+- Always respond in English, regardless of the language of any retrieved content.
 """
 
 TOOL_DEFS = [
