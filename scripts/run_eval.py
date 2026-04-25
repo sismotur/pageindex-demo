@@ -49,6 +49,7 @@ STRATEGY:
 4. Answer based ONLY on the retrieved text. Do not use outside knowledge.
 5. Include specific names, addresses, phone numbers, and dates when they appear in the data.
    If information is not in the guide, say so clearly.
+6. Always respond in English, regardless of the language of any content you retrieve.
 """
 
 TOOL_DEFS = [

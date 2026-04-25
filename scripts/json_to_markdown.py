@@ -26,6 +26,12 @@ OUTPUT_FILE  = PROJECT_ROOT / "data" / "ubeda_guide.md"
 SECTIONS = [
     ("UNESCO World Heritage and City Overview",
      {"WorldHeritageSite", "City"}),
+    # Accommodation comes before Civil Monuments so that POIs with both
+    # Hotel and CivilBuilding types (e.g. the Condestable Dávalos Parador)
+    # are classified as accommodation, not as a monument.
+    ("Accommodation",
+     {"Hotel", "BoutiqueHotel", "LodgingBusiness", "Apartment",
+      "RuralHouse", "Hostel", "GuestHouse", "RVPark"}),
     ("Civil and Historical Monuments",
      {"CivilBuilding", "MilitaryBuilding"}),
     ("Religious Heritage",
@@ -41,9 +47,6 @@ SECTIONS = [
     ("Gastronomy",
      {"Restaurant", "CafeOrCoffeeShop", "BarOrPub", "IceCreamShop",
       "OilMill", "FoodEvent"}),
-    ("Accommodation",
-     {"Hotel", "BoutiqueHotel", "LodgingBusiness", "Apartment",
-      "RuralHouse", "Hostel", "GuestHouse", "RVPark"}),
     ("Guided Tours and Itineraries",
      {"TouristTrip"}),
     ("Events and Festivals",
