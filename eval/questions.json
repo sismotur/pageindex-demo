@@ -1,0 +1,162 @@
+[
+  {
+    "id": "Q01",
+    "category": "overview",
+    "difficulty": "easy",
+    "question": "Why is Úbeda a UNESCO World Heritage City?",
+    "expected_section": "UNESCO World Heritage and City Overview",
+    "grounding_check": "Answer must mention Renaissance architecture, 2003 UNESCO designation, and/or Vázquez de Molina Square"
+  },
+  {
+    "id": "Q02",
+    "category": "monument_lookup",
+    "difficulty": "easy",
+    "question": "What is the Plaza Vázquez de Molina and why is it important?",
+    "expected_section": "UNESCO World Heritage and City Overview",
+    "grounding_check": "Answer must describe it as the emblematic main square containing monuments like Santa María, the Savior Chapel, and the Dean Ortega Palace"
+  },
+  {
+    "id": "Q03",
+    "category": "poi_direct_lookup",
+    "difficulty": "easy",
+    "question": "What is the address and phone number of the Condestable Dávalos Parador?",
+    "expected_section": "Accommodation",
+    "grounding_check": "Answer must include 'Plaza Vázquez de Molina' and '+34953750345'"
+  },
+  {
+    "id": "Q04",
+    "category": "category_browse",
+    "difficulty": "easy",
+    "question": "What museums can I visit in Úbeda?",
+    "expected_section": "Museums and Culture",
+    "grounding_check": "Answer must name at least 2 of the 4 Museum POIs present in the data"
+  },
+  {
+    "id": "Q05",
+    "category": "category_browse",
+    "difficulty": "easy",
+    "question": "What religious buildings are there to visit in Úbeda?",
+    "expected_section": "Religious Heritage",
+    "grounding_check": "Answer must name at least 3 PlaceOfWorship POIs from the data (e.g. Sanctuary of Our Lady of Guadalupe)"
+  },
+  {
+    "id": "Q06",
+    "category": "poi_direct_lookup",
+    "difficulty": "easy",
+    "question": "Tell me about the Ariza Bridge in Úbeda.",
+    "expected_section": "Tourist Attractions and Viewpoints",
+    "grounding_check": "Answer must mention: built 1562, over the Guadalimar River, 100-metre length, central arch of 36 metres"
+  },
+  {
+    "id": "Q07",
+    "category": "practical_info",
+    "difficulty": "easy",
+    "question": "Where can I find tourist information offices in Úbeda?",
+    "expected_section": "Tourist Information and Services",
+    "grounding_check": "Answer must reference at least one TouristInformationCenter POI with an address"
+  },
+  {
+    "id": "Q08",
+    "category": "practical_info",
+    "difficulty": "easy",
+    "question": "Where can I park in Úbeda?",
+    "expected_section": "Practical Information",
+    "grounding_check": "Answer must reference at least one ParkingFacility POI"
+  },
+  {
+    "id": "Q09",
+    "category": "gastronomy",
+    "difficulty": "easy",
+    "question": "Where can I eat traditional food in Úbeda?",
+    "expected_section": "Gastronomy",
+    "grounding_check": "Answer must name at least 2 Restaurant POIs from the data"
+  },
+  {
+    "id": "Q10",
+    "category": "gastronomy",
+    "difficulty": "medium",
+    "question": "Is Úbeda known for olive oil? Are there any olive oil-related places to visit?",
+    "expected_section": "Gastronomy",
+    "grounding_check": "Answer must mention OilMill POIs; Úbeda is in Jaén, one of the world's largest olive oil producing provinces"
+  },
+  {
+    "id": "Q11",
+    "category": "accommodation",
+    "difficulty": "easy",
+    "question": "What accommodation options are available in Úbeda? Is there a parador?",
+    "expected_section": "Accommodation",
+    "grounding_check": "Answer must confirm the Condestable Dávalos Parador exists and list at least 2 other accommodation types"
+  },
+  {
+    "id": "Q12",
+    "category": "heritage",
+    "difficulty": "medium",
+    "question": "What are the most important Renaissance monuments in Úbeda?",
+    "expected_section": "Civil and Historical Monuments",
+    "grounding_check": "Answer must name at least 3 specific civil buildings or heritage sites and describe their Renaissance character"
+  },
+  {
+    "id": "Q13",
+    "category": "events",
+    "difficulty": "medium",
+    "question": "What traditional festivals or events take place in Úbeda?",
+    "expected_section": "Events and Festivals",
+    "grounding_check": "Answer must name at least 1 TraditionalFestival or MusicEvent POI from the data"
+  },
+  {
+    "id": "Q14",
+    "category": "category_browse",
+    "difficulty": "medium",
+    "question": "Are there any viewpoints in Úbeda where I can get a good view of the city?",
+    "expected_section": "Tourist Attractions and Viewpoints",
+    "grounding_check": "Answer must reference at least one ViewPoint POI with its name and/or address"
+  },
+  {
+    "id": "Q15",
+    "category": "poi_direct_lookup",
+    "difficulty": "medium",
+    "question": "What is the Dolmen of Úbeda and when does it date from?",
+    "expected_section": "Archaeological Sites",
+    "grounding_check": "Answer must mention: 3rd millennium BC, funerary megalithic construction, Iberian site of Cabeza Higuerosa"
+  },
+  {
+    "id": "Q16",
+    "category": "practical_info",
+    "difficulty": "medium",
+    "question": "If I need a pharmacy in Úbeda, where can I find one?",
+    "expected_section": "Health and Beauty",
+    "grounding_check": "Answer must name at least 1 Pharmacy POI with an address or location"
+  },
+  {
+    "id": "Q17",
+    "category": "category_browse",
+    "difficulty": "medium",
+    "question": "What guided tours or itineraries are available in Úbeda?",
+    "expected_section": "Guided Tours and Itineraries",
+    "grounding_check": "Answer must reference at least 2 TouristTrip POIs from the data"
+  },
+  {
+    "id": "Q18",
+    "category": "synthesis",
+    "difficulty": "hard",
+    "question": "I have one day in Úbeda. Suggest a morning cultural route that covers the most important heritage sites.",
+    "expected_section": "UNESCO World Heritage and City Overview, Civil and Historical Monuments, Religious Heritage",
+    "grounding_check": "Answer must name at least 4 specific POIs from the heritage sections and describe a logical walking order"
+  },
+  {
+    "id": "Q19",
+    "category": "synthesis",
+    "difficulty": "hard",
+    "question": "I am interested in food tourism. What can I do in Úbeda related to gastronomy and local products?",
+    "expected_section": "Gastronomy",
+    "grounding_check": "Answer must cover restaurants, cafes, and local products (olive oil) using specific POIs from the Gastronomy section"
+  },
+  {
+    "id": "Q20",
+    "category": "synthesis",
+    "difficulty": "hard",
+    "question": "What makes Úbeda different from other Spanish cities as a tourist destination? What is its unique appeal?",
+    "expected_section": "UNESCO World Heritage and City Overview",
+    "grounding_check": "Answer must mention: UNESCO World Heritage status (2003), Renaissance architecture, Vázquez de Molina Square, Andalusia. Must be grounded in the document, not general knowledge."
+  }
+]
