@@ -12,6 +12,27 @@ the smaller model fails the quality threshold.
 
 ---
 
+## Quick Summary
+
+**Recommended model: `gemma4:e4b` — passes both quality thresholds.**
+
+| | E2B (original) | E2B (fixed) | **E4B (fixed)** |
+|---|---|---|---|
+| Factual grounding | 54.1% ❌ | 62.5% ❌ | **82.5% ✅** |
+| Retrieval accuracy | 60% | 60% | **90%** |
+| Content fetched | 75% ✅ | 65% ❌ | **100% ✅** |
+| Composite score | 0.637 | 0.655 | **0.900** |
+| Avg latency (MLX) | 32.5 s/q | 51.1 s/q | **79.7 s/q** |
+
+**Technical configuration used for all runs:**
+- Hardware: Apple Silicon Mac, 128 GB unified memory
+- Inference backend: Ollama MLX engine (`com.ollama.mlx`, `OLLAMA_NEW_ENGINE=true`)
+- LLM routing: `litellm` → `openai/gemma4:{e2b,e4b}` → `http://localhost:11434/v1`
+- Index: PageIndex tree (427 nodes, structural only — no LLM summaries)
+- Dataset: 408 Úbeda POIs from the Inventrip API, 20 evaluation questions
+
+---
+
 ## What is PageIndex?
 
 PageIndex builds a hierarchical tree index from a document's heading
@@ -115,13 +136,42 @@ Create `.env` in the project root:
 
 ```bash
 # Ollama (OpenAI-compatible endpoint)
+# litellm routes openai/* model strings to this base URL.
 OPENAI_API_KEY=ollama
 OPENAI_API_BASE=http://localhost:11434/v1
+
+# Enable Ollama's MLX engine on Apple Silicon.
+# All latency figures in this repo were measured with this active.
+# Without it, inference falls back to llama.cpp and will be noticeably slower.
+OLLAMA_NEW_ENGINE=true
 
 # Inventrip API (only needed for scripts/extract_ubeda.py)
 INVENTRIP_API_BASE_URL=https://stgapi.inventrip.com
 INVENTRIP_API_KEY=your_api_key_here
 ```
+
+### Technical configuration
+
+All evaluation runs in this repository used the following setup:
+
+| Component | Value |
+|---|---|
+| Hardware | Apple Silicon Mac, 128 GB unified memory |
+| OS | macOS |
+| Python | 3.14 via `.venv` |
+| Ollama service | `com.ollama.mlx` (MLX backend) |
+| Ollama endpoint | `http://localhost:11434/v1` (OpenAI-compatible) |
+| LLM client | `litellm 1.83.7` |
+| Model routing | `openai/gemma4:e2b` / `openai/gemma4:e4b` → Ollama |
+| `gemma4:e2b` | 7.2 GB Q4\_K\_M, 128K context |
+| `gemma4:e4b` | 9.6 GB Q4\_K\_M, 128K context |
+| Index type | PageIndex structural tree (no LLM summaries) |
+| Index rebuild time | < 5 s (deterministic, no model calls) |
+
+The `OLLAMA_NEW_ENGINE=true` flag routes Ollama through Apple's
+[MLX](https://github.com/ml-explore/mlx) framework, which is optimised
+for Apple Silicon unified memory. Latency on non-MLX or non-Apple
+Silicon hardware will be higher than the figures reported here.
 
 ---
 
