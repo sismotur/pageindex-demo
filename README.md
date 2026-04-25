@@ -265,6 +265,15 @@ query is borderline. Running the index with node summaries
 navigation context and reduce the number of `get_page_content` calls per
 query, which is the primary driver of latency.
 
+> **Important — MLX engine:** all latency figures above were measured
+> with Ollama running via the MLX backend (`com.ollama.mlx` on macOS,
+> equivalent to `OLLAMA_NEW_ENGINE=true`). This backend uses Apple's MLX
+> framework for inference on unified memory and is significantly faster
+> than the default llama.cpp engine on Apple Silicon. If you run without
+> the MLX engine your latencies will be considerably higher.
+> Add `OLLAMA_NEW_ENGINE=true` to your `.env` (already included in the
+> template) or start Ollama with that variable exported.
+
 ### Persistent failures
 
 Four questions scored below 1.0 for both models. Three are **rubric
