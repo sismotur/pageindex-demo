@@ -12,7 +12,8 @@
 | 6 — Question set | ✅ Done | `eval/questions.json` (20 questions, easy/medium/hard) |
 | 7 — Run Q&A eval (E2B) | ✅ Done | `results/eval_gemma4-e2b.json` (649s, 32.5s/q avg) |
 | 8 — Score + compare | ✅ Done | `results/scored_gemma4-e2b.json` — E2B: 54.1% grounding, 60% retrieval |
-| 9 — Run Q&A eval (E4B) | 🔄 Escalated | `results/eval_gemma4-e4b.json` |
+| 9 — Run Q&A eval (E4B) | ✅ Done | `results/eval_gemma4-e4b.json` (1593s, 79.7s/q avg) |
+| 10 — Cross-model comparison | ✅ Done | `results/comparison_table.md` — E4B: 82.5% grounding ✅ PASS |
 
 ---
 
