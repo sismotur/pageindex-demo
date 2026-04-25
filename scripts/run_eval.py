@@ -49,7 +49,9 @@ A) LISTING questions ("what X exist?", "list all Y")
    2. get_poi_list(section_title) → use the POI names to compose your answer.
    You do NOT need to call get_page_content for every POI in a list.
 
-B) SPECIFIC FACT questions (address, phone, description, dates, measurements)
+B) SPECIFIC FACT questions (address, phone, description, dates, measurements,
+   or any question about a named place: "tell me about X", "what is X?",
+   "describe X", "what are the opening hours of X")
    1. get_sections() → identify the section.
    2. get_poi_list(section_title) → find the exact POI name and its line number.
    3. get_page_content(lines="start-end") → read the POI text (10-25 lines).
