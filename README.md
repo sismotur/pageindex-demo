@@ -97,7 +97,7 @@ ollama pull gemma4:e2b
 ### Installation
 
 ```bash
-git clone https://github.com/felipesanti/pageindex-demo.git
+git clone https://github.com/sismotur/pageindex-demo.git
 cd pageindex-demo
 
 # Clone PageIndex
