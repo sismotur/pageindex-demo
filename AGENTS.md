@@ -1,5 +1,10 @@
 # PageIndex + Gemma 4 (E2B → 31B): Úbeda Tourism RAG Demo
 
+## ✅ Project Complete
+
+**Final result: `gemma4:e4b` with two-level navigation — 85.9% grounding, 59.1 s/q**
+Repository: https://github.com/sismotur/pageindex-demo
+
 ## Progress
 
 | Step | Status | Output |
@@ -14,6 +19,10 @@
 | 8 — Score + compare | ✅ Done | `results/scored_gemma4-e2b.json` — E2B: 54.1% grounding, 60% retrieval |
 | 9 — Run Q&A eval (E4B) | ✅ Done | `results/eval_gemma4-e4b.json` (1593s, 79.7s/q avg) |
 | 10 — Cross-model comparison | ✅ Done | `results/comparison_table.md` — E4B: 82.5% grounding ✅ PASS |
+| 11 — Two-level navigation | ✅ Done | `scripts/run_eval.py` rewritten; `get_sections` + `get_poi_list` |
+| 12 — Section summaries | ✅ Done | `scripts/add_section_summaries.py`; 18 summaries in structure JSON |
+| 13 — E4B re-eval (improved) | ✅ Done | `results/eval_gemma4-e4b.json` (1182s, 59.1s/q avg) |
+| 14 — Merge + document | ✅ Done | `master`: 85.9% grounding ✅, −26% latency; README updated |
 
 ---
 
