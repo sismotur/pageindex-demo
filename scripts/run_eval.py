@@ -34,49 +34,52 @@ RESULTS_DIR    = PROJECT_ROOT / "results"
 DEFAULT_MODEL  = "openai/gemma4:e2b"
 MAX_TOOL_ROUNDS = 14
 
-SYSTEM_PROMPT = """\
+_SYSTEM_PROMPT_TEMPLATE = """\
 You are a tourism assistant for Úbeda, Spain. You answer questions using the \
-Úbeda Tourism Guide document. You have three tools:
+Úbeda Tourism Guide document.
 
-- get_sections(): returns the 18 section titles with their line ranges and summaries.
-- get_poi_list(section_title): returns all POI names and their line numbers in a section.
-- get_page_content(lines): returns the raw Markdown text for a line range (e.g. "9-28").
+The 18 sections of the guide are already listed below — you do NOT need to \
+call any tool to discover them. Use this information directly.
+
+You have TWO tools:
+- get_poi_list(section_title): returns all POI names and their exact line \
+  numbers inside a section. Use the section titles exactly as shown below.
+- get_page_content(lines): returns the raw Markdown text for a line range \
+  (e.g. "9-28").
+
+--- GUIDE SECTIONS (pre-loaded, do not fetch again) ---
+{sections_text}
+--- END SECTIONS ---
 
 STRATEGY — choose the path that fits the question:
 
 A) LISTING questions ("what X exist?", "list all Y")
-   1. get_sections() → identify the relevant section.
-   2. get_poi_list(section_title) → use the POI names to compose your answer.
+   1. Call get_poi_list(section_title) using the relevant section above.
+   2. Use the POI names to compose your answer.
    You do NOT need to call get_page_content for every POI in a list.
 
 B) SPECIFIC FACT questions (address, phone, description, dates, measurements,
    or any question about a named place: "tell me about X", "what is X?",
    "describe X", "what are the opening hours of X")
-   1. get_sections() → identify the section.
-   2. get_poi_list(section_title) → find the exact POI name and its line number.
-   3. get_page_content(lines="start-end") → read the POI text (10-25 lines).
+   1. Call get_poi_list(section_title) to get the exact POI line number.
+   2. Call get_page_content(lines="start-end") to read the POI text (10-25 lines).
    Never answer specific facts from a POI title alone.
 
 RULES FOR ALL QUESTIONS:
-- Answer based ONLY on retrieved text. Do not use outside knowledge.
-- Include exact names, addresses, phones, and dates when present in the text.
+- Answer based ONLY on the text retrieved by your tools. Do not use outside knowledge.
+- Include exact names, addresses, phones, and dates when present.
 - If information is not in the guide, say so clearly.
 - Always respond in English, regardless of the language of any retrieved content.
 """
 
+
+def make_system_prompt(sections_text: str) -> str:
+    """Build the system prompt with sections pre-embedded."""
+    return _SYSTEM_PROMPT_TEMPLATE.format(sections_text=sections_text)
+
+# get_sections() is removed from the tool list: sections are embedded in the
+# system prompt and returned instantly from cache if the model calls it anyway.
 TOOL_DEFS = [
-    {
-        "type": "function",
-        "function": {
-            "name": "get_sections",
-            "description": (
-                "Returns the 18 top-level sections of the Úbeda Tourism Guide, "
-                "each with its title, line range, POI count, and a short summary. "
-                "Call this first to identify which section(s) are relevant."
-            ),
-            "parameters": {"type": "object", "properties": {}, "required": []},
-        },
-    },
     {
         "type": "function",
         "function": {
@@ -264,36 +267,55 @@ def sections_from_tool_calls(tool_calls_made: list, section_map: dict) -> list[s
 
 # ── Agentic loop ───────────────────────────────────────────────────────────────
 
-def execute_tool(name: str, args: dict,
-                 sections_text: str, poi_list_fn, md_lines: list[str]) -> str:
-    """Dispatch a tool call and return its result string."""
+def execute_tool(name: str, args: dict, sections_text: str,
+                 poi_list_fn, md_lines: list[str],
+                 poi_cache: dict) -> tuple[str, bool]:
+    """
+    Dispatch a tool call and return (result_text, cache_hit).
+
+    poi_cache is a session-level dict that persists across all questions.
+    get_poi_list results are stored keyed by lowercase section title.
+    get_sections is handled as a fallback even though it's not in TOOL_DEFS.
+    """
     if name == "get_sections":
-        return sections_text
+        # Fallback if the model calls it despite it being pre-loaded
+        return sections_text, True  # always a "cache hit"
+
     if name == "get_poi_list":
         section_title = args.get("section_title", "")
-        return poi_list_fn(section_title)
+        key = section_title.lower()
+        if key not in poi_cache:
+            poi_cache[key] = poi_list_fn(section_title)
+            return poi_cache[key], False  # cache miss, freshly computed
+        return poi_cache[key], True       # cache hit
+
     if name == "get_page_content":
         spec = args.get("lines", "1-20")
         content = get_lines(md_lines, spec)
         if not content.strip():
-            return "[WARNING] No content found for that line range."
-        return content
-    return f"[ERROR] Unknown tool: {name}"
+            return "[WARNING] No content found for that line range.", False
+        return content, False
+
+    return f"[ERROR] Unknown tool: {name}", False
 
 
-def run_agentic_loop(question: str, sections_text: str,
-                     poi_list_fn, md_lines: list[str], model: str) -> dict:
+def run_agentic_loop(question: str, system_prompt: str,
+                     sections_text: str, poi_list_fn,
+                     md_lines: list[str], model: str,
+                     poi_cache: dict) -> dict:
     """
     Run the tool-calling loop for a single question.
-    Returns a dict with answer, tool_calls, rounds, and any error.
+    poi_cache is shared across questions in the same session.
+    Returns a dict with answer, tool_calls, rounds, cache_hits, and any error.
     """
     messages = [
-        {"role": "system", "content": SYSTEM_PROMPT},
+        {"role": "system", "content": system_prompt},
         {"role": "user",   "content": question},
     ]
     tool_calls_made = []
     answer          = ""
     error           = None
+    cache_hits      = 0
 
     for round_num in range(MAX_TOOL_ROUNDS):
         try:
@@ -339,11 +361,16 @@ def run_agentic_loop(question: str, sections_text: str,
             except json.JSONDecodeError:
                 pass
 
-            result = execute_tool(fn_name, fn_args, sections_text, poi_list_fn, md_lines)
+            result, hit = execute_tool(
+                fn_name, fn_args, sections_text, poi_list_fn, md_lines, poi_cache
+            )
+            if hit:
+                cache_hits += 1
             tool_calls_made.append({
                 "tool":           fn_name,
                 "args":           fn_args,
                 "result_preview": result[:300],
+                "cache_hit":      hit,
             })
 
             messages.append({
@@ -380,6 +407,7 @@ def run_agentic_loop(question: str, sections_text: str,
         "answer":         answer,
         "tool_calls":     tool_calls_made,
         "rounds":         round_num + 1,
+        "cache_hits":     cache_hits,
         "error":          error,
     }
 
@@ -412,7 +440,12 @@ def main() -> None:
 
     questions, structure_data, md_lines = load_inputs()
     sections_text = build_sections_text(structure_data)
+    system_prompt = make_system_prompt(sections_text)
     poi_list_fn   = lambda title: build_poi_list_text(title, structure_data)
+
+    # Session-level POI list cache: persists across all 20 questions
+    # Key: lowercase section title  Value: pre-rendered POI list text
+    poi_cache: dict[str, str] = {}
 
     # Build line→section map from the root's direct children (## sections)
     root_nodes  = structure_data.get("structure", [])
@@ -424,10 +457,11 @@ def main() -> None:
     output_file = RESULTS_DIR / f"eval_{model_tag}.json"
     RESULTS_DIR.mkdir(exist_ok=True)
 
-    print(f"[INFO] Model:     {args.model}")
-    print(f"[INFO] Questions: {len(questions)}")
-    print(f"[INFO] Output:    {output_file}")
-    print(f"[INFO] Sections text: {len(sections_text):,} chars (was ~20,478)\n")
+    print(f"[INFO] Model:          {args.model}")
+    print(f"[INFO] Questions:      {len(questions)}")
+    print(f"[INFO] Output:         {output_file}")
+    print(f"[INFO] System prompt:  {len(system_prompt):,} chars "
+          f"(sections pre-embedded, get_sections() removed)\n")
 
     results = []
     total_start = time.time()
@@ -439,7 +473,10 @@ def main() -> None:
         print(f"[{i:2d}/{len(questions)}] {qid} ({difficulty})  {question[:70]}...")
         t0 = time.time()
 
-        loop_result = run_agentic_loop(question, sections_text, poi_list_fn, md_lines, args.model)
+        loop_result = run_agentic_loop(
+            question, system_prompt, sections_text,
+            poi_list_fn, md_lines, args.model, poi_cache
+        )
 
         elapsed = round(time.time() - t0, 2)
         sections = sections_from_tool_calls(loop_result["tool_calls"], section_map)
@@ -462,13 +499,21 @@ def main() -> None:
         results.append(result)
 
         answer_preview = loop_result["answer"][:120].replace("\n", " ")
-        tools_used = [c["tool"] for c in loop_result["tool_calls"]]
-        status = "ERROR" if loop_result["error"] else "OK"
-        print(f"         [{status}] {elapsed}s | tools: {tools_used}")
+        tools_used  = [c["tool"] for c in loop_result["tool_calls"]]
+        hits        = loop_result.get("cache_hits", 0)
+        total_calls = len(loop_result["tool_calls"])
+        status      = "ERROR" if loop_result["error"] else "OK"
+        print(f"         [{status}] {elapsed}s | tools: {tools_used} | cache hits: {hits}/{total_calls}")
         print(f"         → {answer_preview}...\n")
 
-    elapsed_total = round(time.time() - total_start, 1)
+    elapsed_total   = round(time.time() - total_start, 1)
+    total_hits      = sum(r.get("tool_calls") and
+                          sum(1 for c in r["tool_calls"] if c.get("cache_hit"))
+                          for r in results)
+    total_tool_calls = sum(len(r.get("tool_calls") or []) for r in results)
     print(f"[INFO] Finished {len(results)} questions in {elapsed_total}s")
+    print(f"[INFO] POI cache entries populated: {len(poi_cache)}")
+    print(f"[INFO] Cache hits across session:   {total_hits}/{total_tool_calls} tool calls")
 
     with open(output_file, "w", encoding="utf-8") as f:
         json.dump(results, f, indent=2, ensure_ascii=False)
