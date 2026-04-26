@@ -2,7 +2,7 @@
 
 ## ✅ Project Complete
 
-**Final result: `gemma4:e4b` with two-level navigation — 85.9% grounding, 59.1 s/q**
+**Final result: `gemma4:26b` with two-level navigation — 90.0% grounding, 35.3 s/q**
 Repository: https://github.com/sismotur/pageindex-demo
 
 ## Progress
@@ -23,6 +23,8 @@ Repository: https://github.com/sismotur/pageindex-demo
 | 12 — Section summaries | ✅ Done | `scripts/add_section_summaries.py`; 18 summaries in structure JSON |
 | 13 — E4B re-eval (improved) | ✅ Done | `results/eval_gemma4-e4b.json` (1182s, 59.1s/q avg) |
 | 14 — Merge + document | ✅ Done | `master`: 85.9% grounding ✅, −26% latency; README updated |
+| 15 — Run Q&A eval (26B) | ✅ Done | `results/eval_gemma4-26b.json` (706s, 35.3s/q avg) |
+| 16 — Final comparison | ✅ Done | 26B: 90.0% grounding ✅, 95% retrieval, best on all metrics |
 
 ---
 

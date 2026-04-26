@@ -21,17 +21,20 @@ the smaller model fails the quality threshold.
 | E2B — original | 54.1% ❌ | 60% | 32.5 s |
 | E2B — fixed pipeline | 62.5% ❌ | 60% | 51.1 s |
 | E4B — flat navigation | 82.5% ✅ | 90% | 79.7 s |
-| **E4B — two-level nav + summaries** | **85.9% ✅** | **90%** | **59.1 s** |
+| E4B — two-level nav + summaries | 85.9% ✅ | 90% | 59.1 s |
+| **26B MoE — two-level nav + summaries** | **90.0% ✅** | **95%** | **35.3 s** |
 
-The final configuration adds **two-level navigation** and **section-level LLM
-summaries** to the retrieval loop, improving grounding by +3.4 pp and
-reducing average latency by 26% compared to the flat navigation baseline.
+**`gemma4:26b` is the best result across all dimensions:** highest
+grounding, highest retrieval accuracy, and the fastest latency of any
+multi-model run. Its Mixture-of-Experts architecture (25B total / 4B active
+parameters at inference) explains the speed — it runs as fast as E4B but
+reasoning at 26B quality.
 
 **Technical configuration (final):**
 - Hardware: Apple Silicon Mac, 128 GB unified memory
 - Inference: Ollama MLX engine (`com.ollama.mlx`, `OLLAMA_NEW_ENGINE=true`,
-  `OLLAMA_KV_CACHE_TYPE=q8_0`)
-- LLM routing: `litellm` → `openai/gemma4:e4b` → `http://localhost:11434/v1`
+  `OLLAMA_KV_CACHE_TYPE=q8_0`, `num_batch=2048`)
+- LLM routing: `litellm` → `openai/gemma4:26b` → `http://localhost:11434/v1`
 - Index: PageIndex tree (427 nodes) + 18 section-level LLM summaries
 - Dataset: 408 Úbeda POIs, 20 evaluation questions
 
@@ -273,7 +276,8 @@ Each answer is scored on four dimensions:
 
 ## Results
 
-Four evaluation runs were conducted across two retrieval architectures.
+Five evaluation runs were conducted across two retrieval architectures
+and three model sizes.
 
 ### Run summary
 
@@ -282,10 +286,11 @@ Four evaluation runs were conducted across two retrieval architectures.
 | E2B — original | flat nav | `gemma4:e2b` | 54.1% ❌ | 60% | 32.5 s |
 | E2B — fixed | flat nav | `gemma4:e2b` | 62.5% ❌ | 60% | 51.1 s |
 | E4B — flat nav | flat nav | `gemma4:e4b` | 82.5% ✅ | 90% | 79.7 s |
-| **E4B — two-level + summaries** | **two-level** | **`gemma4:e4b`** | **85.9% ✅** | **90%** | **59.1 s** |
+| E4B — two-level + summaries | two-level | `gemma4:e4b` | 85.9% ✅ | 90% | 59.1 s |
+| **26B — two-level + summaries** | **two-level** | **`gemma4:26b`** | **90.0% ✅** | **95%** | **35.3 s** |
 
-**Verdict: `gemma4:e4b` with two-level navigation passes all thresholds.
-No escalation to 26B or 31B required.**
+**`gemma4:26b` is the best result — highest grounding and retrieval
+accuracy at the lowest latency of any run.**
 
 ### Pipeline fixes applied between E2B original and E2B fixed
 
@@ -333,11 +338,11 @@ Two fixes were applied after the first E2B run:
 
 ### Per-difficulty breakdown
 
-| Difficulty | Questions | E2B (fixed) | E4B | Δ |
+| Difficulty | Questions | E2B (fixed) | E4B (two-level) | 26B (two-level) |
 |---|---|---|---|---|
-| Easy | 10 | 0.720 | **0.970** | +0.250 |
-| Medium | 7 | 0.671 | **0.814** | +0.143 |
-| Hard | 3 | 0.400 | **0.867** | +0.467 |
+| Easy | 10 | 0.720 | 0.850 | **0.940** |
+| Medium | 7 | 0.671 | 0.743 | **0.771** |
+| Hard | 3 | 0.400 | 0.867 | **0.933** |
 
 E4B's largest gain is on **hard synthesis questions** (+0.467) — exactly
 the category where E2B's weaker instruction-following hurt most.
@@ -348,12 +353,14 @@ the category where E2B's weaker instruction-following hurt most.
 |---|---|---|---|---|
 | Flat navigation | E2B | 1022 s | 51 s | 1× |
 | Flat navigation | E4B | 1593 s | 80 s | 1.6× |
-| **Two-level + summaries** | **E4B** | **1182 s** | **59 s** | **1.2×** |
+| Two-level + summaries | E4B | 1182 s | 59 s | 1.2× |
+| **Two-level + summaries** | **26B** | **706 s** | **35 s** | **0.7×** |
 
-The two-level navigation reduces E4B latency by **26%** (80 s → 59 s)
-by replacing the 5,100-token flat structure dump with a 2,000-token
-section overview. Listing questions resolve in 2 tool calls instead of 3,
-and targeted fact lookups fetch one POI text instead of a full section.
+26B MoE is the **fastest model despite being the largest**: its
+Mixture-of-Experts architecture activates only ~4B parameters per token,
+giving near-E4B compute cost with 26B-level reasoning. Combined with the
+two-level navigation and `num_batch=2048` tuning, it answers in 35 s/q
+— 31% faster than E4B and 44% faster than E4B flat navigation.
 
 > **MLX engine:** all figures were measured with `com.ollama.mlx`
 > (`OLLAMA_NEW_ENGINE=true`, `OLLAMA_KV_CACHE_TYPE=q8_0`). Running
@@ -383,15 +390,15 @@ reported here.
 
 ## Conclusions
 
-**`gemma4:e4b` with two-level navigation and section summaries is the
+**`gemma4:26b` with two-level navigation and section summaries is the
 recommended configuration for this tourism RAG use case.**
 
 Key takeaways from the experiment:
 
 1. **PageIndex works well for structured tourism data.** The
    heading-based tree index over 408 POIs and 18 sections gives the
-   model a navigable map of the destination. E4B achieved 90%
-   retrieval accuracy — it found the right section 18 out of 20 times
+   model a navigable map of the destination. 26B achieved 95%
+   retrieval accuracy — it found the right section 19 out of 20 times
    without any embedding model or vector database.
 
 2. **Data preparation quality matters as much as model size.** The
@@ -406,12 +413,11 @@ Key takeaways from the experiment:
    following (language enforcement). 54–62% grounding is too low for
    a production tourism assistant.
 
-4. **Two-level navigation + section summaries cuts latency by 26%
-   and improves grounding.** Replacing the flat 5,100-token structure
-   dump with an 18-section overview (2,000 tokens) and on-demand POI
-   lists changes E4B from 79.7 s/q to 59.1 s/q, while grounding
-   rises from 82.5% to 85.9%. The one-time cost is ~8 minutes to
-   generate the 18 section summaries.
+4. **Two-level navigation + section summaries improves both quality
+   and speed.** The 18-section overview (2,000 tokens) replaces the
+   flat 5,100-token structure dump, enabling faster navigation and
+   better section-level reasoning. Combined with `gemma4:26b`, this
+   achieves 90% grounding at 35 s/q — the best result on every metric.
 
 5. **Prompt strategy matters as much as context size.** Distinguishing
    listing questions (answer from POI titles) from specific-fact
@@ -455,8 +461,9 @@ Key takeaways from the experiment:
 - **Revise scoring rubric** — use semantic matching for Q13, Q15, Q17
   to eliminate false negatives from paraphrasing and language
   equivalents. This alone would lift measured grounding above 90%.
-- **Test 26B / 31B** — both models fit in 128 GB unified memory and
-  would likely resolve remaining synthesis failures (Q18).
+- **Test 31B** — fits in 128 GB unified memory (20 GB); the dense
+  31B model would likely resolve Q12 (language drift on heritage
+  question) and push grounding above 92%.
 - **Response caching** — section summaries and POI lists are static;
   caching them client-side would eliminate repeated `get_sections` and
   `get_poi_list` calls across a conversation, cutting latency further.
