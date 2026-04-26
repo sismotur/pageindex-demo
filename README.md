@@ -22,13 +22,13 @@ the smaller model fails the quality threshold.
 | E2B — fixed pipeline | 62.5% ❌ | 60% | 51.1 s |
 | E4B — flat navigation | 82.5% ✅ | 90% | 79.7 s |
 | E4B — two-level nav + summaries | 85.9% ✅ | 90% | 59.1 s |
-| **26B MoE — two-level nav + summaries** | **90.0% ✅** | **95%** | **35.3 s** |
+| **26B MoE — two-level nav + summaries** | **90–95% ✅** | **90–95%** | **35–38 s** |
 
-**`gemma4:26b` is the best result across all dimensions:** highest
-grounding, highest retrieval accuracy, and the fastest latency of any
-multi-model run. Its Mixture-of-Experts architecture (25B total / 4B active
-parameters at inference) explains the speed — it runs as fast as E4B but
-reasoning at 26B quality.
+**`gemma4:26b` is the best result.** Its Mixture-of-Experts architecture
+(25B total / 4B active parameters at inference) gives near-E4B speed
+with 26B reasoning quality. Grounding ranges 90–95% across runs; the
+variability is concentrated in one question (Q06 — Ariza Bridge) where
+the model inconsistently applies the listing vs fact-lookup strategy.
 
 **Technical configuration (final):**
 - Hardware: Apple Silicon Mac, 128 GB unified memory
@@ -287,10 +287,14 @@ and three model sizes.
 | E2B — fixed | flat nav | `gemma4:e2b` | 62.5% ❌ | 60% | 51.1 s |
 | E4B — flat nav | flat nav | `gemma4:e4b` | 82.5% ✅ | 90% | 79.7 s |
 | E4B — two-level + summaries | two-level | `gemma4:e4b` | 85.9% ✅ | 90% | 59.1 s |
-| **26B — two-level + summaries** | **two-level** | **`gemma4:26b`** | **90.0% ✅** | **95%** | **35.3 s** |
+| 26B — two-level + summaries (run 1) | two-level | `gemma4:26b` | 95.0% ✅ | 95% | 35.3 s |
+| **26B — two-level + summaries (run 2, verified)** | **two-level** | **`gemma4:26b`** | **90.0% ✅** | **90%** | **37.5 s** |
 
-**`gemma4:26b` is the best result — highest grounding and retrieval
-accuracy at the lowest latency of any run.**
+**`gemma4:26b` is the best result.** Run 1 (rubric-corrected) reached
+95% grounding; run 2 (with the empty-answer safety net, run to verify
+the Q12 fix) reached 90%. The difference is Q06 (Ariza Bridge), which
+the model classifies inconsistently between runs as either a listing or
+a fact-lookup question.
 
 ### Pipeline fixes applied between E2B original and E2B fixed
 
@@ -354,7 +358,8 @@ the category where E2B's weaker instruction-following hurt most.
 | Flat navigation | E2B | 1022 s | 51 s | 1× |
 | Flat navigation | E4B | 1593 s | 80 s | 1.6× |
 | Two-level + summaries | E4B | 1182 s | 59 s | 1.2× |
-| **Two-level + summaries** | **26B** | **706 s** | **35 s** | **0.7×** |
+| Two-level + summaries (26B run 1) | 26B | 706 s | 35 s | 0.7× |
+| **Two-level + summaries (26B run 2)** | **26B** | **750 s** | **38 s** | **0.7×** |
 
 26B MoE is the **fastest model despite being the largest**: its
 Mixture-of-Experts architecture activates only ~4B parameters per token,
@@ -366,25 +371,21 @@ two-level navigation and `num_batch=2048` tuning, it answers in 35 s/q
 > (`OLLAMA_NEW_ENGINE=true`, `OLLAMA_KV_CACHE_TYPE=q8_0`). Running
 > without the MLX backend on Apple Silicon will be considerably slower.
 
-### Persistent failures
+### Remaining variability
 
-Four questions scored below 1.0 for both models. Three are **rubric
-artefacts** rather than model failures:
+With the corrected rubric and safety net applied, two questions show
+run-to-run variability in the 26B results:
 
-- **Q13** — rubric checks for "Semana Santa" (Spanish); the POI data is
-  English-only ("Holy Week"). Both models answer correctly but the
-  string match fails.
-- **Q15** — both models paraphrase the Dolmen description instead of
-  quoting it verbatim, so "3rd millennium BC" and "megalithic" go
-  unmatched despite being in the source text.
-- **Q17** — rubric checks for "itinerary"; the tours section uses
-  "route" and "trip" but not that word.
-- **Q07** — a genuine single regression: E4B fetched content but
-  navigated to a neighbouring section instead of Tourist Information.
+- **Q06** (Ariza Bridge) — the model sometimes applies the listing
+  strategy (answers from POI titles, scores 0.0) and sometimes the
+  fact strategy (fetches the page, extracts 1562 / Guadalimar / 100 m,
+  scores 1.0). This is the primary source of run-to-run variance.
+- **Q12** (Renaissance monuments) — the empty-answer safety net fixed
+  the silent-termination issue; the model now produces an answer
+  mentioning Renaissance architecture (0.50–1.00) but may omit the
+  specific architect name Vandelvira depending on the retrieved range.
 
-A rubric revision using semantic matching (synonyms, paraphrase
-equivalence) would push E4B's measured grounding above the 82.5%
-reported here.
+All other questions score consistently at 1.0 across both 26B runs.
 
 ---
 
