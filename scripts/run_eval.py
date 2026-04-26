@@ -359,6 +359,23 @@ def run_agentic_loop(question: str, sections_text: str,
                 answer = msg["content"].strip()
                 break
 
+    # Safety net: if still empty (model terminated without text after tool calls),
+    # make one final explicit generation request
+    if not answer and not error:
+        try:
+            recovery = litellm.completion(
+                model=model,
+                messages=messages + [{
+                    "role": "user",
+                    "content": "Based on what you have retrieved above, "
+                               "please give your final answer in English now.",
+                }],
+                temperature=0,
+            )
+            answer = (recovery.choices[0].message.content or "").strip()
+        except Exception as exc:
+            error = f"recovery failed: {exc}"
+
     return {
         "answer":         answer,
         "tool_calls":     tool_calls_made,

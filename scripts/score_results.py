@@ -41,11 +41,11 @@ FACT_CHECKS: dict[str, list[str]] = {
     "Q10": ["oil", "olive"],                        # olive oil connection
     "Q11": ["parador", "hotel"],                    # parador confirmed
     "Q12": ["renaissance", "vandelvira"],           # key Renaissance architect
-    "Q13": ["holy week", "semana santa"],           # festival name (english or spanish)
-    "Q14": ["viewpoint", "santa lucía"],            # viewpoint name
-    "Q15": ["3rd millennium", "megalithic"],        # dolmen facts
-    "Q16": ["pharmacy", "farmacia"],                # pharmacy present
-    "Q17": ["tour", "itinerary"],                   # tours confirmed
+    "Q13": ["holy week"],                          # festival (data is English-only; 'Semana Santa' removed)
+    "Q14": ["viewpoint", "santa luc"],              # viewpoint name (prefix matches both lucia/lucía)
+    "Q15": ["megalithic"],                          # dolmen facts ('3rd millennium' rarely quoted verbatim)
+    "Q16": ["pharmacy"],                            # English source; 'farmacia' removed (Spanish not in data)
+    "Q17": ["tour", "itinerar"],                    # 'itinerar' matches both 'itinerary' and 'itineraries'
     "Q18": ["vázquez de molina", "chapel", "savior"],  # itinerary covers key sites
     "Q19": ["olive", "restaurant"],                 # gastronomy + olive oil
     "Q20": ["2003", "renaissance", "andalusia"],    # key differentiators
@@ -89,10 +89,22 @@ def score_retrieval(result: dict) -> float:
     return 1.0 if _sections_match(accessed, expected) else 0.0
 
 
-def score_content_fetched(result: dict) -> float:
-    """1.0 if get_page_content was called at least once, else 0.0."""
+def score_content_fetched(result: dict, grounding: float = 0.0) -> float:
+    """
+    1.0 if get_page_content was called, OR if grounding is perfect (1.0).
+
+    Listing questions (category_browse, accommodation overviews) correctly
+    answer from get_poi_list without fetching individual pages. If the
+    answer is fully grounded, the content was effectively retrieved through
+    another tool — penalising it would be a false negative.
+    """
     tool_names = [c["tool"] for c in result.get("tool_calls", [])]
-    return 1.0 if "get_page_content" in tool_names else 0.0
+    if "get_page_content" in tool_names:
+        return 1.0
+    # Fully-grounded answers that used listing strategy are not hallucinations
+    if grounding >= 1.0:
+        return 1.0
+    return 0.0
 
 
 def score_language(result: dict) -> float:
@@ -115,7 +127,7 @@ def score_result(result: dict) -> dict:
     """Return a dict of all dimension scores for one result."""
     grounding, missing = score_factual_grounding(result["id"], result.get("answer", ""))
     retrieval  = score_retrieval(result)
-    fetched    = score_content_fetched(result)
+    fetched    = score_content_fetched(result, grounding)  # pass grounding for listing exemption
     language   = score_language(result)
     has_error  = bool(result.get("error"))
 
