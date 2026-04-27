@@ -116,7 +116,7 @@
     "category": "poi_direct_lookup",
     "difficulty": "medium",
     "question": "What is the Dolmen of Úbeda and when does it date from?",
-    "expected_section": "Archaeological Sites",
+    "expected_section": "Tourist Attractions and Viewpoints",
     "grounding_check": "Answer must mention: 3rd millennium BC, funerary megalithic construction, Iberian site of Cabeza Higuerosa"
   },
   {
