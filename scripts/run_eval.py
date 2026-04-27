@@ -447,6 +447,15 @@ def main() -> None:
     # Key: lowercase section title  Value: pre-rendered POI list text
     poi_cache: dict[str, str] = {}
 
+    # Pre-warm: populate all 18 sections immediately.
+    # build_poi_list_text() is pure Python dict traversal (~2 ms total).
+    # Every get_poi_list() call in the session will be a cache hit.
+    for _sec in _get_sections(structure_data):
+        _title = _sec.get("title", "")
+        if _title:
+            poi_cache[_title.lower()] = poi_list_fn(_title)
+    print(f"[INFO] Cache pre-warmed: {len(poi_cache)} sections loaded")
+
     # Build line→section map from the root's direct children (## sections)
     root_nodes  = structure_data.get("structure", [])
     section_map = {}
