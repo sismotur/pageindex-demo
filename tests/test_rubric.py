@@ -22,7 +22,8 @@ sys.path.insert(0, str(PROJECT_ROOT / "scripts"))
 
 from score_results import score_result, score_factual_grounding, _matches
 
-EVAL_FILE = PROJECT_ROOT / "results" / "eval_gemma4-26b.json"
+EVAL_FILE      = PROJECT_ROOT / "results" / "eval_gemma4-26b.json"
+STRUCTURE_FILE = PROJECT_ROOT / "results" / "ubeda_guide_structure.json"
 
 
 # ── Fixtures ───────────────────────────────────────────────────────────────────
@@ -113,3 +114,75 @@ class TestAggregateThresholds:
     def test_composite_above_90_percent(self, scores):
         avg = sum(s["composite"] for s in scores.values()) / len(scores)
         assert avg >= 0.90, f"Composite avg={avg:.3f} — expected ≥ 0.90"
+
+
+# ── Section summary quality tests ─────────────────────────────────────────────────
+
+@pytest.fixture(scope="module")
+def structure_data():
+    if not STRUCTURE_FILE.exists():
+        pytest.skip(f"Structure file not found: {STRUCTURE_FILE}")
+    with open(STRUCTURE_FILE, encoding="utf-8") as f:
+        return json.load(f)
+
+
+@pytest.fixture(scope="module")
+def section_nodes(structure_data):
+    root = structure_data.get("structure", [])
+    if not root:
+        pytest.skip("No structure nodes found")
+    return root[0].get("nodes", [])
+
+
+class TestSectionSummaryQuality:
+    """Verify that section summaries exist and have meaningful content."""
+
+    def test_all_18_sections_have_summaries(self, section_nodes):
+        missing = [s["title"] for s in section_nodes if not s.get("summary", "").strip()]
+        assert not missing, f"Sections without summaries: {missing}"
+
+    def test_summaries_are_long_enough(self, section_nodes):
+        """Each summary must be > 100 chars (title-only summaries are shorter)."""
+        short = [
+            (s["title"], len(s.get("summary", "")))
+            for s in section_nodes
+            if len(s.get("summary", "")) <= 100
+        ]
+        assert not short, f"Summaries too short (<=100 chars): {short}"
+
+    def test_accommodation_summary_mentions_parador(self, section_nodes):
+        """Accommodation summary should mention the Parador by name."""
+        acc = next(
+            (s for s in section_nodes if "accommodation" in s["title"].lower()),
+            None,
+        )
+        assert acc is not None, "Accommodation section not found"
+        summary = acc.get("summary", "").lower()
+        assert "condestable" in summary or "parador" in summary, (
+            f"Accommodation summary does not mention Parador: {acc['summary'][:120]}"
+        )
+
+    def test_gastronomy_summary_mentions_olive_oil(self, section_nodes):
+        """Gastronomy summary should mention olive oil or olive mill."""
+        gast = next(
+            (s for s in section_nodes if "gastronomy" in s["title"].lower()),
+            None,
+        )
+        assert gast is not None, "Gastronomy section not found"
+        summary = gast.get("summary", "").lower()
+        assert "olive" in summary or "almazara" in summary or "oil" in summary, (
+            f"Gastronomy summary does not mention olive oil: {gast['summary'][:120]}"
+        )
+
+    def test_tours_summary_mentions_specific_operator(self, section_nodes):
+        """Guided Tours summary should name at least one operator."""
+        tours = next(
+            (s for s in section_nodes if "guided" in s["title"].lower()
+             or "itinerar" in s["title"].lower()),
+            None,
+        )
+        assert tours is not None, "Guided Tours section not found"
+        summary = tours.get("summary", "").lower()
+        assert any(name in summary for name in ["falcon", "mh travel", "trails"]), (
+            f"Guided Tours summary does not name a specific operator: {tours['summary'][:120]}"
+        )
