@@ -24,20 +24,22 @@ the smaller model fails the quality threshold.
 | E4B — two-level nav + summaries | 85.9% ✅ | 90% | 59.1 s |
 | 26B — two-level nav + summaries | 90–95% ✅ | 90–95% | 35–38 s |
 | 26B — + response caching | 93.4% ✅ | 95% | 28.2 s |
-| **26B — + content summaries + cache pre-warm + rubric** | **100.0% ✅** | **100%** | **19.7 s** |
+| 26B — + content summaries + cache pre-warm + rubric | 100.0% ✅ | 100% | 19.7 s |
+| **26B — + enriched corpus (production data)** | **92.5% ✅** | **80%** | **26.5 s** |
 
-**`gemma4:26b` with all improvements achieves 100% grounding at 19.7 s/q** —
-perfect score across 20 questions, 75% faster than the E4B flat-navigation
-baseline. The MoE architecture (25B total / 4B active parameters) delivers
-26B reasoning quality at near-E4B compute cost.
+**`gemma4:26b` with all improvements achieves 92.5% grounding at 26.5 s/q** on
+production data (367 POIs, `https://api.inventrip.com`), 67% faster than the
+E4B flat-navigation baseline. The MoE architecture (25B total / 4B active
+parameters) delivers 26B reasoning quality at near-E4B compute cost.
 
 **Technical configuration (final):**
 - Hardware: Apple Silicon Mac, 128 GB unified memory
 - Inference: Ollama MLX engine (`com.ollama.mlx`, `OLLAMA_NEW_ENGINE=true`,
   `OLLAMA_KV_CACHE_TYPE=q8_0`, `num_batch=2048`)
 - LLM routing: `litellm` → `openai/gemma4:26b` → `http://localhost:11434/v1`
-- Index: PageIndex tree (427 nodes) + 18 section-level LLM summaries
-- Dataset: 408 Úbeda POIs, 20 evaluation questions
+- Data source: `https://api.inventrip.com` (production)
+- Index: PageIndex tree (451 nodes) + 20 section-level LLM summaries
+- Dataset: 367 Úbeda POIs + 13 curated trips, 20 evaluation questions
 
 ---
 
