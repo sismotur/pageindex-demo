@@ -34,6 +34,13 @@ RESULTS_DIR    = PROJECT_ROOT / "results"
 DEFAULT_MODEL  = "openai/gemma4:e2b"
 MAX_TOOL_ROUNDS = 14
 
+_LANG_RULES = {
+    "en": "Always respond in English, regardless of the language of any retrieved content.",
+    "es": "Responde siempre en español, independientemente del idioma del contenido recuperado.",
+    "fr": "Répondez toujours en français, quelle que soit la langue du contenu récupéré.",
+    "de": "Antworten Sie immer auf Deutsch, unabhängig von der Sprache des abgerufenen Inhalts.",
+}
+
 _SYSTEM_PROMPT_TEMPLATE = """\
 You are a tourism assistant for Úbeda, Spain. You answer questions using the \
 Úbeda Tourism Guide document.
@@ -69,13 +76,16 @@ RULES FOR ALL QUESTIONS:
 - Answer based ONLY on the text retrieved by your tools. Do not use outside knowledge.
 - Include exact names, addresses, phones, and dates when present.
 - If information is not in the guide, say so clearly.
-- Always respond in English, regardless of the language of any retrieved content.
+- {{lang_rule}}
 """
 
 
-def make_system_prompt(sections_text: str) -> str:
-    """Build the system prompt with sections pre-embedded."""
-    return _SYSTEM_PROMPT_TEMPLATE.format(sections_text=sections_text)
+def make_system_prompt(sections_text: str, lang: str = "en") -> str:
+    """Build the system prompt with sections pre-embedded and the correct language rule."""
+    lang_rule = _LANG_RULES.get(lang, _LANG_RULES["en"])
+    return _SYSTEM_PROMPT_TEMPLATE.replace("{{lang_rule}}", lang_rule).format(
+        sections_text=sections_text
+    )
 
 # get_sections() is removed from the tool list: sections are embedded in the
 # system prompt and returned instantly from cache if the model calls it anyway.
@@ -414,14 +424,15 @@ def run_agentic_loop(question: str, system_prompt: str,
 
 # ── Main ───────────────────────────────────────────────────────────────────────
 
-def load_inputs() -> tuple[list, dict, list[str]]:
+def load_inputs(questions_file: Path | None = None) -> tuple[list, dict, list[str]]:
     """Load questions, structure, and Markdown lines. Fail fast if missing."""
-    for path in (QUESTIONS_FILE, STRUCTURE_FILE, MD_FILE):
+    q_file = questions_file or QUESTIONS_FILE
+    for path in (q_file, STRUCTURE_FILE, MD_FILE):
         if not path.exists():
             print(f"[ERROR] Missing: {path}", file=sys.stderr)
             sys.exit(1)
 
-    with open(QUESTIONS_FILE, encoding="utf-8") as f:
+    with open(q_file, encoding="utf-8") as f:
         questions = json.load(f)
     with open(STRUCTURE_FILE, encoding="utf-8") as f:
         structure_data = json.load(f)
@@ -436,11 +447,16 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Run PageIndex Q&A evaluation")
     parser.add_argument("--model", default=DEFAULT_MODEL,
                         help=f"litellm model string (default: {DEFAULT_MODEL})")
+    parser.add_argument("--questions", default=None,
+                        help="Path to questions JSON (default: eval/questions.json)")
+    parser.add_argument("--lang", default="en",
+                        help="Response language code: en, es, fr, de (default: en)")
     args = parser.parse_args()
 
-    questions, structure_data, md_lines = load_inputs()
+    questions_file = Path(args.questions) if args.questions else QUESTIONS_FILE
+    questions, structure_data, md_lines = load_inputs(questions_file)
     sections_text = build_sections_text(structure_data)
-    system_prompt = make_system_prompt(sections_text)
+    system_prompt = make_system_prompt(sections_text, lang=args.lang)
     poi_list_fn   = lambda title: build_poi_list_text(title, structure_data)
 
     # Session-level POI list cache: persists across all 20 questions
@@ -462,12 +478,14 @@ def main() -> None:
     if root_nodes and root_nodes[0].get("nodes"):
         section_map = build_section_map(root_nodes[0]["nodes"])
 
-    model_tag = args.model.split("/")[-1].replace(":", "-")
-    output_file = RESULTS_DIR / f"eval_{model_tag}.json"
+    model_tag  = args.model.split("/")[-1].replace(":", "-")
+    lang_suffix = f"_{args.lang}" if args.lang != "en" else ""
+    output_file = RESULTS_DIR / f"eval_{model_tag}{lang_suffix}.json"
     RESULTS_DIR.mkdir(exist_ok=True)
 
     print(f"[INFO] Model:          {args.model}")
-    print(f"[INFO] Questions:      {len(questions)}")
+    print(f"[INFO] Language:       {args.lang}")
+    print(f"[INFO] Questions:      {len(questions)}  ({questions_file.name})")
     print(f"[INFO] Output:         {output_file}")
     print(f"[INFO] System prompt:  {len(system_prompt):,} chars "
           f"(sections pre-embedded, get_sections() removed)\n")
@@ -493,6 +511,7 @@ def main() -> None:
         result = {
             "id":               qid,
             "model":            args.model,
+            "lang":             args.lang,
             "category":         q.get("category"),
             "difficulty":       difficulty,
             "question":         question,

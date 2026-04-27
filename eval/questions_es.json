@@ -1,0 +1,162 @@
+[
+  {
+    "id": "Q01",
+    "category": "overview",
+    "difficulty": "easy",
+    "question": "¿Por qué Úbeda es Ciudad Patrimonio de la Humanidad por la UNESCO?",
+    "expected_section": "Destination Overview",
+    "grounding_check": "La respuesta debe mencionar la arquitectura renacentista, la designación UNESCO de 2003 y/o la Plaza Vázquez de Molina"
+  },
+  {
+    "id": "Q02",
+    "category": "monument_lookup",
+    "difficulty": "easy",
+    "question": "¿Qué es la Plaza Vázquez de Molina y por qué es importante?",
+    "expected_section": "UNESCO World Heritage and City Overview",
+    "grounding_check": "La respuesta debe describir la plaza como el espacio central del patrimonio, rodeada de monumentos emblemáticos"
+  },
+  {
+    "id": "Q03",
+    "category": "poi_direct_lookup",
+    "difficulty": "easy",
+    "question": "¿Cuál es la dirección y el teléfono del Parador Condestable Dávalos?",
+    "expected_section": "Accommodation",
+    "grounding_check": "La respuesta debe incluir 'Plaza Vázquez de Molina' y el número de teléfono del parador"
+  },
+  {
+    "id": "Q04",
+    "category": "category_browse",
+    "difficulty": "easy",
+    "question": "¿Qué museos se pueden visitar en Úbeda?",
+    "expected_section": "Museums and Culture",
+    "grounding_check": "La respuesta debe nombrar al menos 2 museos presentes en los datos"
+  },
+  {
+    "id": "Q05",
+    "category": "category_browse",
+    "difficulty": "easy",
+    "question": "¿Qué edificios religiosos hay para visitar en Úbeda?",
+    "expected_section": "Religious Heritage",
+    "grounding_check": "La respuesta debe nombrar al menos 3 lugares de culto de los datos"
+  },
+  {
+    "id": "Q06",
+    "category": "poi_direct_lookup",
+    "difficulty": "easy",
+    "question": "Cuéntame sobre el Puente de Ariza en Úbeda.",
+    "expected_section": "Tourist Attractions and Viewpoints",
+    "grounding_check": "La respuesta debe mencionar: construido en 1562, sobre el río Guadalimar, longitud de 100 metros"
+  },
+  {
+    "id": "Q07",
+    "category": "practical_info",
+    "difficulty": "easy",
+    "question": "¿Dónde puedo encontrar oficinas de información turística en Úbeda?",
+    "expected_section": "Tourist Information and Services",
+    "grounding_check": "La respuesta debe referenciar al menos un centro de información turística con dirección"
+  },
+  {
+    "id": "Q08",
+    "category": "practical_info",
+    "difficulty": "easy",
+    "question": "¿Dónde puedo aparcar el coche en Úbeda?",
+    "expected_section": "Practical Information",
+    "grounding_check": "La respuesta debe referenciar al menos un aparcamiento con su ubicación"
+  },
+  {
+    "id": "Q09",
+    "category": "gastronomy",
+    "difficulty": "easy",
+    "question": "¿Dónde puedo comer comida tradicional en Úbeda?",
+    "expected_section": "Gastronomy",
+    "grounding_check": "La respuesta debe nombrar al menos 2 restaurantes o establecimientos de los datos"
+  },
+  {
+    "id": "Q10",
+    "category": "gastronomy",
+    "difficulty": "medium",
+    "question": "¿Es Úbeda conocida por el aceite de oliva? ¿Hay algún lugar relacionado con el aceite de oliva para visitar?",
+    "expected_section": "Gastronomy",
+    "grounding_check": "La respuesta debe mencionar almazaras o molinos de aceite de oliva presentes en los datos"
+  },
+  {
+    "id": "Q11",
+    "category": "accommodation",
+    "difficulty": "easy",
+    "question": "¿Qué opciones de alojamiento hay en Úbeda? ¿Existe un parador?",
+    "expected_section": "Accommodation",
+    "grounding_check": "La respuesta debe confirmar la existencia del Parador Condestable Dávalos y listar al menos otros 2 tipos de alojamiento"
+  },
+  {
+    "id": "Q12",
+    "category": "heritage",
+    "difficulty": "medium",
+    "question": "¿Cuáles son los monumentos renacentistas más importantes de Úbeda?",
+    "expected_section": "Civil and Historical Monuments",
+    "grounding_check": "La respuesta debe nombrar al menos 3 edificios civiles o patrimoniales y describir su carácter renacentista"
+  },
+  {
+    "id": "Q13",
+    "category": "events",
+    "difficulty": "medium",
+    "question": "¿Qué festivales o eventos tradicionales se celebran en Úbeda?",
+    "expected_section": "Events and Festivals",
+    "grounding_check": "La respuesta debe nombrar al menos 1 festival o evento tradicional de los datos"
+  },
+  {
+    "id": "Q14",
+    "category": "category_browse",
+    "difficulty": "medium",
+    "question": "¿Hay miradores en Úbeda desde los que se pueda ver bien la ciudad?",
+    "expected_section": "Tourist Attractions and Viewpoints",
+    "grounding_check": "La respuesta debe referenciar al menos un mirador con su nombre o dirección"
+  },
+  {
+    "id": "Q15",
+    "category": "poi_direct_lookup",
+    "difficulty": "medium",
+    "question": "¿Qué es el Dolmen de Úbeda y de cuándo data?",
+    "expected_section": "Tourist Attractions and Viewpoints",
+    "grounding_check": "La respuesta debe mencionar la construcción megalítica de carácter funerario y/o el tercer milenio a.C."
+  },
+  {
+    "id": "Q16",
+    "category": "practical_info",
+    "difficulty": "medium",
+    "question": "Si necesito una farmacia en Úbeda, ¿dónde puedo encontrar una?",
+    "expected_section": "Health and Beauty",
+    "grounding_check": "La respuesta debe nombrar al menos 1 farmacia con su dirección o ubicación"
+  },
+  {
+    "id": "Q17",
+    "category": "category_browse",
+    "difficulty": "medium",
+    "question": "¿Qué visitas guiadas o itinerarios están disponibles en Úbeda?",
+    "expected_section": "Guided Tours and Itineraries",
+    "grounding_check": "La respuesta debe referenciar al menos 2 operadores de tours turísticos de los datos"
+  },
+  {
+    "id": "Q18",
+    "category": "synthesis",
+    "difficulty": "hard",
+    "question": "Tengo un día en Úbeda. Sugiere una ruta cultural matinal que cubra los lugares patrimoniales más importantes.",
+    "expected_section": "UNESCO World Heritage and City Overview, Civil and Historical Monuments, Religious Heritage",
+    "grounding_check": "La respuesta debe nombrar al menos 4 POIs específicos de las secciones patrimoniales y describir un orden lógico de visita"
+  },
+  {
+    "id": "Q19",
+    "category": "synthesis",
+    "difficulty": "hard",
+    "question": "Me interesa el turismo gastronómico. ¿Qué puedo hacer en Úbeda relacionado con la gastronomía y los productos locales?",
+    "expected_section": "Gastronomy",
+    "grounding_check": "La respuesta debe cubrir restaurantes, cafés y productos locales (aceite de oliva) usando POIs específicos de la sección de gastronomía"
+  },
+  {
+    "id": "Q20",
+    "category": "synthesis",
+    "difficulty": "hard",
+    "question": "¿Qué hace a Úbeda diferente de otras ciudades españolas como destino turístico? ¿Cuál es su atractivo único?",
+    "expected_section": "Destination Overview",
+    "grounding_check": "La respuesta debe mencionar: estado de Patrimonio de la Humanidad de la UNESCO (2003), arquitectura renacentista. Debe estar fundamentada en el documento, no en conocimiento general."
+  }
+]

@@ -62,6 +62,23 @@ FACT_CHECKS: dict[str, list[str]] = {
     "Q20": ["2003", "renaissance"],                 # 'andalusia' removed (model omits it but answers correctly)
 }
 
+# For Spanish (lang='es'), these keyword translations are tried when the
+# English check fails. Only English terms that get translated in Spanish
+# responses need entries here; proper nouns and numbers stay the same.
+_ES_KEYWORDS: dict[str, str] = {
+    "renaissance":       "renacentista",   # or 'renacimiento'
+    "museum":            "museo",
+    "restaurant":        "restaurante",
+    "holy week":         "semana santa",
+    "megalithic":        "megalítico",
+    "tourist information": "información turística",
+    "pharmacy":          "farmacia",
+    "parking":           "aparcamiento",
+    "viewpoint":         "mirador",
+    "savior":            "salvador",
+}
+
+
 def _normalize_digits(s: str) -> str:
     """Return only the digit characters from s."""
     return re.sub(r"\D", "", s)
@@ -95,17 +112,30 @@ def _sections_match(accessed: list[str], expected: str) -> bool:
 
 # ── Scoring functions ─────────────────────────────────────────────────────────
 
-def score_factual_grounding(qid: str, answer: str) -> tuple[float, list[str]]:
+def score_factual_grounding(qid: str, answer: str,
+                            lang: str = "en") -> tuple[float, list[str]]:
     """
     Return (score 0.0–1.0, missing_facts).
     1.0 = all required facts present, 0.0 = none present.
+
+    For Spanish evals (lang='es'), each check is also tried against its
+    Spanish translation from _ES_KEYWORDS, so 'renacentista' counts as a
+    hit for the 'renaissance' check.
     """
     checks = FACT_CHECKS.get(qid, [])
     if not checks:
         return 1.0, []
 
     answer_lower = answer.lower()
-    missing = [c for c in checks if not _matches(c, answer_lower)]
+    missing = []
+    for c in checks:
+        if _matches(c, answer_lower):
+            continue  # English check passed
+        if lang == "es" and c.lower() in _ES_KEYWORDS:
+            es_equiv = _ES_KEYWORDS[c.lower()]
+            if _matches(es_equiv, answer_lower):
+                continue  # Spanish equivalent found
+        missing.append(c)
     score = (len(checks) - len(missing)) / len(checks)
     return round(score, 2), missing
 
@@ -142,25 +172,47 @@ def score_content_fetched(result: dict, grounding: float = 0.0) -> float:
     return 0.0
 
 
+# Spanish stop-words used for language detection
+_SPANISH_STOPS = frozenset({
+    "de", "la", "el", "en", "es", "se", "por", "los", "las",
+    "un", "una", "con", "su", "del", "al", "que", "para",
+    "como", "más", "también", "tiene", "están", "hay",
+    "del", "entre", "este", "para", "pero", "son",
+})
+
+
 def score_language(result: dict) -> float:
     """
-    Rough English check: 1.0 if answer has more ASCII-range words than
-    Spanish stop-words. Flags obvious Spanish responses.
+    Language conformance check.
+
+    For English runs (lang='en'): returns 0.0 if the answer contains
+    too many Spanish stop-words (> 12% of word count).
+
+    For Spanish runs (lang='es'): returns 1.0 if the answer contains
+    enough Spanish stop-words (> 5% of word count), confirming the
+    model responded in Spanish as instructed.
+
+    For other languages: skipped (returns 1.0) — no detection logic yet.
     """
-    spanish_stops = {"de", "la", "el", "en", "es", "se", "por", "los", "las",
-                     "un", "una", "con", "su", "del", "al", "que", "para",
-                     "como", "más", "también", "tiene", "están", "hay"}
+    lang  = result.get("lang", "en")
     words = re.findall(r"\b\w+\b", result.get("answer", "").lower())
     if not words:
         return 0.0
-    spanish_count = sum(1 for w in words if w in spanish_stops)
+
+    spanish_count = sum(1 for w in words if w in _SPANISH_STOPS)
     ratio = spanish_count / len(words)
-    return 0.0 if ratio > 0.12 else 1.0
+
+    if lang == "en":
+        return 0.0 if ratio > 0.12 else 1.0
+    if lang == "es":
+        return 1.0 if ratio > 0.05 else 0.0  # must have Spanish stop-words
+    return 1.0  # other languages: skip the check
 
 
 def score_result(result: dict) -> dict:
     """Return a dict of all dimension scores for one result."""
-    grounding, missing = score_factual_grounding(result["id"], result.get("answer", ""))
+    lang = result.get("lang", "en")
+    grounding, missing = score_factual_grounding(result["id"], result.get("answer", ""), lang=lang)
     retrieval  = score_retrieval(result)
     fetched    = score_content_fetched(result, grounding)  # pass grounding for listing exemption
     language   = score_language(result)

@@ -56,6 +56,7 @@ from run_eval import (
     TOOL_DEFS,
     MAX_TOOL_ROUNDS,
     load_inputs,
+    _LANG_RULES,
 )
 
 # ── Constants ──────────────────────────────────────────────────────────────────
@@ -315,7 +316,7 @@ def run_conversation(thread: dict, system_prompt: str,
 
 def run_interactive(system_prompt: str, sections_text: str, poi_list_fn,
                     md_lines: list[str], model: str,
-                    structure_data: dict) -> None:
+                    structure_data: dict, lang: str = "en") -> None:
     """Start an interactive chat session in the terminal.
 
     Full conversation context carries across turns. Type 'exit', 'quit',
@@ -335,6 +336,8 @@ def run_interactive(system_prompt: str, sections_text: str, poi_list_fn,
     print("─" * 60)
     print("  Úbeda Tourism Assistant — Interactive Mode")
     print(f"  Model: {model}")
+    lang_label = {"en": "English", "es": "Español", "fr": "Français", "de": "Deutsch"}.get(lang, lang.upper())
+    print(f"  Language: {lang_label}")
     print("  Type your question and press Enter. 'exit' to quit.")
     print("─" * 60)
     print()
@@ -391,6 +394,8 @@ def main() -> None:
                         help=f"litellm model string (default: {DEFAULT_MODEL})")
     parser.add_argument("--interactive",  action="store_true",
                         help="Start an interactive chat session")
+    parser.add_argument("--lang",          default="en",
+                        help="Response language: en, es, fr, de (default: en)")
     parser.add_argument("--conversation", default=None,
                         help="Run only this conversation ID (e.g. C01)")
     parser.add_argument("--output",       default=None,
@@ -413,14 +418,14 @@ def main() -> None:
 
     questions, structure_data, md_lines = load_inputs()
     sections_text = build_sections_text(structure_data)
-    system_prompt = make_system_prompt(sections_text)
+    system_prompt = make_system_prompt(sections_text, lang=args.lang)
     poi_list_fn   = lambda title: build_poi_list_text(title, structure_data)
 
-    # ── Interactive mode ────────────────────────────────────────────────────
+    # ── Interactive mode ─────────────────────────────────────────────────────
     if args.interactive:
         run_interactive(
             system_prompt, sections_text, poi_list_fn,
-            md_lines, args.model, structure_data,
+            md_lines, args.model, structure_data, lang=args.lang,
         )
         return
 
