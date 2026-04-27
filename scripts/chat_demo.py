@@ -94,14 +94,18 @@ class Spinner:
                 break
             with self._lock:
                 text = self._msg
-            print(f"\r  {frame}  {text}…", end="", flush=True)
+            # \033[2K = erase entire current line; \r = go to start of line
+            sys.stdout.write(f"\033[2K\r  {frame}  {text}\u2026")
+            sys.stdout.flush()
             time.sleep(0.08)
 
     def stop(self) -> None:
         self._active = False
         if self._thread:
             self._thread.join()
-        print("\r" + " " * 50 + "\r", end="", flush=True)  # erase spinner
+        # Erase the spinner line completely and return cursor to start
+        sys.stdout.write("\033[2K\r")
+        sys.stdout.flush()
 
 
 # ── Single-turn execution (appends to shared history) ─────────────────────
