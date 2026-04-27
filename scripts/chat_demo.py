@@ -276,13 +276,11 @@ def run_interactive(system_prompt: str, sections_text: str, poi_list_fn,
     turn = 0
 
     print()
-    print("\u250c" + "─" * 68 + "┐")
-    print("\u2502  Úbeda Tourism Assistant — Interactive Mode"
-          " " * 21 + "\u2502")
-    print("\u2502  Model: " + model + " " * (59 - len(model)) + "\u2502")
-    print("\u2502  Type your question and press Enter. 'exit' to quit." +
-          " " * 16 + "\u2502")
-    print("\u2514" + "─" * 68 + "┘")
+    print("─" * 60)
+    print("  Úbeda Tourism Assistant — Interactive Mode")
+    print(f"  Model: {model}")
+    print("  Type your question and press Enter. 'exit' to quit.")
+    print("─" * 60)
     print()
 
     while True:
