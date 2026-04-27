@@ -18,10 +18,14 @@ Key difference from run_eval.py:
   - the next user question always follows the last assistant message
 
 Usage:
+    # Scripted conversations
     .venv/bin/python scripts/chat_demo.py
     .venv/bin/python scripts/chat_demo.py --model openai/gemma4:e4b
     .venv/bin/python scripts/chat_demo.py --conversation C01
-    .venv/bin/python scripts/chat_demo.py --output results/conversations.json
+
+    # Interactive mode (type questions, get answers, conversation context carries)
+    .venv/bin/python scripts/chat_demo.py --interactive
+    .venv/bin/python scripts/chat_demo.py --interactive --model openai/gemma4:26b
 """
 
 import argparse
@@ -251,13 +255,87 @@ def run_conversation(thread: dict, system_prompt: str,
     }
 
 
+# ── Interactive mode ───────────────────────────────────────────────────────────
+
+def run_interactive(system_prompt: str, sections_text: str, poi_list_fn,
+                    md_lines: list[str], model: str,
+                    structure_data: dict) -> None:
+    """Start an interactive chat session in the terminal.
+
+    Full conversation context carries across turns. Type 'exit', 'quit',
+    or press Ctrl+C / Ctrl+D to end the session.
+    """
+    # Pre-warm POI cache once for the whole session
+    poi_cache: dict[str, str] = {}
+    for sec in _get_sections(structure_data):
+        title = sec.get("title", "")
+        if title:
+            poi_cache[title.lower()] = poi_list_fn(title)
+
+    messages: list[dict] = [{"role": "system", "content": system_prompt}]
+    turn = 0
+
+    print()
+    print("\u250c" + "─" * 68 + "┐")
+    print("\u2502  Úbeda Tourism Assistant — Interactive Mode"
+          " " * 21 + "\u2502")
+    print("\u2502  Model: " + model + " " * (59 - len(model)) + "\u2502")
+    print("\u2502  Type your question and press Enter. 'exit' to quit." +
+          " " * 16 + "\u2502")
+    print("\u2514" + "─" * 68 + "┘")
+    print()
+
+    while True:
+        try:
+            question = input("You: ").strip()
+        except (EOFError, KeyboardInterrupt):
+            print("\n\nGoodbye!")
+            break
+
+        if not question:
+            continue
+        if question.lower() in {"exit", "quit", "q", "bye"}:
+            print("Goodbye!")
+            break
+
+        turn += 1
+        t0 = time.time()
+
+        # Show tool calls as they happen via a lightweight callback
+        print("\nAssistant: ", end="", flush=True)
+
+        result = run_turn(
+            question, messages,
+            sections_text, poi_list_fn, md_lines, model, poi_cache,
+        )
+        elapsed = round(time.time() - t0, 2)
+
+        # Print the answer
+        print(result["answer"])
+
+        # Compact metadata line
+        tools_used = [c["tool"].replace("get_", "") for c in result["tool_calls"]]
+        hits = result["cache_hits"]
+        total = len(result["tool_calls"])
+        meta = f"[{elapsed}s"
+        if tools_used:
+            meta += f" | tools: {', '.join(tools_used)}"
+        if total:
+            meta += f" | cache {hits}/{total}"
+        meta += f" | turn {turn}]"
+        print(f"\033[2m{meta}\033[0m")   # dim text
+        print()
+
+
 # ── Main ───────────────────────────────────────────────────────────────────────
 
 def main() -> None:
-    """Load conversations, run each thread, save results."""
+    """Load conversations or start interactive mode."""
     parser = argparse.ArgumentParser(description="Multi-turn conversation demo")
     parser.add_argument("--model",        default=DEFAULT_MODEL,
                         help=f"litellm model string (default: {DEFAULT_MODEL})")
+    parser.add_argument("--interactive",  action="store_true",
+                        help="Start an interactive chat session")
     parser.add_argument("--conversation", default=None,
                         help="Run only this conversation ID (e.g. C01)")
     parser.add_argument("--output",       default=None,
@@ -283,6 +361,15 @@ def main() -> None:
     system_prompt = make_system_prompt(sections_text)
     poi_list_fn   = lambda title: build_poi_list_text(title, structure_data)
 
+    # ── Interactive mode ────────────────────────────────────────────────────
+    if args.interactive:
+        run_interactive(
+            system_prompt, sections_text, poi_list_fn,
+            md_lines, args.model, structure_data,
+        )
+        return
+
+    # ── Scripted mode ───────────────────────────────────────────────────────
     model_tag   = args.model.split("/")[-1].replace(":", "-")
     output_file = Path(args.output) if args.output \
                   else RESULTS_DIR / f"conversations_{model_tag}.json"
