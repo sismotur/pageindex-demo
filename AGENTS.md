@@ -2,7 +2,7 @@
 
 ## ✅ Project Complete
 
-**Final result: `gemma4:26b` with all improvements — 100% grounding, 19.7 s/q**
+**Final result: `gemma4:26b` with enriched corpus — 90% grounding, 27.2 s/q**
 Repository: https://github.com/sismotur/pageindex-demo
 
 ## Progress
@@ -30,6 +30,8 @@ Repository: https://github.com/sismotur/pageindex-demo
 | 19 — Rubric fixes (#1) + tests | ✅ Done | Q03/Q15/Q17/Q20 corrected; `tests/test_rubric.py` 18/18 pass |
 | 20 — Cache pre-warm (#6) | ✅ Done | All 18 sections loaded at session start; 50% cache hit rate |
 | 21 — Final eval (all improvements) | ✅ Done | 100.0% grounding ✅, 100% retrieval, composite 1.000, 19.7 s/q |
+| 22 — Destination corpus (#8) | ✅ Done | `extract_destination_data.py`; 22 trips, Indispensable labels, zoom labels, type names |
+| 23 — Final eval (enriched corpus) | ✅ Done | 90.0% grounding ✅, 85% retrieval, composite 0.915, 27.2 s/q |
 
 ---
 
