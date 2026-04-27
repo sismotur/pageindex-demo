@@ -115,7 +115,9 @@ def run_turn(question: str, messages: list[dict],
              sections_text: str, poi_list_fn,
              md_lines: list[str], model: str,
              poi_cache: dict,
-             on_status=None) -> dict:
+             on_status=None,
+             on_stream_start=None,
+             stream: bool = False) -> dict:
     """
     Execute one conversation turn.
 
@@ -132,41 +134,128 @@ def run_turn(question: str, messages: list[dict],
     cache_hits = 0
 
     for round_num in range(MAX_TOOL_ROUNDS):
-        try:
-            response = litellm.completion(
-                model=model,
-                messages=messages,
-                tools=TOOL_DEFS,
-                tool_choice="auto",
-                temperature=0,
-            )
-        except Exception as exc:
-            error = str(exc)
-            break
+        if stream:
+            # ── Streaming round ───────────────────────────────────────────
+            # Accumulate content + tool-call deltas from the stream.
+            # Text tokens are printed immediately; tool-call tokens are
+            # collected silently (spinner stays active until first text).
+            acc_content    = ""
+            acc_tool_calls: list[dict] = []  # [{id, name, arguments}]
+            streaming_live = False  # True once first text token printed
 
-        choice  = response.choices[0]
-        message = choice.message
+            try:
+                response_stream = litellm.completion(
+                    model=model,
+                    messages=messages,
+                    tools=TOOL_DEFS,
+                    tool_choice="auto",
+                    temperature=0,
+                    stream=True,
+                )
+            except Exception as exc:
+                error = str(exc)
+                break
 
-        assistant_msg = {"role": "assistant", "content": message.content or ""}
-        if message.tool_calls:
-            assistant_msg["tool_calls"] = [
-                {
-                    "id":       tc.id,
-                    "type":     "function",
-                    "function": {"name": tc.function.name,
-                                 "arguments": tc.function.arguments},
-                }
-                for tc in message.tool_calls
+            for chunk in response_stream:
+                delta = chunk.choices[0].delta
+
+                # ─ Text content token
+                if delta.content:
+                    if not streaming_live:
+                        # Signal caller to stop the spinner, then start printing
+                        if on_stream_start:
+                            on_stream_start()  # stops spinner + prints prefix
+                        else:
+                            sys.stdout.write("\033[2K\rAssistant: ")
+                            sys.stdout.flush()
+                        streaming_live = True
+                    acc_content += delta.content
+                    sys.stdout.write(delta.content)
+                    sys.stdout.flush()
+
+                # ─ Tool-call delta (accumulate silently)
+                if delta.tool_calls:
+                    for tc_delta in delta.tool_calls:
+                        idx = tc_delta.index
+                        while len(acc_tool_calls) <= idx:
+                            acc_tool_calls.append({"id": "", "name": "", "arguments": ""})
+                        if tc_delta.id:
+                            acc_tool_calls[idx]["id"] = tc_delta.id
+                        if tc_delta.function:
+                            if tc_delta.function.name:
+                                acc_tool_calls[idx]["name"] = tc_delta.function.name
+                            if tc_delta.function.arguments:
+                                acc_tool_calls[idx]["arguments"] += tc_delta.function.arguments
+
+            if streaming_live:
+                print()   # newline after streamed answer
+
+            # Build assistant message from accumulated deltas
+            assistant_msg = {"role": "assistant", "content": acc_content or ""}
+            if acc_tool_calls:
+                assistant_msg["tool_calls"] = [
+                    {
+                        "id":       tc["id"],
+                        "type":     "function",
+                        "function": {"name": tc["name"],
+                                     "arguments": tc["arguments"]},
+                    }
+                    for tc in acc_tool_calls
+                ]
+            messages.append(assistant_msg)
+
+            if not acc_tool_calls:
+                answer = acc_content.strip()
+                break
+
+            # Process accumulated tool calls
+            raw_tool_calls = [
+                type("TC", (), {"id": tc["id"],
+                                "function": type("F", (), {
+                                    "name":      tc["name"],
+                                    "arguments": tc["arguments"],
+                                })()})()
+                for tc in acc_tool_calls
             ]
-        messages.append(assistant_msg)
 
-        # No tool calls → final answer for this turn
-        if not message.tool_calls:
-            answer = (message.content or "").strip()
-            break
+        else:
+            # ── Non-streaming round (scripted / batch use) ──────────────
+            try:
+                response = litellm.completion(
+                    model=model,
+                    messages=messages,
+                    tools=TOOL_DEFS,
+                    tool_choice="auto",
+                    temperature=0,
+                )
+            except Exception as exc:
+                error = str(exc)
+                break
+
+            choice  = response.choices[0]
+            message = choice.message
+
+            assistant_msg = {"role": "assistant", "content": message.content or ""}
+            if message.tool_calls:
+                assistant_msg["tool_calls"] = [
+                    {
+                        "id":       tc.id,
+                        "type":     "function",
+                        "function": {"name": tc.function.name,
+                                     "arguments": tc.function.arguments},
+                    }
+                    for tc in message.tool_calls
+                ]
+            messages.append(assistant_msg)
+
+            if not message.tool_calls:
+                answer = (message.content or "").strip()
+                break
+
+            raw_tool_calls = message.tool_calls
 
         # Execute tools and append responses to history
-        for tc in message.tool_calls:
+        for tc in raw_tool_calls:
             fn_name = tc.function.name
             fn_args = {}
             try:
@@ -360,16 +449,30 @@ def run_interactive(system_prompt: str, sections_text: str, poi_list_fn,
 
         spinner = Spinner()
         spinner.start("Thinking")
+        spinner_stopped = False
+
+        def on_stream_start():
+            nonlocal spinner_stopped
+            spinner.stop()
+            spinner_stopped = True
+            sys.stdout.write("Assistant: ")
+            sys.stdout.flush()
 
         result = run_turn(
             question, messages,
             sections_text, poi_list_fn, md_lines, model, poi_cache,
             on_status=spinner.update,
+            on_stream_start=on_stream_start,
+            stream=True,
         )
-        spinner.stop()
-        elapsed = round(time.time() - t0, 2)
 
-        print("Assistant:", result["answer"])
+        if not spinner_stopped:
+            # Streaming didn't happen (empty answer / error): stop normally
+            spinner.stop()
+            print("Assistant:", result["answer"])
+        # else: answer was already streamed to the terminal
+
+        elapsed = round(time.time() - t0, 2)
 
         # Compact metadata line
         tools_used = [c["tool"].replace("get_", "") for c in result["tool_calls"]]
