@@ -23,11 +23,13 @@ the smaller model fails the quality threshold.
 | E4B — flat navigation | 82.5% ✅ | 90% | 79.7 s |
 | E4B — two-level nav + summaries | 85.9% ✅ | 90% | 59.1 s |
 | 26B — two-level nav + summaries | 90–95% ✅ | 90–95% | 35–38 s |
-| **26B — + response caching** | **93.4% ✅** | **95%** | **28.2 s** |
+| 26B — + response caching | 93.4% ✅ | 95% | 28.2 s |
+| **26B — + content summaries + cache pre-warm + rubric** | **100.0% ✅** | **100%** | **19.7 s** |
 
-**`gemma4:26b` with caching achieves 93.4% grounding at 28.2 s/q** —
-best on every metric. The MoE architecture (25B total / 4B active
-parameters) delivers 26B reasoning quality at near-E4B compute cost.
+**`gemma4:26b` with all improvements achieves 100% grounding at 19.7 s/q** —
+perfect score across 20 questions, 75% faster than the E4B flat-navigation
+baseline. The MoE architecture (25B total / 4B active parameters) delivers
+26B reasoning quality at near-E4B compute cost.
 
 **Technical configuration (final):**
 - Hardware: Apple Silicon Mac, 128 GB unified memory

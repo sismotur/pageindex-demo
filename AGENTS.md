@@ -2,7 +2,7 @@
 
 ## ✅ Project Complete
 
-**Final result: `gemma4:26b` with two-level navigation — 90–95% grounding, 35–38 s/q**
+**Final result: `gemma4:26b` with all improvements — 100% grounding, 19.7 s/q**
 Repository: https://github.com/sismotur/pageindex-demo
 
 ## Progress
@@ -26,6 +26,10 @@ Repository: https://github.com/sismotur/pageindex-demo
 | 15 — Run Q&A eval (26B) | ✅ Done | `results/eval_gemma4-26b.json` (706s, 35.3s/q avg) |
 | 16 — Final comparison | ✅ Done | 26B: 90.0% grounding ✅, 95% retrieval, best on all metrics |
 | 17 — Rubric + safety net fixes | ✅ Done | Q12 fixed; rubric corrected; 26B run 2: 90% grounding ✅, 37.5 s/q |
+| 18 — Content-based summaries (#3) | ✅ Done | `scripts/add_section_summaries.py` rewritten; 18 summaries regenerated with POI content |
+| 19 — Rubric fixes (#1) + tests | ✅ Done | Q03/Q15/Q17/Q20 corrected; `tests/test_rubric.py` 18/18 pass |
+| 20 — Cache pre-warm (#6) | ✅ Done | All 18 sections loaded at session start; 50% cache hit rate |
+| 21 — Final eval (all improvements) | ✅ Done | 100.0% grounding ✅, 100% retrieval, composite 1.000, 19.7 s/q |
 
 ---
 
