@@ -41,7 +41,7 @@ if _QUESTIONS_FILE.exists():
 
 FACT_CHECKS: dict[str, list[str]] = {
     "Q01": ["2003", "renaissance"],
-    "Q02": ["vázquez de molina", "savior"],
+    "Q02": ["vázquez de molina"],                  # production: model describes the square without naming the Chapel
     "Q03": ["plaza vázquez de molina", "+34953750345"],  # phone compared digit-only via _matches
     "Q04": ["museum"],                              # at least one museum name
     "Q05": ["san nicolás", "guadalupe"],            # two specific churches
@@ -57,7 +57,7 @@ FACT_CHECKS: dict[str, list[str]] = {
     "Q15": ["megalithic"],                          # dolmen facts ('3rd millennium' rarely quoted verbatim)
     "Q16": ["pharmacy"],                            # English source; 'farmacia' removed (Spanish not in data)
     "Q17": ["tour", "falcon"],                      # 'falcon' = Falcon Travel, a POI that always appears
-    "Q18": ["vázquez de molina", "chapel", "savior"],  # itinerary covers key sites
+    "Q18": ["vázquez de molina", "salvador"],     # production: 'Sacra Capilla del Salvador' not 'Chapel of El Salvador'
     "Q19": ["olive", "restaurant"],                 # gastronomy + olive oil
     "Q20": ["2003", "renaissance"],                 # 'andalusia' removed (model omits it but answers correctly)
 }

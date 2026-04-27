@@ -51,14 +51,28 @@ def get_poi_text_sample(poi_node: dict, next_line: int,
 
 
 def get_section_content_sample(sec_node: dict, md_lines: list[str],
-                               max_pois: int = 5, max_chars: int = 250) -> str:
-    """Build a multi-POI content sample for the summary prompt."""
+                               max_pois: int = 5, max_chars: int = 250,
+                               max_total_chars: int = 2000) -> str:
+    """Build a multi-POI content sample for the summary prompt.
+
+    Returns an empty string if the section has no POI children (caller
+    should fall back to the title-only prompt).  Total output is capped
+    at max_total_chars to prevent oversized prompts on sections with
+    large per-POI content (e.g. Curated Trips).
+    """
     pois = sec_node.get("nodes") or []
+    if not pois:
+        return ""   # no children — caller uses fallback prompt
     parts = []
+    total = 0
     for i, poi in enumerate(pois[:max_pois]):
+        if total >= max_total_chars:
+            break
         next_start = pois[i + 1].get("line_num", len(md_lines) + 1) \
                      if i + 1 < len(pois) else len(md_lines) + 1
-        parts.append(get_poi_text_sample(poi, next_start, md_lines, max_chars))
+        snippet = get_poi_text_sample(poi, next_start, md_lines, max_chars)
+        parts.append(snippet)
+        total += len(snippet)
     return "\n\n---\n\n".join(parts)
 
 
@@ -73,6 +87,10 @@ def generate_summary(section_title: str, poi_names: list[str], model: str,
     """
     if sec_node is not None and md_lines is not None:
         sample = get_section_content_sample(sec_node, md_lines)
+    else:
+        sample = ""
+
+    if sample:   # content-based prompt (preferred)
         prompt = (
             f"You are summarising a tourism section for a travel guide about Úbeda, Spain.\n\n"
             f"Section: \"{section_title}\" ({len(poi_names)} points of interest)\n\n"
@@ -83,7 +101,7 @@ def generate_summary(section_title: str, poi_names: list[str], model: str,
             f"Do not use bullet points. Reply in English only."
         )
     else:
-        # Fallback: title-only prompt (used when Markdown is unavailable)
+        # Fallback: title-only prompt (0-POI sections or Markdown unavailable)
         poi_str = ", ".join(poi_names[:30])
         if len(poi_names) > 30:
             poi_str += f", … ({len(poi_names) - 30} more)"
