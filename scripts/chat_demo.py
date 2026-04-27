@@ -29,8 +29,10 @@ Usage:
 """
 
 import argparse
+import itertools
 import json
 import sys
+import threading
 import time
 from pathlib import Path
 
@@ -62,12 +64,53 @@ RESULTS_DIR        = PROJECT_ROOT / "results"
 DEFAULT_MODEL      = "openai/gemma4:26b"
 
 
-# ── Single-turn execution (appends to shared history) ─────────────────────────
+# ── Spinner (background thread) ─────────────────────────────────────────
+
+class Spinner:
+    """Lightweight terminal spinner that runs in a background thread."""
+    _FRAMES = ["\u28cb","\u28d9","\u28b9","\u28b8","\u28bc","\u28b4",
+               "\u28a6","\u28a7","\u2887","\u288f"]  # braille dots
+
+    def __init__(self) -> None:
+        self._msg    = "Thinking"
+        self._active = False
+        self._thread: threading.Thread | None = None
+        self._lock   = threading.Lock()
+
+    def update(self, msg: str) -> None:
+        """Change the status text while the spinner is running."""
+        with self._lock:
+            self._msg = msg
+
+    def start(self, msg: str = "Thinking") -> None:
+        self._msg    = msg
+        self._active = True
+        self._thread = threading.Thread(target=self._spin, daemon=True)
+        self._thread.start()
+
+    def _spin(self) -> None:
+        for frame in itertools.cycle(self._FRAMES):
+            if not self._active:
+                break
+            with self._lock:
+                text = self._msg
+            print(f"\r  {frame}  {text}…", end="", flush=True)
+            time.sleep(0.08)
+
+    def stop(self) -> None:
+        self._active = False
+        if self._thread:
+            self._thread.join()
+        print("\r" + " " * 50 + "\r", end="", flush=True)  # erase spinner
+
+
+# ── Single-turn execution (appends to shared history) ─────────────────────
 
 def run_turn(question: str, messages: list[dict],
              sections_text: str, poi_list_fn,
              md_lines: list[str], model: str,
-             poi_cache: dict) -> dict:
+             poi_cache: dict,
+             on_status=None) -> dict:
     """
     Execute one conversation turn.
 
@@ -125,6 +168,15 @@ def run_turn(question: str, messages: list[dict],
                 fn_args = json.loads(tc.function.arguments or "{}")
             except json.JSONDecodeError:
                 pass
+
+            # Update status so the spinner shows what's happening
+            if on_status:
+                if fn_name == "get_poi_list":
+                    sec = fn_args.get("section_title", "section")
+                    on_status(f"Searching {sec}")
+                elif fn_name == "get_page_content":
+                    lines = fn_args.get("lines", "...")
+                    on_status(f"Reading guide lines {lines}")
 
             result, hit = execute_tool(
                 fn_name, fn_args, sections_text, poi_list_fn, md_lines, poi_cache
@@ -299,17 +351,18 @@ def run_interactive(system_prompt: str, sections_text: str, poi_list_fn,
         turn += 1
         t0 = time.time()
 
-        # Show tool calls as they happen via a lightweight callback
-        print("\nAssistant: ", end="", flush=True)
+        spinner = Spinner()
+        spinner.start("Thinking")
 
         result = run_turn(
             question, messages,
             sections_text, poi_list_fn, md_lines, model, poi_cache,
+            on_status=spinner.update,
         )
+        spinner.stop()
         elapsed = round(time.time() - t0, 2)
 
-        # Print the answer
-        print(result["answer"])
+        print("Assistant:", result["answer"])
 
         # Compact metadata line
         tools_used = [c["tool"].replace("get_", "") for c in result["tool_calls"]]
