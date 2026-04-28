@@ -1,6 +1,6 @@
 # Cloudflare Worker — Inventrip RAG: Technical Specification
 
-**Version:** 1.1  
+**Version:** 1.2  
 **Status:** Draft  
 **Scope:** 200 tourist destinations × 16 languages  
 **Relates to:** `scripts/chat_demo.py`, `scripts/run_eval.py`, `docs/cloudflare-worker-spec.md`
@@ -25,6 +25,10 @@ Worker so that:
   routing to their individual corpora.
 - The full response is streamed token-by-token to the client from the
   moment the LLM produces the first word.
+- **Strict destination isolation:** when a session has a destination set,
+  the Worker is physically incapable of returning data from any other
+  destination. Cross-destination queries require an explicit separate
+  endpoint and are never triggered by a regular `/v1/chat` call.
 - The GKE cluster continues to serve the existing Inventrip API unchanged.
 
 ---
@@ -205,6 +209,51 @@ Content-Type: application/json
   "scope":      "spain"         // optional: country / region filter
 }
 ```
+
+### Query routing rules and destination isolation
+
+**Rule 1 — session with destination set → strict single-destination mode.**
+Every `/v1/chat` call on a session that has a `destination` field loads
+*only* the corpus for that destination from R2. The navigation tools
+(`get_poi_list`, `get_page_content`) operate exclusively on that
+destination’s in-memory structure and Markdown. There is no code path
+that can read another destination’s data during the same session.
+Any answer the model produces is grounded solely in the loaded corpus.
+
+```
+Session { destination: "baeza" }  →  R2: destinations/baeza/**
+                                       NEVER reads destinations/ubeda/**
+                                       or any other destination
+```
+
+This is structural, not a runtime check: the R2 key prefix is derived
+directly from `session.destination`, so accessing a different
+destination’s data is physically impossible within the same request.
+
+**Rule 2 — session without destination → cross-destination mode only.**
+A session created without a `destination` field cannot call `/v1/chat`
+(returns 400). Cross-destination queries must go through `/v1/meta-chat`,
+which uses the meta-index to identify relevant destinations and then
+runs one isolated `ragLoop` per destination. The final synthesis step
+combines results but clearly attributes each fact to its source destination.
+
+```
+Session { destination: null }  →  /v1/meta-chat only
+                                  /v1/chat → 400 Bad Request
+```
+
+**Rule 3 — destination cannot change mid-session.**
+Once set, `session.destination` is immutable in the Durable Object.
+Subsequent `/v1/chat` calls ignore any `destination` field in the
+request body and always use the session value. This prevents
+a client from querying a different destination by passing a different
+slug in a later request.
+
+| Session type | Endpoint | Corpus loaded | Cross-destination |
+|---|---|---|---|
+| `destination: "baeza"` | `/v1/chat` | `destinations/baeza/` only | ❌ Not possible |
+| `destination: null` | `/v1/meta-chat` | meta-index + N per-dest corpora | ✅ Explicit |
+| `destination: null` | `/v1/chat` | — | 400 error |
 
 ### Response (SSE stream)
 
@@ -705,6 +754,9 @@ SUPPORTED_LANGS        = "en,es,fr,de,it,pt,ca,nl,pl,ru,zh,ja,ar,tr,uk,hr"
 | Invalid question (empty) | 400, no stream opened |
 | Tool call JSON parse failure | skip arguments, call tool with `{}` |
 | MAX_ROUNDS exceeded | return whatever partial answer was accumulated |
+| `/v1/chat` on session with no destination | 400 `destination_required` — use `/v1/meta-chat` |
+| Unknown destination slug in session | 500 `corpus_not_found` — trigger pipeline upload |
+| `destination` field in `/v1/chat` body differs from session | silently ignored — session value always wins |
 
 ---
 
