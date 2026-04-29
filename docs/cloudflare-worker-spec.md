@@ -111,23 +111,28 @@ subsequent requests on the same PoP serve them from memory.
 
 ### Uploading corpus files
 
+Local artifact names follow the `{dest}_{type}_{lang}` convention.
+The upload maps them to the R2 path scheme `destinations/{dest}/`:
+
 ```bash
-# Upload a single destination (run from pageindex-demo project root):
+# Upload a single (destination, language) pair:
 DEST=ubeda
-wrangler r2 object put inventrip-rag/destinations/$DEST/index/structure.json \
-  --file results/ubeda_guide_structure.json
-wrangler r2 object put inventrip-rag/destinations/$DEST/index/destination.json \
-  --file data/ubeda_destination.json
-wrangler r2 object put inventrip-rag/destinations/$DEST/corpus/guide_en.md \
-  --file data/ubeda_guide.md
+LANG=en
+
+wrangler r2 object put inventrip-rag/destinations/$DEST/index/structure_${LANG}.json \
+  --file results/${DEST}_guide_${LANG}_structure.json
+wrangler r2 object put inventrip-rag/destinations/$DEST/index/destination_${LANG}.json \
+  --file data/${DEST}_destination_${LANG}.json
+wrangler r2 object put inventrip-rag/destinations/$DEST/corpus/guide_${LANG}.md \
+  --file data/${DEST}_guide_${LANG}.md
 
 # Upload the meta-index (after all destinations are processed):
 wrangler r2 object put inventrip-rag/meta/all_destinations.json \
   --file data/all_destinations.json
 ```
 
-The Cloud Run data pipeline iterates all 200 destinations and calls
-this upload sequence for each, then rebuilds `all_destinations.json`.
+The Cloud Run data pipeline iterates all `(destination, language)` pairs
+and calls this upload sequence for each, then rebuilds `all_destinations.json`.
 
 ---
 
@@ -328,11 +333,12 @@ function getSections(structure: { structure: SectionNode[] }): SectionNode[] {
   return structure.structure[0]?.nodes ?? [];
 }
 
-function buildSectionsText(structure: { structure: SectionNode[]; line_count: number }): string {
+function buildSectionsText(structure: { structure: SectionNode[]; doc_name: string; line_count: number }): string {
   const sections  = getSections(structure);
   const lineCount = structure.line_count;
+  const docName   = structure.doc_name ?? "guide";
   const lines: string[] = [
-    `Document: ubeda_guide  (${lineCount} lines)`,
+    `Document: ${docName}  (${lineCount} lines)`,
     "",
     `SECTIONS (${sections.length} total):`,
   ];
@@ -841,23 +847,35 @@ cross-lingual retrieval: a French question retrieves from the English
 corpus and the answer is synthesised in French.
 
 **Trade-off:** POI names are in English (`Santa Lucía Viewpoints`
-instead of `Miradores de Santa Lucía`). The model’s translation is
+instead of `Miradores de Santa Lucía`). The model's translation is
 generally accurate but may lose local terminology or branding.
 
-### v2: Per-language corpora (optional)
+### v2: Per-language corpora
 
-For destinations with high traffic in a specific language (e.g.
-Spanish for all Spanish destinations), generate a language-specific
-Markdown from the Inventrip API with `language={lang}`. Store as
-`corpus/guide_es.md`. The Worker tries the language-specific corpus
-first and falls back to English if missing.
+The local pipeline already supports per-language corpora. Run the
+full 5-step pipeline with `--lang {code}` for each desired language:
+
+```bash
+# Spanish corpus for Ubeda
+scripts/extract_pois.py             --destination ubeda --lang es
+scripts/extract_destination_data.py --destination ubeda --lang es
+scripts/json_to_markdown.py         --destination ubeda --lang es
+pageindex/run_pageindex.py --md_path data/ubeda_guide_es.md ...
+scripts/add_section_summaries.py --structure results/ubeda_guide_es_structure.json --lang es
+```
+
+This produces `data/ubeda_guide_es.md` and
+`results/ubeda_guide_es_structure.json`, which upload to
+`corpus/guide_es.md` and `index/structure_es.json` in R2.
+The Worker tries the language-specific corpus first and falls back
+to the English corpus if the requested language is not available.
 
 Storage: 200 destinations × 16 languages × 290 KB = 928 MB (negligible
 cost; data pipeline cost is the real constraint).
 
-**Recommendation:** Start with v1. Add per-language corpora only for
-the top 3 languages by traffic (likely es, fr, de), measuring grounding
-improvement before expanding to all 16.
+**Recommendation:** Start with v1. Generate per-language corpora only
+for the top 3 languages by traffic (likely es, fr, de), measuring
+grounding quality improvement before expanding to all 16.
 
 ### Session language lock
 

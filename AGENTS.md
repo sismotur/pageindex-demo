@@ -1,8 +1,8 @@
-# PageIndex + Gemma 4 (E2B → 31B): Úbeda Tourism RAG Demo
+# PageIndex + Gemma 4: Multi-Destination Tourism RAG
 
 ## ✅ Project Complete
 
-**Final result: `gemma4:26b` with enriched corpus — 90% grounding, 27.2 s/q**
+**Final result: `gemma4:26b` with enriched corpus, multilingual, multi-destination pipeline**
 Repository: https://github.com/sismotur/pageindex-demo
 
 ## Progress
@@ -32,6 +32,10 @@ Repository: https://github.com/sismotur/pageindex-demo
 | 21 — Final eval (all improvements) | ✅ Done | 100.0% grounding ✅, 100% retrieval, composite 1.000, 19.7 s/q |
 | 22 — Destination corpus (#8) | ✅ Done | `extract_destination_data.py`; 22 trips, Indispensable labels, zoom labels, type names |
 | 23 — Final eval (enriched corpus) | ✅ Done | 90.0% grounding ✅, 85% retrieval, composite 0.915, 27.2 s/q |
+| 24 — Enrich POI Markdown | ✅ Done | Added coordinates, postal code, country (ISO→name), region, image links, audio guide links, booking URL to `json_to_markdown.py` |
+| 25 — Remove destination hardcoding | ✅ Done | All 6 scripts fully destination- and language-agnostic; `--destination` + `--lang` CLI args throughout |
+| 26 — Language in artifact filenames | ✅ Done | `{dest}_{type}_{lang}` convention; `ubeda_guide.md` → `ubeda_guide_en.md`; no (dest, lang) pair can overwrite another |
+| 27 — Rename extract_ubeda.py | ✅ Done | `scripts/extract_ubeda.py` → `scripts/extract_pois.py` |
 
 ---
 
@@ -39,7 +43,8 @@ Repository: https://github.com/sismotur/pageindex-demo
 
 Evaluate whether **PageIndex** (vectorless, reasoning-based RAG) combined
 with **Gemma 4** models served via **Ollama** can answer grounded tourism
-questions about Úbeda using real Inventrip POI data.
+questions for **any tourist destination in any language** using real
+Inventrip POI data. Reference dataset: Úbeda, Spain.
 
 Start with `gemma4:e2b` (smallest, smartphone-viable). Escalate to `e4b`,
 `26b`, and `31b` only if answer quality is insufficient at the smaller size.
@@ -135,14 +140,18 @@ python3 pageindex/run_pageindex.py --md_path smoke_test.md --model openai/gemma4
 Confirm the tree JSON is produced in `results/`. If this fails, fix the
 Ollama config before proceeding.
 
-### Step 3 — Extract Úbeda POIs from Inventrip API
+### Step 3 — Extract POIs from Inventrip API
 
-Script: `scripts/extract_ubeda.py`
+Script: `scripts/extract_pois.py` (formerly `extract_ubeda.py`)
 
-Calls `GET /v120/pois?tourist_destination=ubeda&language=en&strip_nulls=true`
-against `$INVENTRIP_API_BASE_URL` with `Authorization: Bearer $INVENTRIP_API_KEY`.
+Calls `GET /v120/pois?tourist_destination={dest}&language={lang}&strip_nulls=true`.
+Accepts `--destination` and `--lang` CLI args (defaults: `ubeda`, `en`).
 
-Saves result to `data/ubeda_pois_raw.json`.
+Saves to `data/{destination}_pois_raw_{lang}.json`.
+
+Also run `scripts/extract_destination_data.py --destination {dest} --lang {lang}`
+to fetch trips, tourist types, and interest-level taxonomy.
+Saves to `data/{destination}_destination_{lang}.json`.
 
 The relevant query params (from `params-builder.js`):
 - `tourist_destination` → `filter.name_implan`
@@ -153,44 +162,41 @@ The relevant query params (from `params-builder.js`):
 
 Script: `scripts/json_to_markdown.py`
 
-Input: `data/ubeda_pois_raw.json`
-Output: `data/ubeda_guide.md`
+Accepts `--destination` and `--lang` CLI args.
+Input:  `data/{destination}_pois_raw_{lang}.json`
+Output: `data/{destination}_guide_{lang}.md`
 
 Group POIs by UNE 178503 type into `##` sections. For each POI, emit a
-`###` heading with name, then description, address, opening hours, and
-tourist tags as bullet points. This gives PageIndex a clean hierarchy to
-index.
+`###` heading with: name, description, address, postal code, country,
+region, coordinates, phone, website, booking URL, tourist type tags,
+image links, and audio guide links.
 
 ### Step 5 — Run PageIndex indexing
 
 Two modes:
 
-**Fast (structural only, no LLM calls — recommended first):**
+**Fast (structural only, no LLM calls — recommended):**
 Builds the tree from heading hierarchy alone. Instant, deterministic.
 
 ```bash
 .venv/bin/python pageindex/run_pageindex.py \
-  --md_path data/ubeda_guide.md \
-  --model openai/gemma4:e2b \
+  --md_path data/ubeda_guide_en.md \
+  --model openai/gemma4:26b \
   --if-add-node-summary no \
   --if-add-doc-description no
+# → produces results/ubeda_guide_en_structure.json
 ```
 
-**Full (with LLM-generated summaries — ~10-12 min on E2B):**
-Calls `gemma4:e2b` once per node above the token threshold.
-Summaries improve navigation in the agentic retrieval step.
-
-```bash
-.venv/bin/python pageindex/run_pageindex.py \
-  --md_path data/ubeda_guide.md \
-  --model openai/gemma4:e2b \
-  --if-add-node-summary yes \
-  --if-add-doc-description no
-```
-
-Output: `results/ubeda_guide_structure.json` — the hierarchical tree index.
+Output filename mirrors the input Markdown name: `{dest}_guide_{lang}_structure.json`.
 The `results/` directory is created automatically if it does not exist.
 The `.env` file in the project root is loaded automatically (OPENAI_API_KEY + OPENAI_API_BASE).
+
+After indexing, run section summaries (one-time per (destination, language)):
+
+```bash
+.venv/bin/python scripts/add_section_summaries.py \
+  --structure results/ubeda_guide_en_structure.json --lang en
+```
 
 ### Step 6 — Define the evaluation question set
 
@@ -212,19 +218,24 @@ retrieval quality (PageIndex) from generation quality (Gemma 4).
 
 Script: `scripts/run_eval.py`
 
-Uses `PageIndexClient` (same pattern as `examples/agentic_vectorless_rag_demo.py`).
-For each question:
-1. Ask the model using the indexed document.
-2. Record the answer, retrieved sections/line ranges, and wall-clock latency.
-3. Append to `results/eval_{model_tag}.json`.
-
-Run with each model in escalation order:
+Key options: `--model`, `--questions`, `--structure`, `--lang`.
+The destination name and Markdown path are derived automatically from the
+structure file. Run in escalation order:
 
 ```bash
-python3 scripts/run_eval.py --model openai/gemma4:e2b
-python3 scripts/run_eval.py --model openai/gemma4:e4b   # only if E2B is poor
-python3 scripts/run_eval.py --model openai/gemma4:26b   # only if E4B is poor
-python3 scripts/run_eval.py --model openai/gemma4:31b   # only if 26B is poor
+# English eval
+.venv/bin/python scripts/run_eval.py --model openai/gemma4:e2b
+.venv/bin/python scripts/run_eval.py --model openai/gemma4:26b   # recommended
+
+# Spanish eval
+.venv/bin/python scripts/run_eval.py \
+  --model openai/gemma4:26b \
+  --questions eval/questions_es.json \
+  --structure results/ubeda_guide_es_structure.json \
+  --lang es
+
+# Interactive chat (any language)
+.venv/bin/python scripts/chat_demo.py --interactive --lang es
 ```
 
 ### Step 8 — Evaluate and compare
@@ -252,22 +263,30 @@ Produces `results/comparison_table.md` — a cross-model summary.
 
 ```
 pageindex-demo/
-├── AGENTS.md                  ← this file
-├── pageindex/                 ← cloned VectifyAI/PageIndex repo
-├── data/
-│   ├── ubeda_pois_raw.json    ← raw output from Inventrip API
-│   └── ubeda_guide.md         ← structured Markdown for PageIndex
+├── AGENTS.md                        ← this file
+├── README.md
+├── docs/
+│   └── cloudflare-worker-spec.md
+├── pageindex/                       ← cloned VectifyAI/PageIndex repo
+├── data/                            ← {dest}_{type}_{lang} naming
+│   ├── ubeda_pois_raw_en.json   ← 367 POIs from Inventrip API
+│   ├── ubeda_destination_en.json← trips, tourist types, interest levels
+│   └── ubeda_guide_en.md        ← structured Markdown (240 KB, 20 sections)
 ├── eval/
-│   └── questions.json         ← curated visitor question set
+│   ├── questions.json           ← 20 English visitor questions
+│   ├── questions_es.json        ← 20 Spanish visitor questions
+│   └── conversations.json       ← multi-turn conversation threads
 ├── results/
-│   ├── ubeda_guide_structure.json   ← PageIndex tree index
-│   ├── eval_gemma4-e2b.json         ← Q&A results per model
-│   └── comparison_table.md          ← cross-model rubric summary
+│   ├── ubeda_guide_en_structure.json  ← PageIndex tree index (gitignored)
+│   └── eval_gemma4-26b.json           ← Q&A results
 └── scripts/
-    ├── extract_ubeda.py       ← Step 3: fetch from Inventrip API
-    ├── json_to_markdown.py    ← Step 4: convert JSON to Markdown
-    ├── run_eval.py            ← Step 7: PageIndex Q&A runner
-    └── score_results.py       ← Step 8: scoring and comparison
+    ├── extract_pois.py          ← Step 3a: fetch POIs (--destination, --lang)
+    ├── extract_destination_data.py  ← Step 3b: fetch trips & metadata
+    ├── json_to_markdown.py      ← Step 4: JSON → Markdown (--destination, --lang)
+    ├── add_section_summaries.py ← Step 5: LLM section summaries (--structure, --lang)
+    ├── run_eval.py              ← Step 6: PageIndex Q&A runner
+    ├── score_results.py         ← Step 7: scoring and comparison
+    └── chat_demo.py             ← interactive / scripted conversation demo
 ```
 
 ---
@@ -275,10 +294,17 @@ pageindex-demo/
 ## Environment Variables Required
 
 ```bash
-INVENTRIP_API_BASE_URL=https://api.inventrip.com   # or staging URL
-INVENTRIP_API_KEY=...                               # your API key
-OPENAI_API_KEY=ollama                               # literal string
-OPENAI_API_BASE=http://localhost:11434/v1           # local Ollama endpoint
+# Data extraction (extract_pois.py, extract_destination_data.py)
+INVENTRIP_API_BASE_URL=https://api.inventrip.com
+INVENTRIP_API_KEY=your_api_key_here
+
+# LLM inference via Ollama (all eval/chat/summary scripts)
+OPENAI_API_KEY=ollama                  # literal string
+OPENAI_API_BASE=http://localhost:11434/v1
+
+# Apple Silicon MLX engine (all latency figures use this)
+OLLAMA_NEW_ENGINE=true
+OLLAMA_KV_CACHE_TYPE=q8_0
 ```
 
 ---

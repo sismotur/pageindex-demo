@@ -1,10 +1,15 @@
-# PageIndex + Gemma 4: Úbeda Tourism RAG Demo
+# PageIndex + Gemma 4: Multi-Destination Tourism RAG
 
-A self-contained experiment that evaluates whether
+A self-contained framework that evaluates whether
 [PageIndex](https://github.com/VectifyAI/PageIndex) (vectorless,
 reasoning-based RAG) combined with Google's **Gemma 4** family served
-via **Ollama** can answer grounded tourism questions about Úbeda, Spain,
-using real POI data from the [Inventrip](https://inventrip.com) API.
+via **Ollama** can answer grounded tourism questions for **any tourist
+destination** using real POI data from the [Inventrip](https://inventrip.com)
+API. The reference dataset is Úbeda, Spain.
+
+The pipeline supports **multiple destinations** and **multiple languages**.
+All artifacts use the `{destination}_{type}_{lang}` naming convention so
+different `(destination, language)` pairs never overwrite each other.
 
 The experiment starts with the smallest model (`gemma4:e2b`, 7.2 GB —
 smartphone-viable) and escalates to `e4b`, `26b`, and `31b` only when
@@ -116,10 +121,16 @@ POI data comes from the **Inventrip API** (`/v120/pois`), which wraps
 the PostgreSQL function `it.get_objects_une_v121`. The data is
 structured according to the **UNE 178503** Spanish tourism standard.
 
-- **408 POIs** for the Úbeda tourist destination
-- Fields: name, type (UNE 178503), description, address, phone,
-  website, tourist type tags, and coordinates
-- Languages: English (`language=en`)
+- **367 POIs** for the Úbeda tourist destination (production)
+- **Fields per POI:** name, type (UNE 178503), description, address,
+  postal code, country (ISO → full name), region, coordinates
+  (lat/lon), phone, website, booking URL, tourist type tags,
+  image links (`/v100/image/{id}?image_quality=high`),
+  audio guide links (`/v100/audios?language={lang}&audio={id}`).
+- **Languages:** any language code accepted by `/v120/pois?language=`;
+  available codes listed at `/v100/configuration-languages?is_active_app=true`.
+- **Destination data:** trips/itineraries and tourist-type taxonomy
+  from `/v120/tourist-destinations` and `/v120/trips`.
 
 The raw JSON is converted into a structured **Markdown document** (not
 fed as raw JSON) because PageIndex's tree-builder anchors on `#` heading
@@ -132,31 +143,51 @@ with no semantic hierarchy.
 
 ```
 pageindex-demo/
-├── AGENTS.md                     ← implementation guide (for Warp agents)
-├── README.md                     ← this file
-├── .env                          ← credentials (gitignored)
+├── AGENTS.md                          ← implementation guide (for Warp agents)
+├── README.md                          ← this file
+├── .env                               ← credentials (gitignored)
 ├── .gitignore
-├── pageindex/                    ← cloned VectifyAI/PageIndex (gitignored)
-├── .venv/                        ← Python virtual environment (gitignored)
+├── docs/
+│   └── cloudflare-worker-spec.md  ← Cloudflare Worker RAG specification
+├── pageindex/                         ← cloned VectifyAI/PageIndex (gitignored)
+├── .venv/                             ← Python virtual environment (gitignored)
 │
-├── data/
-│   ├── ubeda_pois_raw.json       ← 408 POIs from Inventrip API (gitignored)
-│   └── ubeda_guide.md            ← structured Markdown for PageIndex (gitignored)
+├── data/                              ← gitignored; named {dest}_{type}_{lang}
+│   ├── ubeda_pois_raw_en.json     ← 367 POIs from Inventrip API
+│   ├── ubeda_destination_en.json  ← trips, tourist types, interest levels
+│   └── ubeda_guide_en.md          ← structured Markdown for PageIndex
 │
 ├── eval/
-│   └── questions.json            ← 20 curated visitor questions
+│   ├── questions.json             ← 20 curated visitor questions (English)
+│   ├── questions_es.json          ← 20 questions translated to Spanish
+│   └── conversations.json         ← multi-turn conversation threads
 │
-├── results/
-│   ├── ubeda_guide_structure.json     ← PageIndex tree (427 nodes, gitignored)
-│   ├── eval_gemma4-e2b.json           ← raw Q&A results (gitignored)
-│   └── scored_gemma4-e2b.json         ← scored results (gitignored)
+├── results/                           ← gitignored
+│   ├── ubeda_guide_en_structure.json  ← PageIndex tree (451 nodes)
+│   ├── eval_gemma4-26b.json           ← raw Q&A results
+│   └── scored_gemma4-26b.json         ← scored results
 │
 └── scripts/
-    ├── extract_ubeda.py          ← Step 1: fetch POIs from Inventrip API
-    ├── json_to_markdown.py       ← Step 2: convert JSON → structured Markdown
-    ├── add_section_summaries.py  ← Step 3b: generate 18 section summaries (one-time)
-    ├── run_eval.py               ← Step 4: litellm agentic tool-calling eval
-    └── score_results.py          ← Step 5: score grounding + retrieval
+    ├── extract_pois.py            ← Step 1a: fetch POIs (--destination, --lang)
+    ├── extract_destination_data.py← Step 1b: fetch trips & metadata
+    ├── json_to_markdown.py        ← Step 2: JSON → Markdown (--destination, --lang)
+    ├── add_section_summaries.py   ← Step 3b: section summaries (--structure, --lang)
+    ├── run_eval.py                ← Step 4: agentic eval (--structure, --lang)
+    ├── score_results.py           ← Step 5: score grounding + retrieval
+    └── chat_demo.py               ← interactive / scripted chat demo
+```
+
+### File naming convention
+
+Every artifact includes both the destination slug and the language code,
+so multiple `(destination, language)` pairs coexist without overwriting
+each other:
+
+```
+data/{destination}_pois_raw_{lang}.json
+data/{destination}_destination_{lang}.json
+data/{destination}_guide_{lang}.md
+results/{destination}_guide_{lang}_structure.json
 ```
 
 ---
@@ -238,23 +269,29 @@ Silicon hardware will be higher than the figures reported here.
 
 ## Running the Pipeline
 
-```bash
-# 1. Fetch Úbeda POIs from the Inventrip API
-.venv/bin/python scripts/extract_ubeda.py
+### Úbeda in English (default)
 
-# 2. Convert to structured Markdown (18 sections, 408 POI entries)
-.venv/bin/python scripts/json_to_markdown.py
+```bash
+# 1a. Fetch POIs from the Inventrip API
+.venv/bin/python scripts/extract_pois.py --destination ubeda --lang en
+
+# 1b. Fetch destination data (trips, tourist types)
+.venv/bin/python scripts/extract_destination_data.py --destination ubeda --lang en
+
+# 2. Convert to structured Markdown (20 sections, 367 POI entries)
+.venv/bin/python scripts/json_to_markdown.py --destination ubeda --lang en
 
 # 3. Build the PageIndex structural tree (deterministic, no LLM calls, < 5 s)
 .venv/bin/python pageindex/run_pageindex.py \
-  --md_path data/ubeda_guide.md \
-  --model openai/gemma4:e4b \
+  --md_path data/ubeda_guide_en.md \
+  --model openai/gemma4:26b \
   --if-add-node-summary no \
   --if-add-doc-description no
+# → produces results/ubeda_guide_en_structure.json
 
-# 3b. Generate section summaries — ONE-TIME, ~8 min on E4B
-#     Re-run only if the Markdown document is rebuilt.
-.venv/bin/python scripts/add_section_summaries.py --model openai/gemma4:e4b
+# 3b. Generate section summaries — ONE-TIME, ~8 min
+#     Re-run only when the Markdown is rebuilt.
+.venv/bin/python scripts/add_section_summaries.py --lang en
 
 # 4. Run the Q&A evaluation (recommended: gemma4:26b, ~10 min)
 .venv/bin/python scripts/run_eval.py --model openai/gemma4:26b
@@ -262,6 +299,61 @@ Silicon hardware will be higher than the figures reported here.
 # 5. Score and summarise
 .venv/bin/python scripts/score_results.py --file results/eval_gemma4-26b.json
 ```
+
+### Running in Spanish
+
+```bash
+.venv/bin/python scripts/extract_pois.py             --destination ubeda --lang es
+.venv/bin/python scripts/extract_destination_data.py --destination ubeda --lang es
+.venv/bin/python scripts/json_to_markdown.py         --destination ubeda --lang es
+.venv/bin/python pageindex/run_pageindex.py \
+  --md_path data/ubeda_guide_es.md \
+  --model openai/gemma4:26b --if-add-node-summary no --if-add-doc-description no
+.venv/bin/python scripts/add_section_summaries.py \
+  --structure results/ubeda_guide_es_structure.json --lang es
+.venv/bin/python scripts/run_eval.py \
+  --model openai/gemma4:26b \
+  --questions eval/questions_es.json \
+  --structure results/ubeda_guide_es_structure.json \
+  --lang es
+```
+
+### Adding a new destination
+
+Replace `caceres` and `es` with your destination slug and language:
+
+```bash
+# 1. Extract
+.venv/bin/python scripts/extract_pois.py             --destination caceres --lang es
+.venv/bin/python scripts/extract_destination_data.py --destination caceres --lang es
+
+# 2. Build Markdown
+.venv/bin/python scripts/json_to_markdown.py         --destination caceres --lang es
+
+# 3. Index with PageIndex
+.venv/bin/python pageindex/run_pageindex.py \
+  --md_path data/caceres_guide_es.md \
+  --model openai/gemma4:26b \
+  --if-add-node-summary no --if-add-doc-description no
+# → produces results/caceres_guide_es_structure.json
+
+# 4. Generate section summaries (one-time per (destination, language))
+.venv/bin/python scripts/add_section_summaries.py \
+  --structure results/caceres_guide_es_structure.json --lang es
+
+# 5. Evaluate or chat
+.venv/bin/python scripts/run_eval.py \
+  --model openai/gemma4:26b \
+  --structure results/caceres_guide_es_structure.json \
+  --lang es
+
+.venv/bin/python scripts/chat_demo.py --interactive \
+  --lang es
+```
+
+No code changes are needed for new destinations. The destination name
+in the system prompt and banner is derived automatically from the
+structure file's root node title.
 
 ---
 
@@ -467,22 +559,58 @@ Key takeaways from the experiment:
 
 ```bash
 # 1. Data pipeline
-.venv/bin/python scripts/extract_ubeda.py
-.venv/bin/python scripts/json_to_markdown.py
+.venv/bin/python scripts/extract_pois.py             --destination ubeda --lang en
+.venv/bin/python scripts/extract_destination_data.py --destination ubeda --lang en
+.venv/bin/python scripts/json_to_markdown.py         --destination ubeda --lang en
 .venv/bin/python pageindex/run_pageindex.py \
-  --md_path data/ubeda_guide.md --model openai/gemma4:e4b \
+  --md_path data/ubeda_guide_en.md --model openai/gemma4:26b \
   --if-add-node-summary no --if-add-doc-description no
 
-# 2. Generate section summaries (one-time, ~8 min on E4B)
-.venv/bin/python scripts/add_section_summaries.py --model openai/gemma4:e4b
+# 2. Generate section summaries (one-time, ~8 min)
+.venv/bin/python scripts/add_section_summaries.py
 
-# 3. Baseline eval for comparison (E2B, flat navigation)
+# 3. Baseline eval for comparison (E2B)
 .venv/bin/python scripts/run_eval.py --model openai/gemma4:e2b
 .venv/bin/python scripts/score_results.py --file results/eval_gemma4-e2b.json
 
 # 4. Recommended eval (26B, two-level navigation + caching)
 .venv/bin/python scripts/run_eval.py --model openai/gemma4:26b
 .venv/bin/python scripts/score_results.py --file results/eval_gemma4-26b.json
+
+# 5. Spanish eval
+.venv/bin/python scripts/extract_pois.py             --destination ubeda --lang es
+.venv/bin/python scripts/extract_destination_data.py --destination ubeda --lang es
+.venv/bin/python scripts/json_to_markdown.py         --destination ubeda --lang es
+.venv/bin/python pageindex/run_pageindex.py \
+  --md_path data/ubeda_guide_es.md --model openai/gemma4:26b \
+  --if-add-node-summary no --if-add-doc-description no
+.venv/bin/python scripts/add_section_summaries.py \
+  --structure results/ubeda_guide_es_structure.json --lang es
+.venv/bin/python scripts/run_eval.py \
+  --model openai/gemma4:26b \
+  --questions eval/questions_es.json \
+  --structure results/ubeda_guide_es_structure.json \
+  --lang es
+.venv/bin/python scripts/score_results.py --file results/eval_gemma4-26b_es.json
+```
+
+---
+
+## Env variable reference
+
+```bash
+# Inventrip API  (only needed for data extraction)
+INVENTRIP_API_BASE_URL=https://api.inventrip.com
+INVENTRIP_API_KEY=your_api_key_here
+
+# Ollama OpenAI-compatible endpoint (litellm routes openai/* here)
+OPENAI_API_KEY=ollama
+OPENAI_API_BASE=http://localhost:11434/v1
+
+# Apple Silicon MLX engine — all latency figures use this.
+# Without it inference falls back to llama.cpp and will be slower.
+OLLAMA_NEW_ENGINE=true
+OLLAMA_KV_CACHE_TYPE=q8_0
 ```
 
 ---
