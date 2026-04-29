@@ -58,6 +58,8 @@ from run_eval import (
     load_inputs,
     _LANG_RULES,
     _RECOVERY_MSGS,
+    DEFAULT_STRUCTURE,
+    PROJECT_ROOT,
 )
 
 # ── Constants ──────────────────────────────────────────────────────────────────
@@ -501,6 +503,9 @@ def main() -> None:
                         help="Start an interactive chat session")
     parser.add_argument("--lang",          default="en",
                         help="Response language: en, es, fr, de (default: en)")
+    parser.add_argument("--structure",    default=None,
+                        help=f"PageIndex structure JSON "
+                             f"(default: {DEFAULT_STRUCTURE})")
     parser.add_argument("--conversation", default=None,
                         help="Run only this conversation ID (e.g. C01)")
     parser.add_argument("--output",       default=None,
@@ -521,7 +526,10 @@ def main() -> None:
                   file=sys.stderr)
             sys.exit(1)
 
-    questions, structure_data, md_lines = load_inputs()
+    structure_path = Path(args.structure) if args.structure else DEFAULT_STRUCTURE
+    if not structure_path.is_absolute():
+        structure_path = PROJECT_ROOT / structure_path
+    questions, structure_data, md_lines = load_inputs(structure_file=structure_path)
 
     # Derive destination name from root node title
     root_nodes = structure_data.get("structure", [])
