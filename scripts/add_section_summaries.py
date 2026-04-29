@@ -23,9 +23,17 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-PROJECT_ROOT   = Path(__file__).parent.parent
+PROJECT_ROOT      = Path(__file__).parent.parent
 DEFAULT_STRUCTURE = PROJECT_ROOT / "results" / "ubeda_guide_structure.json"
 DEFAULT_MODEL     = "openai/gemma4:26b"
+
+# Language-appropriate closing instruction for the summary prompt
+_LANG_SUMMARY_INSTRS: dict[str, str] = {
+    "en": "Do not use bullet points. Reply in English only.",
+    "es": "No uses listas con viñetas. Responde únicamente en español.",
+    "fr": "N'utilisez pas de listes à puces. Répondez uniquement en français.",
+    "de": "Verwende keine Aufzählungspunkte. Antworte nur auf Deutsch.",
+}
 
 load_dotenv(PROJECT_ROOT / ".env")
 import litellm
@@ -77,7 +85,7 @@ def get_section_content_sample(sec_node: dict, md_lines: list[str],
 
 
 def generate_summary(section_title: str, poi_names: list[str], model: str,
-                     destination_name: str = "",
+                     destination_name: str = "", lang: str = "en",
                      sec_node: dict | None = None,
                      md_lines: list[str] | None = None) -> str:
     """Ask the model for a 2-sentence tourism summary of the section.
@@ -86,7 +94,8 @@ def generate_summary(section_title: str, poi_names: list[str], model: str,
     Markdown content (descriptions, addresses) from the first N POIs,
     producing significantly richer summaries than titles alone.
     """
-    dest_label = destination_name if destination_name else "this destination"
+    dest_label   = destination_name if destination_name else "this destination"
+    lang_instr   = _LANG_SUMMARY_INSTRS.get(lang, _LANG_SUMMARY_INSTRS["en"])
 
     if sec_node is not None and md_lines is not None:
         sample = get_section_content_sample(sec_node, md_lines)
@@ -101,7 +110,7 @@ def generate_summary(section_title: str, poi_names: list[str], model: str,
             f"{sample}\n\n"
             f"Write exactly 2 sentences summarising what a visitor will find in this section. "
             f"Be specific — mention the most notable highlights by name. "
-            f"Do not use bullet points. Reply in English only."
+            f"{lang_instr}"
         )
     else:
         # Fallback: title-only prompt (0-POI sections or Markdown unavailable)
@@ -114,7 +123,7 @@ def generate_summary(section_title: str, poi_names: list[str], model: str,
             f"Contains {len(poi_names)} points of interest, including: {poi_str}\n\n"
             f"Write exactly 2 sentences summarising what a visitor will find in this section. "
             f"Be specific — name the most notable highlights. "
-            f"Do not use bullet points. Reply in English only."
+            f"{lang_instr}"
         )
 
     response = litellm.completion(
@@ -133,6 +142,8 @@ def main() -> None:
                              f"(default: {DEFAULT_STRUCTURE})")
     parser.add_argument("--model", default=DEFAULT_MODEL,
                         help=f"Model for summarisation (default: {DEFAULT_MODEL})")
+    parser.add_argument("--lang", default="en",
+                        help="Language for generated summaries: en, es, fr, de (default: en)")
     parser.add_argument("--force", action="store_true",
                         help="Regenerate even if summary already present")
     args = parser.parse_args()
@@ -175,6 +186,7 @@ def main() -> None:
 
     print(f"[INFO] Destination: {destination_name or '(unknown)'}")
     print(f"[INFO] Model:       {args.model}")
+    print(f"[INFO] Language:    {args.lang}")
     print(f"[INFO] Sections:    {len(sections)}")
     print()
 
@@ -195,6 +207,7 @@ def main() -> None:
         try:
             summary = generate_summary(title, poi_names, args.model,
                                        destination_name=destination_name,
+                                       lang=args.lang,
                                        sec_node=sec, md_lines=md_lines)
         except Exception as exc:
             print(f"[{i:2d}/{len(sections)}] {title[:60]}  — ERROR: {exc}", file=sys.stderr)

@@ -1,19 +1,24 @@
 #!/usr/bin/env python3
 """
-extract_destination_data.py — Fetch Úbeda destination-level data from the API.
+extract_destination_data.py — Fetch destination-level data for any tourist destination.
 
-Collects five data sources and saves to data/ubeda_destination.json:
+Collects five data sources and saves to data/{destination}_destination.json:
   1. /v120/tourist-destinations  — destination overview, trip IDs, route IDs
-  2. /v120/trips                 — all 13 curated trips with full itineraries
-  3. /v120/paths                 — 5 walking/driving routes (one fetch per ID)
+  2. /v120/trips                 — curated trips with full itineraries
+  3. /v120/paths                 — walking/driving routes (one fetch per ID)
   4. /v120/interest-levels       — editorial hierarchy: Indispensable / Interesting / Outstanding
-  5. /v120/tourist-types         — 48 type codes with human-readable English names
+  5. /v120/tourist-types         — type codes with human-readable names
+
+Usage:
+    .venv/bin/python scripts/extract_destination_data.py
+    .venv/bin/python scripts/extract_destination_data.py --destination fayon --lang es
 
 Environment variables (loaded from .env):
     INVENTRIP_API_BASE_URL  Base URL of the Inventrip API
     INVENTRIP_API_KEY       API key passed as query param ?api_key=...
 """
 
+import argparse
 import json
 import os
 import sys
@@ -22,18 +27,17 @@ from pathlib import Path
 import requests
 from dotenv import load_dotenv
 
-PROJECT_ROOT = Path(__file__).parent.parent
-OUTPUT_FILE  = PROJECT_ROOT / "data" / "ubeda_destination.json"
-TOURIST_DESTINATION = "ubeda"
-LANGUAGE = "en"
-TIMEOUT  = 60
+PROJECT_ROOT        = Path(__file__).parent.parent
+DEFAULT_DESTINATION = "ubeda"
+DEFAULT_LANGUAGE    = "en"
+TIMEOUT             = 60
 
 load_dotenv(PROJECT_ROOT / ".env")
 
 
 # ── Helpers ────────────────────────────────────────────────────────────────────
 
-def get_session() -> tuple[requests.Session, str]:
+def get_session(lang: str = DEFAULT_LANGUAGE) -> tuple[requests.Session, str]:
     """Return a configured requests session and the base URL."""
     base_url = os.getenv("INVENTRIP_API_BASE_URL", "").strip().rstrip("/")
     api_key  = os.getenv("INVENTRIP_API_KEY", "").strip()
@@ -41,7 +45,7 @@ def get_session() -> tuple[requests.Session, str]:
         print("[ERROR] INVENTRIP_API_BASE_URL or INVENTRIP_API_KEY not set", file=sys.stderr)
         sys.exit(1)
     session = requests.Session()
-    session.params = {"api_key": api_key, "language": LANGUAGE, "strip_nulls": "true"}
+    session.params = {"api_key": api_key, "language": lang, "strip_nulls": "true"}
     return session, base_url
 
 
@@ -65,10 +69,10 @@ def get_english(entries: list[dict], key: str = "value") -> str:
 
 # ── Fetchers ───────────────────────────────────────────────────────────────────
 
-def fetch_destination(session, base_url: str) -> dict:
-    """Fetch the destination record for Úbeda."""
+def fetch_destination(session, base_url: str, destination: str) -> dict:
+    """Fetch the destination record for the given tourist destination."""
     data = fetch(session, f"{base_url}/v120/tourist-destinations",
-                 {"tourist_destination": TOURIST_DESTINATION})
+                 {"tourist_destination": destination})
     if not isinstance(data, list) or not data:
         print("[ERROR] tourist-destinations returned empty", file=sys.stderr)
         sys.exit(1)
@@ -86,10 +90,10 @@ def fetch_destination(session, base_url: str) -> dict:
     }
 
 
-def fetch_trips(session, base_url: str) -> list:
+def fetch_trips(session, base_url: str, destination: str) -> list:
     """Fetch all curated trips with full itineraries."""
     raw = fetch(session, f"{base_url}/v120/trips",
-                {"tourist_destination": TOURIST_DESTINATION,
+                {"tourist_destination": destination,
                  "add_itinerary": "true", "limit": 100, "offset": 0})
     trips = []
     for t in (raw if isinstance(raw, list) else []):
@@ -173,25 +177,42 @@ def fetch_tourist_types(session, base_url: str) -> dict:
 # ── Main ───────────────────────────────────────────────────────────────────────
 
 def main() -> None:
-    session, base_url = get_session()
-    print(f"[INFO] API base:  {base_url}")
-    print(f"[INFO] Destination: {TOURIST_DESTINATION}")
+    parser = argparse.ArgumentParser(
+        description="Fetch destination-level data from the Inventrip API"
+    )
+    parser.add_argument(
+        "--destination", default=DEFAULT_DESTINATION,
+        help=f"Tourist destination slug (default: {DEFAULT_DESTINATION})",
+    )
+    parser.add_argument(
+        "--lang", default=DEFAULT_LANGUAGE,
+        help=f"Language code for content (default: {DEFAULT_LANGUAGE})",
+    )
+    args = parser.parse_args()
+
+    output_file = PROJECT_ROOT / "data" / f"{args.destination}_destination.json"
+
+    load_dotenv(PROJECT_ROOT / ".env")
+    session, base_url = get_session(lang=args.lang)
+    print(f"[INFO] API base:    {base_url}")
+    print(f"[INFO] Destination: {args.destination}")
+    print(f"[INFO] Language:    {args.lang}")
 
     print("\n[1/5] Fetching tourist-destination overview...")
-    destination = fetch_destination(session, base_url)
-    print(f"  {destination['name']}  "
-          f"({len(destination['trip_ids'])} trips, "
-          f"{len(destination['route_ids'])} routes)")
+    dest_record = fetch_destination(session, base_url, args.destination)
+    print(f"  {dest_record['name']}  "
+          f"({len(dest_record['trip_ids'])} trips, "
+          f"{len(dest_record['route_ids'])} routes)")
 
     print("\n[2/5] Fetching trips with itineraries...")
-    trips = fetch_trips(session, base_url)
+    trips = fetch_trips(session, base_url, args.destination)
     for t in trips:
         total_pois = sum(len(s["pois"]) for s in t["itinerary"])
         print(f"  {t['id']:12s}  \"{t['name']}\"  "
               f"({len(t['itinerary'])} steps, {total_pois} POIs)")
 
     print("\n[3/5] Fetching walking/driving routes...")
-    paths = fetch_paths(session, base_url, destination["route_ids"])
+    paths = fetch_paths(session, base_url, dest_record["route_ids"])
 
     print("\n[4/5] Fetching interest-level taxonomy...")
     interest_levels = fetch_interest_levels(session, base_url)
@@ -204,16 +225,16 @@ def main() -> None:
 
     # Save combined output
     output = {
-        "destination":    destination,
-        "trips":          trips,
-        "paths":          paths,
+        "destination":     dest_record,
+        "trips":           trips,
+        "paths":           paths,
         "interest_levels": interest_levels,
-        "tourist_types":  tourist_types,
+        "tourist_types":   tourist_types,
     }
-    OUTPUT_FILE.parent.mkdir(parents=True, exist_ok=True)
-    with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
+    output_file.parent.mkdir(parents=True, exist_ok=True)
+    with open(output_file, "w", encoding="utf-8") as f:
         json.dump(output, f, indent=2, ensure_ascii=False)
-    print(f"\n[INFO] Saved → {OUTPUT_FILE}")
+    print(f"\n[INFO] Saved → {output_file}")
 
 
 if __name__ == "__main__":

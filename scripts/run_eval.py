@@ -27,12 +27,11 @@ litellm.drop_params = True
 litellm.set_verbose = False
 
 # ── Constants ──────────────────────────────────────────────────────────────────
-QUESTIONS_FILE = PROJECT_ROOT / "eval" / "questions.json"
-STRUCTURE_FILE = PROJECT_ROOT / "results" / "ubeda_guide_structure.json"
-MD_FILE        = PROJECT_ROOT / "data" / "ubeda_guide.md"
-RESULTS_DIR    = PROJECT_ROOT / "results"
-DEFAULT_MODEL  = "openai/gemma4:e2b"
-MAX_TOOL_ROUNDS = 14
+QUESTIONS_FILE    = PROJECT_ROOT / "eval" / "questions.json"
+DEFAULT_STRUCTURE = PROJECT_ROOT / "results" / "ubeda_guide_structure.json"
+RESULTS_DIR       = PROJECT_ROOT / "results"
+DEFAULT_MODEL     = "openai/gemma4:e2b"
+MAX_TOOL_ROUNDS   = 14
 
 _LANG_RULES = {
     "en": "Always respond in English, regardless of the language of any retrieved content.",
@@ -41,9 +40,17 @@ _LANG_RULES = {
     "de": "Antworten Sie immer auf Deutsch, unabhängig von der Sprache des abgerufenen Inhalts.",
 }
 
+# Recovery messages: sent as a final user turn when the loop ends without an answer.
+_RECOVERY_MSGS = {
+    "en": "Based on what you have retrieved above, please give your final answer now.",
+    "es": "Basándote en lo que has recuperado, da tu respuesta final ahora.",
+    "fr": "Sur la base de ce que vous avez récupéré, donnez votre réponse finale maintenant.",
+    "de": "Basierend auf dem, was Sie abgerufen haben, geben Sie jetzt Ihre endgültige Antwort.",
+}
+
 _SYSTEM_PROMPT_TEMPLATE = """\
-You are a tourism assistant for Úbeda, Spain. You answer questions using the \
-Úbeda Tourism Guide document.
+You are a tourism assistant for {destination}. You answer questions using the \
+{destination} Tourism Guide document.
 
 The 18 sections of the guide are already listed below — you do NOT need to \
 call any tool to discover them. Use this information directly.
@@ -80,11 +87,13 @@ RULES FOR ALL QUESTIONS:
 """
 
 
-def make_system_prompt(sections_text: str, lang: str = "en") -> str:
+def make_system_prompt(sections_text: str, lang: str = "en",
+                       destination: str = "this destination") -> str:
     """Build the system prompt with sections pre-embedded and the correct language rule."""
     lang_rule = _LANG_RULES.get(lang, _LANG_RULES["en"])
     return _SYSTEM_PROMPT_TEMPLATE.replace("{{lang_rule}}", lang_rule).format(
-        sections_text=sections_text
+        sections_text=sections_text,
+        destination=destination,
     )
 
 # get_sections() is removed from the tool list: sections are embedded in the
@@ -312,7 +321,8 @@ def execute_tool(name: str, args: dict, sections_text: str,
 def run_agentic_loop(question: str, system_prompt: str,
                      sections_text: str, poi_list_fn,
                      md_lines: list[str], model: str,
-                     poi_cache: dict) -> dict:
+                     poi_cache: dict,
+                     recovery_msg: str = "") -> dict:
     """
     Run the tool-calling loop for a single question.
     poi_cache is shared across questions in the same session.
@@ -399,14 +409,11 @@ def run_agentic_loop(question: str, system_prompt: str,
     # Safety net: if still empty (model terminated without text after tool calls),
     # make one final explicit generation request
     if not answer and not error:
+        msg = recovery_msg or _RECOVERY_MSGS["en"]
         try:
             recovery = litellm.completion(
                 model=model,
-                messages=messages + [{
-                    "role": "user",
-                    "content": "Based on what you have retrieved above, "
-                               "please give your final answer in English now.",
-                }],
+                messages=messages + [{"role": "user", "content": msg}],
                 temperature=0,
             )
             answer = (recovery.choices[0].message.content or "").strip()
@@ -424,19 +431,27 @@ def run_agentic_loop(question: str, system_prompt: str,
 
 # ── Main ───────────────────────────────────────────────────────────────────────
 
-def load_inputs(questions_file: Path | None = None) -> tuple[list, dict, list[str]]:
+def load_inputs(questions_file: Path | None = None,
+                structure_file: Path | None = None,
+                md_file: Path | None = None) -> tuple[list, dict, list[str]]:
     """Load questions, structure, and Markdown lines. Fail fast if missing."""
     q_file = questions_file or QUESTIONS_FILE
-    for path in (q_file, STRUCTURE_FILE, MD_FILE):
+    s_file = structure_file or DEFAULT_STRUCTURE
+    # Derive Markdown path from structure filename when not given explicitly:
+    # results/foo_guide_structure.json  →  data/foo_guide.md
+    m_file = md_file or (
+        PROJECT_ROOT / "data" / s_file.name.replace("_structure.json", ".md")
+    )
+    for path in (q_file, s_file, m_file):
         if not path.exists():
             print(f"[ERROR] Missing: {path}", file=sys.stderr)
             sys.exit(1)
 
     with open(q_file, encoding="utf-8") as f:
         questions = json.load(f)
-    with open(STRUCTURE_FILE, encoding="utf-8") as f:
+    with open(s_file, encoding="utf-8") as f:
         structure_data = json.load(f)
-    with open(MD_FILE, encoding="utf-8") as f:
+    with open(m_file, encoding="utf-8") as f:
         md_lines = f.read().splitlines()
 
     return questions, structure_data, md_lines
@@ -449,14 +464,29 @@ def main() -> None:
                         help=f"litellm model string (default: {DEFAULT_MODEL})")
     parser.add_argument("--questions", default=None,
                         help="Path to questions JSON (default: eval/questions.json)")
+    parser.add_argument("--structure", default=None,
+                        help=f"Path to PageIndex structure JSON "
+                             f"(default: {DEFAULT_STRUCTURE})")
     parser.add_argument("--lang", default="en",
                         help="Response language code: en, es, fr, de (default: en)")
     args = parser.parse_args()
 
     questions_file = Path(args.questions) if args.questions else QUESTIONS_FILE
-    questions, structure_data, md_lines = load_inputs(questions_file)
+    structure_path = Path(args.structure) if args.structure else DEFAULT_STRUCTURE
+    if not structure_path.is_absolute():
+        structure_path = PROJECT_ROOT / structure_path
+
+    questions, structure_data, md_lines = load_inputs(questions_file, structure_path)
+
+    # Derive destination name from root node title (e.g. "Úbeda Tourism Guide" → "Úbeda")
+    root_nodes = structure_data.get("structure", [])
+    root_title = root_nodes[0].get("title", "") if root_nodes else ""
+    destination = root_title.replace(" Tourism Guide", "").strip() or "this destination"
+
+    recovery_msg = _RECOVERY_MSGS.get(args.lang, _RECOVERY_MSGS["en"])
     sections_text = build_sections_text(structure_data)
-    system_prompt = make_system_prompt(sections_text, lang=args.lang)
+    system_prompt = make_system_prompt(sections_text, lang=args.lang,
+                                       destination=destination)
     poi_list_fn   = lambda title: build_poi_list_text(title, structure_data)
 
     # Session-level POI list cache: persists across all 20 questions
@@ -502,7 +532,8 @@ def main() -> None:
 
         loop_result = run_agentic_loop(
             question, system_prompt, sections_text,
-            poi_list_fn, md_lines, args.model, poi_cache
+            poi_list_fn, md_lines, args.model, poi_cache,
+            recovery_msg=recovery_msg,
         )
 
         elapsed = round(time.time() - t0, 2)

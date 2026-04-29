@@ -57,6 +57,7 @@ from run_eval import (
     MAX_TOOL_ROUNDS,
     load_inputs,
     _LANG_RULES,
+    _RECOVERY_MSGS,
 )
 
 # ── Constants ──────────────────────────────────────────────────────────────────
@@ -117,7 +118,8 @@ def run_turn(question: str, messages: list[dict],
              poi_cache: dict,
              on_status=None,
              on_stream_start=None,
-             stream: bool = False) -> dict:
+             stream: bool = False,
+             recovery_msg: str = "") -> dict:
     """
     Execute one conversation turn.
 
@@ -298,14 +300,11 @@ def run_turn(question: str, messages: list[dict],
 
     # Safety net for empty answers
     if not answer and not error:
+        msg = recovery_msg or _RECOVERY_MSGS["en"]
         try:
             recovery = litellm.completion(
                 model=model,
-                messages=messages + [{
-                    "role":    "user",
-                    "content": "Based on what you have retrieved, give your "
-                               "final answer in English now.",
-                }],
+                messages=messages + [{"role": "user", "content": msg}],
                 temperature=0,
             )
             answer = (recovery.choices[0].message.content or "").strip()
@@ -405,7 +404,9 @@ def run_conversation(thread: dict, system_prompt: str,
 
 def run_interactive(system_prompt: str, sections_text: str, poi_list_fn,
                     md_lines: list[str], model: str,
-                    structure_data: dict, lang: str = "en") -> None:
+                    structure_data: dict, lang: str = "en",
+                    destination_name: str = "Tourism",
+                    recovery_msg: str = "") -> None:
     """Start an interactive chat session in the terminal.
 
     Full conversation context carries across turns. Type 'exit', 'quit',
@@ -423,7 +424,7 @@ def run_interactive(system_prompt: str, sections_text: str, poi_list_fn,
 
     print()
     print("─" * 60)
-    print("  Úbeda Tourism Assistant — Interactive Mode")
+    print(f"  {destination_name} Assistant — Interactive Mode")
     print(f"  Model: {model}")
     lang_label = {"en": "English", "es": "Español", "fr": "Français", "de": "Deutsch"}.get(lang, lang.upper())
     print(f"  Language: {lang_label}")
@@ -464,6 +465,7 @@ def run_interactive(system_prompt: str, sections_text: str, poi_list_fn,
             on_status=spinner.update,
             on_stream_start=on_stream_start,
             stream=True,
+            recovery_msg=recovery_msg,
         )
 
         if not spinner_stopped:
@@ -520,15 +522,24 @@ def main() -> None:
             sys.exit(1)
 
     questions, structure_data, md_lines = load_inputs()
+
+    # Derive destination name from root node title
+    root_nodes = structure_data.get("structure", [])
+    root_title = root_nodes[0].get("title", "") if root_nodes else ""
+    destination_name = root_title.replace(" Tourism Guide", "").strip() or "Tourism"
+
+    recovery_msg  = _RECOVERY_MSGS.get(args.lang, _RECOVERY_MSGS["en"])
     sections_text = build_sections_text(structure_data)
-    system_prompt = make_system_prompt(sections_text, lang=args.lang)
+    system_prompt = make_system_prompt(sections_text, lang=args.lang,
+                                       destination=destination_name)
     poi_list_fn   = lambda title: build_poi_list_text(title, structure_data)
 
-    # ── Interactive mode ─────────────────────────────────────────────────────
+    # ── Interactive mode ──────────────────────────────────────────────────────────────────
     if args.interactive:
         run_interactive(
             system_prompt, sections_text, poi_list_fn,
             md_lines, args.model, structure_data, lang=args.lang,
+            destination_name=destination_name, recovery_msg=recovery_msg,
         )
         return
 

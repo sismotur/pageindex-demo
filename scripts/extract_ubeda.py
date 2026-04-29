@@ -1,15 +1,20 @@
 #!/usr/bin/env python3
 """
-extract_ubeda.py — Fetch Úbeda POIs from the Inventrip API.
+extract_ubeda.py — Fetch POIs for any tourist destination from the Inventrip API.
 
-Calls GET /v120/pois with tourist_destination=ubeda and saves the raw
-response array to data/ubeda_pois_raw.json.
+Calls GET /v120/pois with the specified tourist_destination and saves the raw
+response array to data/{destination}_pois_raw.json.
+
+Usage:
+    .venv/bin/python scripts/extract_ubeda.py
+    .venv/bin/python scripts/extract_ubeda.py --destination fayon --lang es
 
 Environment variables (loaded from .env):
     INVENTRIP_API_BASE_URL  Base URL of the Inventrip API
     INVENTRIP_API_KEY       API key passed as query param ?api_key=...
 """
 
+import argparse
 import json
 import os
 import sys
@@ -19,11 +24,10 @@ import requests
 from dotenv import load_dotenv
 
 # ── Constants ──────────────────────────────────────────────────────────────────
-PROJECT_ROOT = Path(__file__).parent.parent
-OUTPUT_FILE = PROJECT_ROOT / "data" / "ubeda_pois_raw.json"
-TOURIST_DESTINATION = "ubeda"
-LANGUAGE = "en"
-TIMEOUT_SECONDS = 60
+PROJECT_ROOT       = Path(__file__).parent.parent
+DEFAULT_DESTINATION = "ubeda"
+DEFAULT_LANGUAGE    = "en"
+TIMEOUT_SECONDS     = 60
 
 
 # ── Helpers ────────────────────────────────────────────────────────────────────
@@ -57,17 +61,17 @@ def load_config() -> tuple[str, str]:
     return base_url, api_key
 
 
-def build_request_params(api_key: str) -> dict:
+def build_request_params(api_key: str, destination: str, lang: str) -> dict:
     """Return the query parameters for the POI endpoint."""
     return {
-        "tourist_destination": TOURIST_DESTINATION,
-        "language": LANGUAGE,
+        "tourist_destination": destination,
+        "language": lang,
         "strip_nulls": "true",
         "api_key": api_key,
     }
 
 
-def fetch_pois(base_url: str, params: dict) -> list:
+def fetch_pois(base_url: str, params: dict, destination: str) -> list:
     """Fetch POIs from the /v120/pois endpoint.
 
     Returns:
@@ -78,7 +82,7 @@ def fetch_pois(base_url: str, params: dict) -> list:
     """
     url = f"{base_url}/v120/pois"
     print(f"[INFO] GET {url}")
-    print(f"[INFO] tourist_destination={TOURIST_DESTINATION}  language={LANGUAGE}")
+    print(f"[INFO] tourist_destination={destination}  language={params.get('language', '?')}")
 
     try:
         response = requests.get(url, params=params, timeout=TIMEOUT_SECONDS)
@@ -94,7 +98,7 @@ def fetch_pois(base_url: str, params: dict) -> list:
         print("[ERROR] 401 Unauthorized — check INVENTRIP_API_KEY", file=sys.stderr)
         sys.exit(1)
     if response.status_code == 404:
-        print("[ERROR] 404 Not Found — tourist_destination 'ubeda' may not exist on this environment",
+        print(f"[ERROR] 404 Not Found — tourist_destination '{destination}' not found",
               file=sys.stderr)
         sys.exit(1)
     if response.status_code != 200:
@@ -109,7 +113,8 @@ def fetch_pois(base_url: str, params: dict) -> list:
         print(f"[ERROR] Expected a JSON array, got {type(pois).__name__}", file=sys.stderr)
         sys.exit(1)
     if len(pois) == 0:
-        print("[WARN] API returned an empty array — no POIs found for Úbeda", file=sys.stderr)
+        print(f"[WARN] API returned an empty array — no POIs found for '{destination}'",
+              file=sys.stderr)
 
     return pois
 
@@ -147,12 +152,27 @@ def print_summary(pois: list) -> None:
 # ── Entry point ────────────────────────────────────────────────────────────────
 
 def main() -> None:
-    """Orchestrate config loading, fetching, and saving."""
+    """Parse args, load config, fetch POIs, and save."""
+    parser = argparse.ArgumentParser(
+        description="Fetch POIs for a tourist destination from the Inventrip API"
+    )
+    parser.add_argument(
+        "--destination", default=DEFAULT_DESTINATION,
+        help=f"Tourist destination slug (default: {DEFAULT_DESTINATION})",
+    )
+    parser.add_argument(
+        "--lang", default=DEFAULT_LANGUAGE,
+        help=f"Language code for POI content (default: {DEFAULT_LANGUAGE})",
+    )
+    args = parser.parse_args()
+
+    output_file = PROJECT_ROOT / "data" / f"{args.destination}_pois_raw.json"
+
     base_url, api_key = load_config()
-    params = build_request_params(api_key)
-    pois = fetch_pois(base_url, params)
+    params = build_request_params(api_key, args.destination, args.lang)
+    pois = fetch_pois(base_url, params, args.destination)
     print_summary(pois)
-    save_json(pois, OUTPUT_FILE)
+    save_json(pois, output_file)
 
 
 if __name__ == "__main__":

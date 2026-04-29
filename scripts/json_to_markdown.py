@@ -18,6 +18,7 @@ Inputs: data/ubeda_pois_raw.json, data/ubeda_destination.json (optional)
 Output: data/ubeda_guide.md
 """
 
+import argparse
 import json
 import sys
 from pathlib import Path
@@ -168,7 +169,8 @@ def interest_level(poi: dict) -> tuple[int, int]:
     return (il, zoom)
 
 
-def format_poi(poi: dict, tourist_type_map: dict | None = None) -> str:
+def format_poi(poi: dict, tourist_type_map: dict | None = None,
+               lang: str = "en") -> str:
     """Render a single POI as a Markdown '###' block."""
     name         = get_text(poi.get("name")) or "(Unnamed)"
     description  = get_text(poi.get("description"))
@@ -258,7 +260,7 @@ def format_poi(poi: dict, tourist_type_map: dict | None = None) -> str:
     audio_links = []
     for audio_id in audios_raw:
         audio_url = (
-            f"{API_BASE_URL}/v100/audios?language=en&offset=1"
+            f"{API_BASE_URL}/v100/audios?language={lang}&offset=1"
             f"&audio={audio_id}&tourist_destination={TOURIST_DESTINATION}"
         )
         audio_links.append(f"[Audio {audio_id}]({audio_url})")
@@ -306,13 +308,6 @@ def format_destination_overview(dest: dict, tourist_type_map: dict) -> str:
     """Render the ## Destination Overview section."""
     lines = ["## Destination Overview", ""]
     d = dest["destination"]
-    # Lead with UNESCO status including the year — critical for retrieval accuracy
-    lines.append(
-        "Úbeda is a **UNESCO World Heritage City** (designated in **2003**), "
-        "located in Andalusia, Spain. It is renowned for its outstanding "
-        "Renaissance architecture and monumental heritage."
-    )
-    lines.append("")
     if d.get("description"):
         lines.append(d["description"])
         lines.append("")
@@ -340,10 +335,11 @@ def format_trips_section(dest: dict, tourist_type_map: dict) -> str:
     if not useful:
         return ""
 
+    dest_name = dest.get("destination", {}).get("name") or "This destination"
     lines = [
         "## Curated Trips and Itineraries",
         "",
-        f"Úbeda offers {len(useful)} officially curated themed tours and itineraries.",
+        f"{dest_name} offers {len(useful)} officially curated themed tours and itineraries.",
         "",
     ]
 
@@ -370,7 +366,8 @@ def format_trips_section(dest: dict, tourist_type_map: dict) -> str:
     return "\n".join(lines)
 
 
-def build_markdown(pois: list[dict], dest: dict | None = None) -> str:
+def build_markdown(pois: list[dict], dest: dict | None = None,
+                   lang: str = "en") -> str:
     """Assemble the complete Markdown document."""
     # Pre-condition: pois is a non-empty list
     if not pois:
@@ -379,6 +376,12 @@ def build_markdown(pois: list[dict], dest: dict | None = None) -> str:
     tourist_type_map = (dest or {}).get("tourist_types", {})
     buckets = bucket_pois(pois)
 
+    # Destination display name: from API data if available, else the slug
+    dest_name = ""
+    if dest and "destination" in dest:
+        dest_name = dest["destination"].get("name", "")
+    dest_name = dest_name or TOURIST_DESTINATION
+
     # Order sections by the SECTIONS priority list; Other goes last
     ordered_sections = sorted(
         buckets.keys(),
@@ -386,11 +389,9 @@ def build_markdown(pois: list[dict], dest: dict | None = None) -> str:
     )
 
     lines = [
-        "# Úbeda Tourism Guide",
+        f"# {dest_name} Tourism Guide",
         "",
-        "Úbeda is a UNESCO World Heritage City in Andalusia, Spain, renowned"
-        " for its outstanding Renaissance architecture. This guide covers"
-        f" {len(pois)} points of interest across the destination.",
+        f"This guide covers {len(pois)} points of interest in {dest_name}.",
         "",
     ]
 
@@ -408,7 +409,7 @@ def build_markdown(pois: list[dict], dest: dict | None = None) -> str:
         lines.append(f"## {section}")
         lines.append("")
         for poi in section_pois:
-            lines.append(format_poi(poi, tourist_type_map))
+            lines.append(format_poi(poi, tourist_type_map, lang=lang))
 
     # Post-condition: at least one section was written
     assert any(line.startswith("## ") for line in lines), \
@@ -437,10 +438,21 @@ def print_summary(buckets: dict[str, list]) -> None:
 # ── Entry point ────────────────────────────────────────────────────────────────
 
 def main() -> None:
-    """Load JSON, convert to Markdown, save."""
+    """Parse args, load JSON, convert to Markdown, save."""
+    parser = argparse.ArgumentParser(
+        description="Convert POI JSON to a PageIndex-ready Markdown document"
+    )
+    parser.add_argument(
+        "--lang", default="en",
+        help="Language code used in audio guide API URLs (default: en)",
+    )
+    args = parser.parse_args()
+
     if not INPUT_FILE.exists():
         print(f"[ERROR] Input not found: {INPUT_FILE}", file=sys.stderr)
-        print("[ERROR] Run scripts/extract_ubeda.py first.", file=sys.stderr)
+        print("[ERROR] Run the data extraction script first "
+              f"(e.g. scripts/extract_ubeda.py --destination {TOURIST_DESTINATION})",
+              file=sys.stderr)
         sys.exit(1)
 
     with open(INPUT_FILE, encoding="utf-8") as fh:
@@ -460,7 +472,7 @@ def main() -> None:
     else:
         print("[INFO] No destination data — run extract_destination_data.py for richer output")
 
-    content = build_markdown(pois, dest)
+    content = build_markdown(pois, dest, lang=args.lang)
     buckets = bucket_pois(pois)
     print_summary(buckets)
 
