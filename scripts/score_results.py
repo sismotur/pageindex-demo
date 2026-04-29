@@ -66,16 +66,18 @@ FACT_CHECKS: dict[str, list[str]] = {
 # English check fails. Only English terms that get translated in Spanish
 # responses need entries here; proper nouns and numbers stay the same.
 _ES_KEYWORDS: dict[str, str] = {
-    "renaissance":       "renacentista",   # or 'renacimiento'
-    "museum":            "museo",
-    "restaurant":        "restaurante",
-    "holy week":         "semana santa",
-    "megalithic":        "megalítico",
+    "renaissance":         "renacentista",    # or 'renacimiento'
+    "museum":              "museo",
+    "restaurant":          "restaurante",
+    "holy week":           "semana santa",
+    "megalithic":          "megalítico",
     "tourist information": "información turística",
-    "pharmacy":          "farmacia",
-    "parking":           "aparcamiento",
-    "viewpoint":         "mirador",
-    "savior":            "salvador",
+    "pharmacy":            "farmacia",
+    "parking":             "aparcamiento",
+    "viewpoint":           "mirador",
+    "savior":              "salvador",
+    "olive":               "oliva",           # aceite de oliva
+    "oil":                 "aceite",           # aceite (de oliva)
 }
 
 
