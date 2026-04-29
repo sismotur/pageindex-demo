@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """
-extract_ubeda.py — Fetch POIs for any tourist destination from the Inventrip API.
+extract_pois.py — Fetch POIs for any tourist destination from the Inventrip API.
 
 Calls GET /v120/pois with the specified tourist_destination and saves the raw
-response array to data/{destination}_pois_raw.json.
+response array to data/{destination}_pois_raw_{lang}.json.
 
 Usage:
-    .venv/bin/python scripts/extract_ubeda.py
-    .venv/bin/python scripts/extract_ubeda.py --destination fayon --lang es
+    .venv/bin/python scripts/extract_pois.py
+    .venv/bin/python scripts/extract_pois.py --destination fayon --lang es
 
 Environment variables (loaded from .env):
     INVENTRIP_API_BASE_URL  Base URL of the Inventrip API

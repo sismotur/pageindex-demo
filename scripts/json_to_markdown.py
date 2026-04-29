@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-json_to_markdown.py — Convert ubeda_pois_raw.json into a structured
-Markdown document suitable for PageIndex tree-indexing.
+json_to_markdown.py — Convert POI JSON into a structured Markdown document
+suitable for PageIndex tree-indexing.
 
 PageIndex uses '#' heading hierarchy to build its retrieval tree.
 Each UNE 178503 type group becomes a '##' section; each individual
@@ -9,13 +9,18 @@ POI becomes a '###' entry.  POIs are sorted by composite key
 (id_interest_level, zoom_level) so the most important and most visible
 POIs appear first within each section.
 
-If data/ubeda_destination.json exists (produced by extract_destination_data.py),
-two additional top-level sections are prepended:
+If data/{destination}_destination_{lang}.json exists (produced by
+extract_destination_data.py), two additional top-level sections are prepended:
   ## Destination Overview
   ## Curated Trips and Itineraries
 
-Inputs: data/ubeda_pois_raw.json, data/ubeda_destination.json (optional)
-Output: data/ubeda_guide.md
+Usage:
+    .venv/bin/python scripts/json_to_markdown.py
+    .venv/bin/python scripts/json_to_markdown.py --destination caceres --lang es
+
+Inputs:  data/{destination}_pois_raw_{lang}.json
+         data/{destination}_destination_{lang}.json  (optional)
+Output:  data/{destination}_guide_{lang}.md
 """
 
 import argparse
@@ -455,7 +460,7 @@ def main() -> None:
 
     if not input_file.exists():
         print(f"[ERROR] Input not found: {input_file}", file=sys.stderr)
-        print(f"[ERROR] Run: scripts/extract_ubeda.py "
+        print(f"[ERROR] Run: scripts/extract_pois.py "
               f"--destination {args.destination} --lang {args.lang}",
               file=sys.stderr)
         sys.exit(1)
