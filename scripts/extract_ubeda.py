@@ -166,7 +166,7 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-    output_file = PROJECT_ROOT / "data" / f"{args.destination}_pois_raw.json"
+    output_file = PROJECT_ROOT / "data" / f"{args.destination}_pois_raw_{args.lang}.json"
 
     base_url, api_key = load_config()
     params = build_request_params(api_key, args.destination, args.lang)

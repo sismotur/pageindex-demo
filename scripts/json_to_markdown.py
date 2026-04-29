@@ -24,13 +24,9 @@ import sys
 from pathlib import Path
 
 # ── Constants ──────────────────────────────────────────────────────────────────
-PROJECT_ROOT    = Path(__file__).parent.parent
-INPUT_FILE      = PROJECT_ROOT / "data" / "ubeda_pois_raw.json"
-DESTINATION_FILE = PROJECT_ROOT / "data" / "ubeda_destination.json"
-OUTPUT_FILE     = PROJECT_ROOT / "data" / "ubeda_guide.md"
-
-# Derive destination slug from the input filename (e.g. "ubeda_pois_raw" → "ubeda")
-TOURIST_DESTINATION = INPUT_FILE.stem.replace("_pois_raw", "")
+PROJECT_ROOT        = Path(__file__).parent.parent
+DEFAULT_DESTINATION = "ubeda"
+DEFAULT_LANGUAGE    = "en"
 
 # Inventrip API base URL (no trailing slash)
 API_BASE_URL = "https://api.inventrip.com"
@@ -170,7 +166,7 @@ def interest_level(poi: dict) -> tuple[int, int]:
 
 
 def format_poi(poi: dict, tourist_type_map: dict | None = None,
-               lang: str = "en") -> str:
+               lang: str = "en", destination: str = "") -> str:
     """Render a single POI as a Markdown '###' block."""
     name         = get_text(poi.get("name")) or "(Unnamed)"
     description  = get_text(poi.get("description"))
@@ -261,7 +257,7 @@ def format_poi(poi: dict, tourist_type_map: dict | None = None,
     for audio_id in audios_raw:
         audio_url = (
             f"{API_BASE_URL}/v100/audios?language={lang}&offset=1"
-            f"&audio={audio_id}&tourist_destination={TOURIST_DESTINATION}"
+            f"&audio={audio_id}&tourist_destination={destination}"
         )
         audio_links.append(f"[Audio {audio_id}]({audio_url})")
     if audio_links:
@@ -296,11 +292,11 @@ def bucket_pois(pois: list[dict]) -> dict[str, list[dict]]:
 
 # ── Destination-level sections ────────────────────────────────────────────
 
-def load_destination_data() -> dict | None:
-    """Load data/ubeda_destination.json if it exists, else return None."""
-    if not DESTINATION_FILE.exists():
+def load_destination_data(path: Path) -> dict | None:
+    """Load destination JSON if it exists, else return None."""
+    if not path.exists():
         return None
-    with open(DESTINATION_FILE, encoding="utf-8") as fh:
+    with open(path, encoding="utf-8") as fh:
         return json.load(fh)
 
 
@@ -367,7 +363,7 @@ def format_trips_section(dest: dict, tourist_type_map: dict) -> str:
 
 
 def build_markdown(pois: list[dict], dest: dict | None = None,
-                   lang: str = "en") -> str:
+                   lang: str = "en", destination: str = "") -> str:
     """Assemble the complete Markdown document."""
     # Pre-condition: pois is a non-empty list
     if not pois:
@@ -380,7 +376,7 @@ def build_markdown(pois: list[dict], dest: dict | None = None,
     dest_name = ""
     if dest and "destination" in dest:
         dest_name = dest["destination"].get("name", "")
-    dest_name = dest_name or TOURIST_DESTINATION
+    dest_name = dest_name or destination or DEFAULT_DESTINATION
 
     # Order sections by the SECTIONS priority list; Other goes last
     ordered_sections = sorted(
@@ -409,7 +405,8 @@ def build_markdown(pois: list[dict], dest: dict | None = None,
         lines.append(f"## {section}")
         lines.append("")
         for poi in section_pois:
-            lines.append(format_poi(poi, tourist_type_map, lang=lang))
+            lines.append(format_poi(poi, tourist_type_map, lang=lang,
+                                    destination=destination))
 
     # Post-condition: at least one section was written
     assert any(line.startswith("## ") for line in lines), \
@@ -443,28 +440,37 @@ def main() -> None:
         description="Convert POI JSON to a PageIndex-ready Markdown document"
     )
     parser.add_argument(
-        "--lang", default="en",
-        help="Language code used in audio guide API URLs (default: en)",
+        "--destination", default=DEFAULT_DESTINATION,
+        help=f"Tourist destination slug (default: {DEFAULT_DESTINATION})",
+    )
+    parser.add_argument(
+        "--lang", default=DEFAULT_LANGUAGE,
+        help=f"Language code for content and audio guide URLs (default: {DEFAULT_LANGUAGE})",
     )
     args = parser.parse_args()
 
-    if not INPUT_FILE.exists():
-        print(f"[ERROR] Input not found: {INPUT_FILE}", file=sys.stderr)
-        print("[ERROR] Run the data extraction script first "
-              f"(e.g. scripts/extract_ubeda.py --destination {TOURIST_DESTINATION})",
+    input_file       = PROJECT_ROOT / "data" / f"{args.destination}_pois_raw_{args.lang}.json"
+    destination_file = PROJECT_ROOT / "data" / f"{args.destination}_destination_{args.lang}.json"
+    output_file      = PROJECT_ROOT / "data" / f"{args.destination}_guide_{args.lang}.md"
+
+    if not input_file.exists():
+        print(f"[ERROR] Input not found: {input_file}", file=sys.stderr)
+        print(f"[ERROR] Run: scripts/extract_ubeda.py "
+              f"--destination {args.destination} --lang {args.lang}",
               file=sys.stderr)
         sys.exit(1)
 
-    with open(INPUT_FILE, encoding="utf-8") as fh:
+    with open(input_file, encoding="utf-8") as fh:
         pois = json.load(fh)
 
     if not isinstance(pois, list) or len(pois) == 0:
         print("[ERROR] Expected a non-empty JSON array", file=sys.stderr)
         sys.exit(1)
 
-    print(f"[INFO] Loaded {len(pois)} POIs from {INPUT_FILE}")
+    print(f"[INFO] Destination: {args.destination}  Language: {args.lang}")
+    print(f"[INFO] Loaded {len(pois)} POIs from {input_file}")
 
-    dest = load_destination_data()
+    dest = load_destination_data(destination_file)
     if dest:
         n_trips = len([t for t in dest.get("trips", []) if t.get("itinerary")])
         print(f"[INFO] Loaded destination data ({n_trips} trips, "
@@ -472,14 +478,14 @@ def main() -> None:
     else:
         print("[INFO] No destination data — run extract_destination_data.py for richer output")
 
-    content = build_markdown(pois, dest, lang=args.lang)
+    content = build_markdown(pois, dest, lang=args.lang, destination=args.destination)
     buckets = bucket_pois(pois)
     print_summary(buckets)
 
-    save_markdown(content, OUTPUT_FILE)
+    save_markdown(content, output_file)
 
-    size_kb = OUTPUT_FILE.stat().st_size / 1024
-    print(f"\n[INFO] Saved → {OUTPUT_FILE}  ({size_kb:.1f} KB)")
+    size_kb = output_file.stat().st_size / 1024
+    print(f"\n[INFO] Saved → {output_file}  ({size_kb:.1f} KB)")
 
 
 if __name__ == "__main__":

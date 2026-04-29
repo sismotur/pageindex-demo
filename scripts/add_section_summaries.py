@@ -24,7 +24,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 PROJECT_ROOT      = Path(__file__).parent.parent
-DEFAULT_STRUCTURE = PROJECT_ROOT / "results" / "ubeda_guide_structure.json"
+DEFAULT_STRUCTURE = PROJECT_ROOT / "results" / "ubeda_guide_en_structure.json"
 DEFAULT_MODEL     = "openai/gemma4:26b"
 
 # Language-appropriate closing instruction for the summary prompt

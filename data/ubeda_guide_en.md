@@ -1,10 +1,8 @@
 # Úbeda Tourism Guide
 
-Úbeda is a UNESCO World Heritage City in Andalusia, Spain, renowned for its outstanding Renaissance architecture. This guide covers 367 points of interest across the destination.
+This guide covers 367 points of interest in Úbeda.
 
 ## Destination Overview
-
-Úbeda is a **UNESCO World Heritage City** (designated in **2003**), located in Andalusia, Spain. It is renowned for its outstanding Renaissance architecture and monumental heritage.
 
 Important and populous city located on the hills of its namesake, in the geographical center of the province, in a landscape populated by olive trees and cereal fields.
 

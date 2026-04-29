@@ -28,7 +28,7 @@ litellm.set_verbose = False
 
 # ── Constants ──────────────────────────────────────────────────────────────────
 QUESTIONS_FILE    = PROJECT_ROOT / "eval" / "questions.json"
-DEFAULT_STRUCTURE = PROJECT_ROOT / "results" / "ubeda_guide_structure.json"
+DEFAULT_STRUCTURE = PROJECT_ROOT / "results" / "ubeda_guide_en_structure.json"
 RESULTS_DIR       = PROJECT_ROOT / "results"
 DEFAULT_MODEL     = "openai/gemma4:e2b"
 MAX_TOOL_ROUNDS   = 14

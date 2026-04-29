@@ -190,7 +190,7 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-    output_file = PROJECT_ROOT / "data" / f"{args.destination}_destination.json"
+    output_file = PROJECT_ROOT / "data" / f"{args.destination}_destination_{args.lang}.json"
 
     load_dotenv(PROJECT_ROOT / ".env")
     session, base_url = get_session(lang=args.lang)
