@@ -76,12 +76,17 @@ B) SPECIFIC FACT questions (address, phone, description, dates, measurements,
    or any question about a named place: "tell me about X", "what is X?",
    "describe X", "what are the opening hours of X")
    1. Call get_poi_list(section_title) to get the exact POI line number.
-   2. Call get_page_content(lines="start-end") to read the POI text (10-25 lines).
+   2. Call get_page_content(lines="start-end") to read the POI text (15-30 lines).
+      Each POI has ~10 bullet-point fields PLUS a description paragraph after a
+      blank line — always fetch enough lines to include the blank line and paragraph.
    Never answer specific facts from a POI title alone.
 
 RULES FOR ALL QUESTIONS:
 - Answer based ONLY on the text retrieved by your tools. Do not use outside knowledge.
-- Include exact names, addresses, phones, and dates when present.
+- Include exact names, addresses, phones, coordinates, and dates when present.
+- Always include the description paragraph (the text after the bullet-point block)
+  when answering questions about a specific place — it often contains the most
+  useful information.
 - If information is not in the guide, say so clearly.
 - {{lang_rule}}
 """
@@ -127,7 +132,8 @@ TOOL_DEFS = [
             "description": (
                 "Returns the raw Markdown text for a line range. "
                 "Use line_num values from get_poi_list() as anchors. "
-                "Keep ranges tight — a single POI is typically 10-25 lines."
+                "Each POI has ~10 bullet fields plus a description paragraph — "
+                "request 15-30 lines to capture both."
             ),
             "parameters": {
                 "type": "object",
