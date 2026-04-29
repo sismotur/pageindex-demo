@@ -28,6 +28,41 @@ INPUT_FILE      = PROJECT_ROOT / "data" / "ubeda_pois_raw.json"
 DESTINATION_FILE = PROJECT_ROOT / "data" / "ubeda_destination.json"
 OUTPUT_FILE     = PROJECT_ROOT / "data" / "ubeda_guide.md"
 
+# Derive destination slug from the input filename (e.g. "ubeda_pois_raw" → "ubeda")
+TOURIST_DESTINATION = INPUT_FILE.stem.replace("_pois_raw", "")
+
+# Inventrip API base URL (no trailing slash)
+API_BASE_URL = "https://api.inventrip.com"
+
+# ISO 3166-1 alpha-2 → human-readable country names (extend as needed)
+COUNTRY_CODES: dict[str, str] = {
+    "AD": "Andorra",
+    "AR": "Argentina",
+    "AU": "Australia",
+    "BR": "Brazil",
+    "CA": "Canada",
+    "CL": "Chile",
+    "CN": "China",
+    "CO": "Colombia",
+    "DE": "Germany",
+    "EG": "Egypt",
+    "ES": "Spain",
+    "FR": "France",
+    "GB": "United Kingdom",
+    "GR": "Greece",
+    "IN": "India",
+    "IT": "Italy",
+    "JP": "Japan",
+    "MA": "Morocco",
+    "MX": "Mexico",
+    "NL": "Netherlands",
+    "PE": "Peru",
+    "PT": "Portugal",
+    "TN": "Tunisia",
+    "TR": "Turkey",
+    "US": "United States",
+}
+
 # Map-prominence threshold: POIs with zoom_level <= this value are labelled
 # as major landmarks in the Markdown.
 PROMINENCE_ZOOM_MAX = 16
@@ -135,28 +170,39 @@ def interest_level(poi: dict) -> tuple[int, int]:
 
 def format_poi(poi: dict, tourist_type_map: dict | None = None) -> str:
     """Render a single POI as a Markdown '###' block."""
-    name        = get_text(poi.get("name")) or "(Unnamed)"
-    description = get_text(poi.get("description"))
-    types       = get_list_text(poi.get("type"))
-    address     = poi.get("streetAddress") or ""
-    locality    = poi.get("addressLocality") or ""
-    province    = poi.get("addressProvince") or ""
-    phones      = get_list_text(poi.get("telephone"))
-    emails      = get_list_text(poi.get("email"))
-    urls        = get_list_text(poi.get("url"))
-    t_types_raw = get_list_text(poi.get("touristType"))
-    start_date  = poi.get("startDate") or ""
-    end_date    = poi.get("endDate") or ""
-    identifier  = poi.get("identifier") or ""
-    extras      = poi.get("extras") or {}
-    il          = extras.get("id_interest_level")
-    zoom        = extras.get("zoom_level")
+    name         = get_text(poi.get("name")) or "(Unnamed)"
+    description  = get_text(poi.get("description"))
+    types        = get_list_text(poi.get("type"))
+    address      = poi.get("streetAddress") or ""
+    locality     = poi.get("addressLocality") or ""
+    province     = poi.get("addressProvince") or ""
+    postal_code  = poi.get("postalCode") or ""
+    country_code = poi.get("addressCountry") or ""
+    region       = poi.get("addressRegion") or ""
+    phones       = get_list_text(poi.get("telephone"))
+    emails       = get_list_text(poi.get("email"))
+    urls         = get_list_text(poi.get("url"))
+    t_types_raw  = get_list_text(poi.get("touristType"))
+    start_date   = poi.get("startDate") or ""
+    end_date     = poi.get("endDate") or ""
+    identifier   = poi.get("identifier") or ""
+    extras       = poi.get("extras") or {}
+    il           = extras.get("id_interest_level")
+    zoom         = extras.get("zoom_level")
+    lat          = poi.get("latitude")
+    lon          = poi.get("longitude")
+    booking_url  = extras.get("booking_url") or ""
+    images_raw   = get_list_text(poi.get("image"))
+    audios_raw   = poi.get("audios") or []
 
     # Translate tourist type codes to human-readable names
     if tourist_type_map and t_types_raw:
         t_types = [tourist_type_map.get(t, t).title() for t in t_types_raw]
     else:
         t_types = t_types_raw
+
+    # Resolve ISO country code to full name
+    country = COUNTRY_CODES.get(country_code, country_code)
 
     lines = [f"### {name}"]
 
@@ -174,18 +220,51 @@ def format_poi(poi: dict, tourist_type_map: dict | None = None) -> str:
     location_parts = [p for p in [address, locality, province] if p]
     if location_parts:
         lines.append(f"- **Address**: {', '.join(location_parts)}")
+    if postal_code:
+        lines.append(f"- **Postal code**: {postal_code}")
+    if country:
+        lines.append(f"- **Country**: {country}")
+    if region:
+        lines.append(f"- **Region**: {region}")
+    if lat is not None and lon is not None:
+        lines.append(f"- **Coordinates**: {lat:.6f}, {lon:.6f}")
     if phones:
         lines.append(f"- **Phone**: {', '.join(phones)}")
     if emails:
         lines.append(f"- **Email**: {', '.join(emails)}")
     if urls:
         lines.append(f"- **Website**: {', '.join(urls)}")
+    if booking_url:
+        lines.append(f"- **Booking**: {booking_url}")
     if t_types:
         lines.append(f"- **Tourism interest**: {', '.join(t_types)}")
     if start_date:
         lines.append(f"- **Start date**: {start_date}")
     if end_date:
         lines.append(f"- **End date**: {end_date}")
+
+    # Image links: "image/44883" → API URL with high quality
+    image_links = []
+    for raw in images_raw:
+        parts = raw.split("/")
+        if len(parts) >= 2 and parts[-1].isdigit():
+            img_id = parts[-1]
+            img_url = f"{API_BASE_URL}/v100/image/{img_id}?image_quality=high"
+            image_links.append(f"[Image {img_id}]({img_url})")
+    if image_links:
+        lines.append(f"- **Images**: {', '.join(image_links)}")
+
+    # Audio guide links: list of integer IDs → API URLs
+    audio_links = []
+    for audio_id in audios_raw:
+        audio_url = (
+            f"{API_BASE_URL}/v100/audios?language=en&offset=1"
+            f"&audio={audio_id}&tourist_destination={TOURIST_DESTINATION}"
+        )
+        audio_links.append(f"[Audio {audio_id}]({audio_url})")
+    if audio_links:
+        lines.append(f"- **Audio guides**: {', '.join(audio_links)}")
+
     if identifier:
         lines.append(f"- **ID**: {identifier}")
 
