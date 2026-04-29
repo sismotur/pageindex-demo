@@ -1,0 +1,3314 @@
+{
+  "destination": {
+    "name": "Úbeda",
+    "description": "Importante y populosa ciudad situada sobre los Cerros de su nombre, en el centro geográfico de la provincia , en un paisaje poblado de olivos y campos de cereal.\n\nÚbeda es un ciudad artí­stica y monumental , se mire por donde se mire, y una de las localidades más señoriales y gloriosas de Andalucí­a. Castellana y renacentista por los cuatro costados, encierra tal cantidad de monumentos, iglesias, palacios y casas señoriales que lo mejor es pasear por ella y trasladarse virtualmente al tiempo de su esplendor histórico: La Capilla del Salvador, situada en la incomparable plaza del Ayuntamiento, la Iglesia de S. Pablo, la Iglesia de Santa Marí­a de los Reales Alcázares, la Iglesia de la Trinidad, el Oratorio de San Juan de la Cruz, Monasterio de santa Clara, Palacio Vela de los Cobos, Palacio de las Cadenas, Casa de las Torres, Hospital de Santiago, Hospital de los Honrados viejos del Salvador, Torre del Reloj, Murallas de la Cava, Museo de Alfarerí­a y el Parador Nacional de Turismo, son algunas de las maravillas que contiene esta sorprendente ciudad.\n\nAdemás de estos atractivos, se sugiere una visita a las murallas y la espléndida vista que desde allí­ se obtiene; y a sus alfareros, especialmente a la casa-museo de Paco Titos.",
+    "official_url": "https://www.turismodeubeda.com/index.php/es/",
+    "tourist_types": [
+      "HERITAGE TOURISM",
+      "ARCHITECTURE TOURISM",
+      "SHORT BREAK TOURISM",
+      "OLIVE OIL TOURISM"
+    ],
+    "tourist_networks": [
+      "WORLD HERITAGE CITIES"
+    ],
+    "latitude": 38.0108,
+    "longitude": -3.3717,
+    "trip_ids": [
+      4457,
+      4407,
+      4419,
+      4421,
+      4476,
+      4433,
+      4434,
+      4422,
+      4436,
+      4435,
+      4413,
+      4540,
+      4544
+    ],
+    "route_ids": [
+      6892,
+      8111,
+      8110,
+      8109,
+      8107
+    ]
+  },
+  "trips": [
+    {
+      "id": "trip/4190",
+      "name": "Plaza de Carvajal",
+      "description": "Su nombre viene de los residentes del palacio: Gonzalo de Carvajal y su esposa doña María de Peralta. Éste, descendiente de los famosos hermanos Carvajales que fueron arrojados desde la Peña de Martos por orden de Fernando IV. ",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/4190",
+      "itinerary": [
+        {
+          "step": "Palacio de los Carvajales",
+          "pois": []
+        },
+        {
+          "step": "Cerca",
+          "pois": []
+        },
+        {
+          "step": "Palace of the Marquis of Mancera",
+          "pois": []
+        },
+        {
+          "step": "Basilica of Saint Mary of the Royal Alcazars",
+          "pois": []
+        },
+        {
+          "step": "Archaeological Site \"Eras del Alcázar\"",
+          "pois": []
+        },
+        {
+          "step": "Cárcel Del Obispo",
+          "pois": []
+        },
+        {
+          "step": "Alrededor",
+          "pois": [
+            "Saludeja Fountain"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "trip/4193",
+      "name": "Palacio de Los Busianos",
+      "description": "Uno de los palacios más curiosos, situado en una de las calles principales; la Calle Trinidad.",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/4193",
+      "itinerary": [
+        {
+          "step": "Cerca",
+          "pois": [
+            "Palacio de los Bussianos",
+            "Post and Telegraph Building"
+          ]
+        },
+        {
+          "step": "Alrededor",
+          "pois": [
+            "Ancient Butcheries",
+            "Church and Convent of the Most Holy Trinity",
+            "Church of San Nicolás",
+            "Clock Tower",
+            "Old Casino"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "trip/4194",
+      "name": "Iglesia de San Nicolás",
+      "description": "De los ejemplos más preciados en su escasez del gótico andaluz, y el más ortodoxo en toda la provincia.",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/4194",
+      "itinerary": [
+        {
+          "step": "Cerca",
+          "pois": [
+            "Church of San Nicolás",
+            "Ortega's Head Groom Cover"
+          ]
+        },
+        {
+          "step": "Alrededor",
+          "pois": [
+            "Convent of the Conception",
+            "Palace of Don Luis de la Cueva",
+            "Olive Oil and Olive Grove Interpretation Center",
+            "Octagonal Tower",
+            "Church and Convent of the Most Holy Trinity",
+            "Palacio de los Bussianos",
+            "Post and Telegraph Building",
+            "Abastos Market",
+            "Old Casino"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "trip/4195",
+      "name": "Iglesia de San Isidoro",
+      "description": "Uno de los tres templos góticos de la cuidad. ",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/4195",
+      "itinerary": [
+        {
+          "step": "Cerca",
+          "pois": [
+            "Church of San Isidoro",
+            "Plateresque Facade on Gradas Street"
+          ]
+        },
+        {
+          "step": "Alrededor",
+          "pois": [
+            "Hospital de Santiago",
+            "Ancient Butcheries",
+            "Clock Tower",
+            "Plaza de Toros de Úbeda",
+            "Orozco Palace",
+            "Hotel Palace of the Marquis of La Rambla"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "trip/4199",
+      "name": "Palacio Don Luis de la Cueva",
+      "description": "Se trata de una mansión solariega residencia de la familia Cueva. Actualmente oficinas municipales.",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/4199",
+      "itinerary": [
+        {
+          "step": "Cerca",
+          "pois": [
+            "Palace of Don Luis de la Cueva"
+          ]
+        },
+        {
+          "step": "Alrededor",
+          "pois": [
+            "Convent of the Conception",
+            "Archaeological Museum - Mudéjar House",
+            "Olive Oil and Olive Grove Interpretation Center",
+            "Octagonal Tower",
+            "Palacio de los Torrente",
+            "Abastos Market",
+            "Palacio de los Porceles"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "trip/4201",
+      "name": "Convento de la Concepción",
+      "description": "A día de hoy es habitado por las monjas Carmelitas Descalzas, famosas por su labor de repostería. ",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/4201",
+      "itinerary": [
+        {
+          "step": "Convent of the Conception",
+          "pois": []
+        },
+        {
+          "step": "Cerca",
+          "pois": [
+            "Abastos Market",
+            "Palacio de los Torrente",
+            "Palace of Don Luis de la Cueva",
+            "Olive Oil and Olive Grove Interpretation Center",
+            "Octagonal Tower"
+          ]
+        },
+        {
+          "step": "Alrededor",
+          "pois": [
+            "Archaeological Museum - Mudéjar House",
+            "Walls and Losal Gate"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "trip/4202",
+      "name": "Convento y Museo de San Juan de la Cruz",
+      "description": "Será aquí cuando, el 28 de septiembre de 1591, llegue enfermo para quedarse el Padre fray Juan de la Cruz, muriendo el 14 de diciembre del mismo año. ",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/4202",
+      "itinerary": [
+        {
+          "step": "Cerca",
+          "pois": [
+            "Convent and Museum of San Juan de la Cruz",
+            "San Miguel Church"
+          ]
+        },
+        {
+          "step": "Alrededor",
+          "pois": [
+            "Old Convent of San Andrés",
+            "Francisco de los Cobos Palace",
+            "Church of San Millán",
+            "Palacio de los Torrente",
+            "Walls and Losal Gate",
+            "Huerto del Carmen",
+            "Manor house at 18 Cuesta del Losal street",
+            "Bishop's Canastero House",
+            "Santo Tomas Archaeological Ruins Complex",
+            "House of the Granada Venegas"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "trip/4203",
+      "name": "Casa Mudéjar y Museo Arqueológico",
+      "description": "Interesante ejemplo de arquitectura doméstica de estilo mudéjar. Un modelo de casa mediterráneo: con patio central y entorno a él, cuatro galerías con las distintas estancias donde se exponen las piezas.",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/4203",
+      "itinerary": [
+        {
+          "step": "Cerca",
+          "pois": [
+            "Archaeological Museum - Mudéjar House",
+            "Church of Saint Paul"
+          ]
+        },
+        {
+          "step": "Alrededor",
+          "pois": [
+            "Water Synagogue",
+            "Palacio de los Torrente",
+            "Palacio de los Porceles"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "trip/4204",
+      "name": "Murallas y Puerta del Losal",
+      "description": "Pasear por la periferia de la antigua muralla nos descubre rincones únicos con valiosas puertas alrededor de todo el casco histórico. ",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/4204",
+      "itinerary": [
+        {
+          "step": "Cerca",
+          "pois": [
+            "Walls and Losal Gate",
+            "Huerto del Carmen"
+          ]
+        },
+        {
+          "step": "Alrededor",
+          "pois": [
+            "Convent of the Conception",
+            "Church of San Millán",
+            "Convent and Museum of San Juan de la Cruz",
+            "Old Convent of San Andrés",
+            "San Miguel Church",
+            "Bishop's Canastero House",
+            "Manor house at 18 Cuesta del Losal street"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "trip/4205",
+      "name": "Iglesia de San Millán",
+      "description": "Dentro de esta iglesia se venera a la Virgen de la Soledad, que protagoniza uno de los momentos más espectaculares y emotivos de la Semana Santa de Úbeda.",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/4205",
+      "itinerary": [
+        {
+          "step": "Church of San Millán",
+          "pois": []
+        },
+        {
+          "step": "Cerca",
+          "pois": [
+            "Plaza de los Olleros",
+            "Valencia Street",
+            "Huerto del Carmen"
+          ]
+        },
+        {
+          "step": "Alrededor",
+          "pois": [
+            "Convent of the Conception",
+            "Palacio de los Torrente",
+            "Walls and Losal Gate",
+            "Convent and Museum of San Juan de la Cruz",
+            "San Miguel Church",
+            "Manor house at 18 Cuesta del Losal street",
+            "Bishop's Canastero House"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "trip/4206",
+      "name": "Palacio Francisco de los Cobos",
+      "description": " Fue la residencia en vida del secretario del emperador Carlos V, hidalgo que desde joven escaló hasta adquirir máxima responsabilidad en la España del siglo XVI.",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/4206",
+      "itinerary": [
+        {
+          "step": "Cerca",
+          "pois": [
+            "Francisco de los Cobos Palace",
+            "Sacra Capilla del Salvador"
+          ]
+        },
+        {
+          "step": "Alrededor",
+          "pois": [
+            "Dean Ortega Palace. Tourism Parador",
+            "Hospital of the Honorable Old People of El Salvador",
+            "Santa Lucía Viewpoints",
+            "Santo Tomas Archaeological Ruins Complex",
+            "Palacio de los Manueles",
+            "Santa Lucía Gate"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "trip/4207",
+      "name": "Palacio de los Medinilla",
+      "description": "Mandado construir por el doctor Anguís Medinilla, y posteriormente heredada por su sobrino don Álvaro de Torres, quien da nombre a la pequeña plaza inmediata al palacio.",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/4207",
+      "itinerary": [
+        {
+          "step": "Cerca",
+          "pois": [
+            "Palacio de los Medinilla"
+          ]
+        },
+        {
+          "step": "Alrededor",
+          "pois": [
+            "House of the Towers",
+            "House of the Morales",
+            "Church of Santo Domingo",
+            "Church of San Lorenzo",
+            "Interpretation Center \"The Walls of Úbeda: Tower of the Portillo del Santo Cristo\""
+          ]
+        }
+      ]
+    },
+    {
+      "id": "trip/4208",
+      "name": "Palacio de Marqués de Contadero",
+      "description": "De estilo de renacimiento tardío o \"neo-manierista\", a día de hoy alberga las oficinas municipales.",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/4208",
+      "itinerary": [
+        {
+          "step": "Palace of the Marquess of Contadero",
+          "pois": []
+        },
+        {
+          "step": "Cerca",
+          "pois": [
+            "House of Juan de Valencia"
+          ]
+        },
+        {
+          "step": "Alrededor",
+          "pois": [
+            "Vela de los Cobos Palace",
+            "Vázquez de Molina Palace",
+            "Church of Santo Domingo",
+            "House of the Morales",
+            "Anguis de Medinilla Palace",
+            "Royal Monastery of Santa Clara",
+            "Andalusian Art Museum House"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "trip/4210",
+      "name": "Palacio Vela de los Cobos",
+      "description": "Uno de los palacios visitables más importantes y mejor conservados de la ciudad.",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/4210",
+      "itinerary": [
+        {
+          "step": "Cerca",
+          "pois": [
+            "Vela de los Cobos Palace"
+          ]
+        },
+        {
+          "step": "Alrededor",
+          "pois": [
+            "Vázquez de Molina Palace",
+            "Dean Ortega Palace. Tourism Parador",
+            "Palace of the Marquess of Contadero",
+            "Anguis de Medinilla Palace",
+            "Royal Monastery of Santa Clara",
+            "Old Town Hall Buildings",
+            "Renaissance Fountain"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "trip/4211",
+      "name": "Plaza de Olleros",
+      "description": "La Plaza de los Olleros es el lugar indicativo de la entrada al famoso barrio de los alfareros, una inmersión hacia la arraigada artesanía ubetense.",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/4211",
+      "itinerary": [
+        {
+          "step": "Plaza de los Olleros",
+          "pois": []
+        },
+        {
+          "step": "Cerca",
+          "pois": [
+            "Valencia Street",
+            "Paco Tito Pottery Museum"
+          ]
+        },
+        {
+          "step": "Alrededor",
+          "pois": [
+            "Convent of the Conception",
+            "Church of San Millán",
+            "Walls and Losal Gate",
+            "Manor house at 18 Cuesta del Losal street",
+            "Huerto del Carmen",
+            "Abastos Market"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "trip/4212",
+      "name": "Disfruta Úbeda",
+      "description": "Un paseo por Úbeda es perderse en una de las ciudades más monumentales de Andalucí­a. Sus iglesias, conventos, palacios, casas señoriales, museos y animadas calles te animarán a quedarte con nosotros o a querer volver cuanto antes...",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/4212",
+      "itinerary": [
+        {
+          "step": "Cerca de ti",
+          "pois": []
+        },
+        {
+          "step": "A tu alrededor",
+          "pois": [
+            "Alojamientos",
+            "Palacios y casas señoriales",
+            "Iglesias y conventos",
+            "Museos",
+            "Miradores",
+            "Otros lugares de interés"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "trip/4213",
+      "name": "Disfruta Úbeda",
+      "description": "Un paseo por Úbeda es perderse en una de las ciudades más monumentales de Andalucí­a. Sus iglesias, conventos, palacios, casas señoriales, museos y animadas calles te animarán a quedarte con nosotros o a querer volver cuanto antes...",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/4213",
+      "itinerary": [
+        {
+          "step": "Cerca de ti",
+          "pois": [
+            "Ancient Butcheries"
+          ]
+        },
+        {
+          "step": "A tu alrededor",
+          "pois": [
+            "Alojamientos",
+            "Palacios y casas señoriales",
+            "Iglesias y conventos",
+            "Museos",
+            "Miradores",
+            "Otros lugares de interés"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "trip/4215",
+      "name": "Viaje Promocional",
+      "description": "Descubre Úbeda. Ciudad Patrimonio de la Humanidad.",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/4215",
+      "itinerary": [
+        {
+          "step": "Cerca de ti",
+          "pois": [
+            "Ancient Butcheries",
+            "Clock Tower",
+            "Church and Convent of the Most Holy Trinity",
+            "Úbeda Parking Lots"
+          ]
+        },
+        {
+          "step": "A tu alrededor",
+          "pois": [
+            "Water Synagogue",
+            "Church of San Isidoro",
+            "Church of San Pedro",
+            "Orozco Palace",
+            "Plaza de Toros de Úbeda",
+            "Olive Oil and Olive Grove Interpretation Center",
+            "Old Convent of La Victoria",
+            "Plateresque Facade on Gradas Street"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "trip/4216",
+      "name": "Disfruta Úbeda",
+      "description": "Un paseo por Úbeda es perderse en una de las ciudades más monumentales de Andalucí­a. Sus iglesias, conventos, palacios, casas señoriales, museos y animadas calles te animarán a quedarte con nosotros o a querer volver cuanto antes...",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/4216",
+      "itinerary": [
+        {
+          "step": "Cerca de ti",
+          "pois": [
+            "Olive Oil and Olive Grove Interpretation Center"
+          ]
+        },
+        {
+          "step": "A tu alrededor",
+          "pois": [
+            "Alojamientos",
+            "Palacios y casas señoriales",
+            "Iglesias y conventos",
+            "Museos",
+            "Miradores",
+            "Otros lugares de interés"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "trip/4217",
+      "name": "Viaje Promocional",
+      "description": "Descubre Úbeda. Ciudad Patrimonio de la Humanidad.",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/4217",
+      "itinerary": [
+        {
+          "step": "Cerca de ti",
+          "pois": [
+            "Olive Oil and Olive Grove Interpretation Center",
+            "Octagonal Tower",
+            "Palace of Don Luis de la Cueva",
+            "Old Casino",
+            "Abastos Market"
+          ]
+        },
+        {
+          "step": "A tu alrededor",
+          "pois": [
+            "Archaeological Museum - Mudéjar House",
+            "Convent of the Conception",
+            "Church of San Nicolás",
+            "Church and Convent of the Most Holy Trinity",
+            "Clock Tower",
+            "Palacio de los Porceles"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "trip/4218",
+      "name": "Disfruta Úbeda",
+      "description": "Un paseo por Úbeda es perderse en una de las ciudades más monumentales de Andalucí­a. Sus iglesias, conventos, palacios, casas señoriales, museos y animadas calles te animarán a quedarte con nosotros o a querer volver cuanto antes...",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/4218",
+      "itinerary": [
+        {
+          "step": "Cerca de ti",
+          "pois": [
+            "Vázquez de Molina Palace"
+          ]
+        },
+        {
+          "step": "A tu alrededor",
+          "pois": [
+            "Alojamientos",
+            "Palacios y casas señoriales",
+            "Iglesias y conventos",
+            "Museos",
+            "Miradores",
+            "Otros lugares de interés"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "trip/4219",
+      "name": "Viaje Promocional",
+      "description": "Descubre Úbeda. Ciudad Patrimonio de la Humanidad.",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/4219",
+      "itinerary": [
+        {
+          "step": "Cerca de ti",
+          "pois": [
+            "Vázquez de Molina Palace",
+            "Basilica of Saint Mary of the Royal Alcazars",
+            "Palace of the Marquis of Mancera",
+            "Renaissance Fountain",
+            "Old Granary",
+            "Cárcel Del Obispo"
+          ]
+        },
+        {
+          "step": "A tu alrededor",
+          "pois": [
+            "Vela de los Cobos Palace",
+            "Sacra Capilla del Salvador",
+            "Dean Ortega Palace. Tourism Parador",
+            "Palace of the Marquess of Contadero",
+            "Old Town Hall Buildings",
+            "House of Juan de Valencia"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "trip/4220",
+      "name": "Disfruta Úbeda",
+      "description": "Un paseo por Úbeda es perderse en una de las ciudades más monumentales de Andalucí­a. Sus iglesias, conventos, palacios, casas señoriales, museos y animadas calles te animarán a quedarte con nosotros o a querer volver cuanto antes...",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/4220",
+      "itinerary": [
+        {
+          "step": "Cerca de ti",
+          "pois": [
+            "Hotel Palacio de Úbeda G.L. Restaurant \"El Ábside\""
+          ]
+        },
+        {
+          "step": "A tu alrededor",
+          "pois": [
+            "Palacios y casas señoriales",
+            "Iglesias y conventos",
+            "Museos",
+            "Miradores",
+            "Otros lugares de interés"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "trip/4221",
+      "name": "Viaje Promocional",
+      "description": "Descubre Úbeda. Ciudad Patrimonio de la Humanidad.",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/4221",
+      "itinerary": [
+        {
+          "step": "Cerca de ti",
+          "pois": [
+            "Hotel Palacio de Úbeda G.L. Restaurant \"El Ábside\"",
+            "Church of San Pedro"
+          ]
+        },
+        {
+          "step": "A tu alrededor",
+          "pois": [
+            "Water Synagogue",
+            "Vela de los Cobos Palace",
+            "Anguis de Medinilla Palace",
+            "Royal Monastery of Santa Clara",
+            "Orozco Palace"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "trip/4222",
+      "name": "Disfruta Úbeda",
+      "description": "Un paseo por Úbeda es perderse en una de las ciudades más monumentales de Andalucí­a. Sus iglesias, conventos, palacios, casas señoriales, museos y animadas calles te animarán a quedarte con nosotros o a querer volver cuanto antes...",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/4222",
+      "itinerary": [
+        {
+          "step": "Cerca de ti",
+          "pois": [
+            "Dean Ortega Palace. Tourism Parador"
+          ]
+        },
+        {
+          "step": "A tu alrededor",
+          "pois": [
+            "Alojamientos",
+            "Palacios y casas señoriales",
+            "Iglesias y conventos",
+            "Museos",
+            "Miradores",
+            "Otros lugares de interés"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "trip/4223",
+      "name": "Viaje Promocional",
+      "description": "Descubre Úbeda. Ciudad Patrimonio de la Humanidad.",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/4223",
+      "itinerary": [
+        {
+          "step": "Cerca de ti",
+          "pois": [
+            "Dean Ortega Palace. Tourism Parador",
+            "Sacra Capilla del Salvador",
+            "Palacio de los Manueles"
+          ]
+        },
+        {
+          "step": "A tu alrededor",
+          "pois": [
+            "Vázquez de Molina Palace",
+            "Palace of the Marquis of Mancera",
+            "Basilica of Saint Mary of the Royal Alcazars",
+            "Hospital of the Honorable Old People of El Salvador",
+            "Francisco de los Cobos Palace",
+            "Renaissance Fountain",
+            "Old Granary"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "trip/4224",
+      "name": "Disfruta Úbeda",
+      "description": "Un paseo por Úbeda es perderse en una de las ciudades más monumentales de Andalucí­a. Sus iglesias, conventos, palacios, casas señoriales, museos y animadas calles te animarán a quedarte con nosotros o a querer volver cuanto antes...",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/4224",
+      "itinerary": [
+        {
+          "step": "Cerca de ti",
+          "pois": [
+            "Hotel Álvar Fáñez"
+          ]
+        },
+        {
+          "step": "A tu alrededor",
+          "pois": [
+            "Alojamientos",
+            "Palacios y casas señoriales",
+            "Iglesias y conventos",
+            "Museos",
+            "Miradores",
+            "Otros lugares de interés"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "trip/4225",
+      "name": "Viaje Promocional",
+      "description": "Descubre Úbeda. Ciudad Patrimonio de la Humanidad.",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/4225",
+      "itinerary": [
+        {
+          "step": "Cerca de ti",
+          "pois": [
+            "Hotel Álvar Fáñez",
+            "Hotel Palacio de Úbeda G.L. Restaurant \"El Ábside\"",
+            "Church of San Pedro",
+            "Royal Monastery of Santa Clara"
+          ]
+        },
+        {
+          "step": "A tu alrededor",
+          "pois": [
+            "Vela de los Cobos Palace",
+            "Water Synagogue",
+            "Anguis de Medinilla Palace",
+            "Orozco Palace"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "trip/4226",
+      "name": "Disfruta Úbeda",
+      "description": "Un paseo por Úbeda es perderse en una de las ciudades más monumentales de Andalucí­a. Sus iglesias, conventos, palacios, casas señoriales, museos y animadas calles te animarán a quedarte con nosotros o a querer volver cuanto antes...",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/4226",
+      "itinerary": [
+        {
+          "step": "Cerca de ti",
+          "pois": [
+            "Hotel Don Juan Boutique"
+          ]
+        },
+        {
+          "step": "A tu alrededor",
+          "pois": [
+            "Alojamientos",
+            "Palacios y casas señoriales",
+            "Iglesias y conventos",
+            "Museos",
+            "Miradores",
+            "Otros lugares de interés"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "trip/4227",
+      "name": "Viaje Promocional",
+      "description": "Descubre Úbeda. Ciudad Patrimonio de la Humanidad.",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/4227",
+      "itinerary": [
+        {
+          "step": "Cerca de ti",
+          "pois": [
+            "Hotel Don Juan Boutique",
+            "Ancient Butcheries",
+            "Church and Convent of the Most Holy Trinity",
+            "Clock Tower",
+            "Úbeda Parking Lots"
+          ]
+        },
+        {
+          "step": "A tu alrededor",
+          "pois": [
+            "Hospital de Santiago",
+            "Plaza de Toros de Úbeda",
+            "Church of San Isidoro",
+            "Palacio de los Bussianos",
+            "Old Convent of La Victoria",
+            "Post and Telegraph Building",
+            "Ortega's Head Groom Cover",
+            "North Park"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "trip/4228",
+      "name": "Disfruta Úbeda",
+      "description": "Un paseo por Úbeda es perderse en una de las ciudades más monumentales de Andalucí­a. Sus iglesias, conventos, palacios, casas señoriales, museos y animadas calles te animarán a quedarte con nosotros o a querer volver cuanto antes...",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/4228",
+      "itinerary": [
+        {
+          "step": "Cerca de ti",
+          "pois": [
+            "Hotel Ciudad de Úbeda"
+          ]
+        },
+        {
+          "step": "A tu alrededor",
+          "pois": [
+            "Alojamientos",
+            "Palacios y casas señoriales",
+            "Iglesias y conventos",
+            "Museos",
+            "Miradores",
+            "Otros lugares de interés"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "trip/4229",
+      "name": "Viaje Promocional",
+      "description": "Descubre Úbeda. Ciudad Patrimonio de la Humanidad.",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/4229",
+      "itinerary": [
+        {
+          "step": "Cerca de ti",
+          "pois": [
+            "Hotel Ciudad de Úbeda",
+            "North Park",
+            "Úbeda Bus Station",
+            "Hospital de Santiago",
+            "Plaza de Toros de Úbeda",
+            "Church of Saint John the Baptist"
+          ]
+        },
+        {
+          "step": "A tu alrededor",
+          "pois": [
+            "Ancient Butcheries",
+            "Church of San Nicolás",
+            "Palacio de los Bussianos",
+            "Church and Convent of the Most Holy Trinity",
+            "Church of San Isidoro",
+            "Clock Tower",
+            "Ortega's Head Groom Cover",
+            "Post and Telegraph Building",
+            "Úbeda Parking Lots"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "trip/4230",
+      "name": "Disfruta Úbeda",
+      "description": "Un paseo por Úbeda es perderse en una de las ciudades más monumentales de Andalucí­a. Sus iglesias, conventos, palacios, casas señoriales, museos y animadas calles te animarán a quedarte con nosotros o a querer volver cuanto antes...",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/4230",
+      "itinerary": [
+        {
+          "step": "Cerca de ti",
+          "pois": [
+            "Hotel Arcco Ubeda"
+          ]
+        },
+        {
+          "step": "A tu alrededor",
+          "pois": [
+            "Alojamientos",
+            "Palacios y casas señoriales",
+            "Iglesias y conventos",
+            "Museos",
+            "Miradores",
+            "Otros lugares de interés"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "trip/4231",
+      "name": "Viaje Promocional",
+      "description": "Descubre Úbeda. Ciudad Patrimonio de la Humanidad.",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/4231",
+      "itinerary": [
+        {
+          "step": "Cerca de ti",
+          "pois": [
+            "Hotel Arcco Ubeda",
+            "Church of San Nicolás",
+            "Valencia Street",
+            "Paco Tito Pottery Museum"
+          ]
+        },
+        {
+          "step": "A tu alrededor",
+          "pois": [
+            "Convent of the Conception",
+            "Octagonal Tower",
+            "Palacio de los Bussianos",
+            "Church and Convent of the Most Holy Trinity",
+            "Palace of Don Luis de la Cueva",
+            "Olive Oil and Olive Grove Interpretation Center",
+            "Walls and Losal Gate",
+            "Abastos Market",
+            "Ortega's Head Groom Cover",
+            "Post and Telegraph Building"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "trip/4232",
+      "name": "Disfruta Úbeda",
+      "description": "Un paseo por Úbeda es perderse en una de las ciudades más monumentales de Andalucí­a. Sus iglesias, conventos, palacios, casas señoriales, museos y animadas calles te animarán a quedarte con nosotros o a querer volver cuanto antes...",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/4232",
+      "itinerary": [
+        {
+          "step": "Cerca de ti",
+          "pois": [
+            "Yit El Postigo Hotel"
+          ]
+        },
+        {
+          "step": "A tu alrededor",
+          "pois": [
+            "Alojamientos",
+            "Palacios y casas señoriales",
+            "Iglesias y conventos",
+            "Museos",
+            "Miradores",
+            "Otros lugares de interés"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "trip/4233",
+      "name": "Viaje Promocional",
+      "description": "Descubre Úbeda. Ciudad Patrimonio de la Humanidad.",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/4233",
+      "itinerary": [
+        {
+          "step": "Cerca de ti",
+          "pois": [
+            "Yit El Postigo Hotel",
+            "Andalusian Art Museum House"
+          ]
+        },
+        {
+          "step": "A tu alrededor",
+          "pois": [
+            "Palace of the Marquess of Contadero",
+            "Vela de los Cobos Palace",
+            "Orozco Palace",
+            "Church of San Pedro",
+            "Royal Monastery of Santa Clara",
+            "Anguis de Medinilla Palace",
+            "Church of Santo Domingo",
+            "House of the Morales",
+            "Palacio de los Medinilla",
+            "Interpretation Center \"The Walls of Úbeda: Tower of the Portillo del Santo Cristo\""
+          ]
+        }
+      ]
+    },
+    {
+      "id": "trip/4234",
+      "name": "Disfruta Úbeda",
+      "description": "Un paseo por Úbeda es perderse en una de las ciudades más monumentales de Andalucí­a. Sus iglesias, conventos, palacios, casas señoriales, museos y animadas calles te animarán a quedarte con nosotros o a querer volver cuanto antes...",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/4234",
+      "itinerary": [
+        {
+          "step": "Cerca de ti",
+          "pois": [
+            "Hotel Nine Legends"
+          ]
+        },
+        {
+          "step": "A tu alrededor",
+          "pois": [
+            "Alojamientos",
+            "Palacios y casas señoriales",
+            "Iglesias y conventos",
+            "Museos",
+            "Miradores",
+            "Otros lugares de interés"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "trip/4235",
+      "name": "Viaje Promocional",
+      "description": "Descubre Úbeda. Ciudad Patrimonio de la Humanidad.",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/4235",
+      "itinerary": [
+        {
+          "step": "Cerca de ti",
+          "pois": [
+            "Hotel Nine Legends",
+            "Dean Ortega Palace. Tourism Parador",
+            "Sacra Capilla del Salvador",
+            "Palacio de los Manueles"
+          ]
+        },
+        {
+          "step": "A tu alrededor",
+          "pois": [
+            "Vázquez de Molina Palace",
+            "Palace of the Marquis of Mancera",
+            "Basilica of Saint Mary of the Royal Alcazars",
+            "Hospital of the Honorable Old People of El Salvador",
+            "Francisco de los Cobos Palace",
+            "Renaissance Fountain",
+            "Old Granary"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "trip/4236",
+      "name": "Disfruta Úbeda",
+      "description": "Un paseo por Úbeda es perderse en una de las ciudades más monumentales de Andalucí­a. Sus iglesias, conventos, palacios, casas señoriales, museos y animadas calles te animarán a quedarte con nosotros o a querer volver cuanto antes...",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/4236",
+      "itinerary": [
+        {
+          "step": "Cerca de ti",
+          "pois": [
+            "Hotel María De Molina"
+          ]
+        },
+        {
+          "step": "A tu alrededor",
+          "pois": [
+            "Alojamientos",
+            "Palacios y casas señoriales",
+            "Iglesias y conventos",
+            "Museos",
+            "Miradores",
+            "Otros lugares de interés"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "trip/4237",
+      "name": "Viaje Promocional",
+      "description": "Descubre Úbeda. Ciudad Patrimonio de la Humanidad.",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/4237",
+      "itinerary": [
+        {
+          "step": "Cerca de ti",
+          "pois": [
+            "Hotel María De Molina",
+            "Vela de los Cobos Palace",
+            "House of Juan de Valencia"
+          ]
+        },
+        {
+          "step": "A tu alrededor",
+          "pois": [
+            "Vázquez de Molina Palace",
+            "Dean Ortega Palace. Tourism Parador",
+            "Sacra Capilla del Salvador",
+            "Palace of the Marquis of Mancera",
+            "Basilica of Saint Mary of the Royal Alcazars",
+            "Palace of the Marquess of Contadero",
+            "Church of Santo Domingo",
+            "Renaissance Fountain",
+            "Old Granary",
+            "Andalusian Art Museum House"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "trip/4238",
+      "name": "Disfruta Úbeda",
+      "description": "Un paseo por Úbeda es perderse en una de las ciudades más monumentales de Andalucí­a. Sus iglesias, conventos, palacios, casas señoriales, museos y animadas calles te animarán a quedarte con nosotros o a querer volver cuanto antes...",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/4238",
+      "itinerary": [
+        {
+          "step": "Cerca de ti",
+          "pois": [
+            "Rosaleda De Don Pedro Hotel"
+          ]
+        },
+        {
+          "step": "A tu alrededor",
+          "pois": [
+            "Alojamientos",
+            "Palacios y casas señoriales",
+            "Iglesias y conventos",
+            "Museos",
+            "Miradores",
+            "Otros lugares de interés"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "trip/4239",
+      "name": "Viaje Promocional",
+      "description": "Descubre Úbeda. Ciudad Patrimonio de la Humanidad.",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/4239",
+      "itinerary": [
+        {
+          "step": "Cerca de ti",
+          "pois": [
+            "Rosaleda De Don Pedro Hotel",
+            "Water Synagogue",
+            "Church of Saint Paul",
+            "Old Town Hall Buildings"
+          ]
+        },
+        {
+          "step": "A tu alrededor",
+          "pois": [
+            "Archaeological Museum - Mudéjar House",
+            "Vela de los Cobos Palace",
+            "Hotel Palacio de Úbeda G.L. Restaurant \"El Ábside\"",
+            "Old Convent of San Andrés",
+            "Palacio de los Torrente",
+            "Anguis de Medinilla Palace",
+            "Palacio de los Porceles"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "trip/4240",
+      "name": "Disfruta Úbeda",
+      "description": "Un paseo por Úbeda es perderse en una de las ciudades más monumentales de Andalucí­a. Sus iglesias, conventos, palacios, casas señoriales, museos y animadas calles te animarán a quedarte con nosotros o a querer volver cuanto antes...",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/4240",
+      "itinerary": [
+        {
+          "step": "Cerca de ti",
+          "pois": [
+            "Hotel Afán de Rivera"
+          ]
+        },
+        {
+          "step": "A tu alrededor",
+          "pois": [
+            "Alojamientos",
+            "Palacios y casas señoriales",
+            "Iglesias y conventos",
+            "Museos",
+            "Miradores",
+            "Otros lugares de interés"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "trip/4241",
+      "name": "Viaje Promocional",
+      "description": "Descubre Úbeda. Ciudad Patrimonio de la Humanidad.",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/4241",
+      "itinerary": [
+        {
+          "step": "Cerca de ti",
+          "pois": [
+            "Hotel Afán de Rivera",
+            "Vázquez de Molina Palace",
+            "Basilica of Saint Mary of the Royal Alcazars"
+          ]
+        },
+        {
+          "step": "A tu alrededor",
+          "pois": [
+            "Palace of the Marquis of Mancera",
+            "House of the Morales",
+            "Church of Santo Domingo",
+            "Church of San Lorenzo",
+            "House of the Towers",
+            "Puerta de Granada",
+            "House of Juan de Valencia"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "trip/4242",
+      "name": "Disfruta Úbeda",
+      "description": "Un paseo por Úbeda es perderse en una de las ciudades más monumentales de Andalucí­a. Sus iglesias, conventos, palacios, casas señoriales, museos y animadas calles te animarán a quedarte con nosotros o a querer volver cuanto antes...",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/4242",
+      "itinerary": [
+        {
+          "step": "Cerca de ti",
+          "pois": [
+            "Hotel La Paz"
+          ]
+        },
+        {
+          "step": "A tu alrededor",
+          "pois": [
+            "Alojamientos",
+            "Palacios y casas señoriales",
+            "Iglesias y conventos",
+            "Museos",
+            "Miradores",
+            "Otros lugares de interés"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "trip/4243",
+      "name": "Viaje Promocional",
+      "description": "Descubre Úbeda. Ciudad Patrimonio de la Humanidad.",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/4243",
+      "itinerary": [
+        {
+          "step": "Cerca de ti",
+          "pois": [
+            "Hotel La Paz",
+            "North Park",
+            "Úbeda Bus Station",
+            "Hospital de Santiago",
+            "Plaza de Toros de Úbeda",
+            "Church of Saint John the Baptist"
+          ]
+        },
+        {
+          "step": "A tu alrededor",
+          "pois": [
+            "Ancient Butcheries",
+            "Church of San Nicolás",
+            "Palacio de los Bussianos",
+            "Church and Convent of the Most Holy Trinity",
+            "Church of San Isidoro",
+            "Clock Tower",
+            "Ortega's Head Groom Cover",
+            "Post and Telegraph Building",
+            "Úbeda Parking Lots"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "trip/4244",
+      "name": "Disfruta Úbeda",
+      "description": "Un paseo por Úbeda es perderse en una de las ciudades más monumentales de Andalucí­a. Sus iglesias, conventos, palacios, casas señoriales, museos y animadas calles te animarán a quedarte con nosotros o a querer volver cuanto antes...",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/4244",
+      "itinerary": [
+        {
+          "step": "Cerca de ti",
+          "pois": [
+            "Hotel Las Casas del Cónsul"
+          ]
+        },
+        {
+          "step": "A tu alrededor",
+          "pois": [
+            "Alojamientos",
+            "Palacios y casas señoriales",
+            "Iglesias y conventos",
+            "Museos",
+            "Miradores",
+            "Otros lugares de interés"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "trip/4245",
+      "name": "Viaje Promocional",
+      "description": "Descubre Úbeda. Ciudad Patrimonio de la Humanidad.",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/4245",
+      "itinerary": [
+        {
+          "step": "Cerca de ti",
+          "pois": [
+            "Hotel Las Casas del Cónsul",
+            "Convent and Museum of San Juan de la Cruz",
+            "San Miguel Church",
+            "Jewish Houses on Gradeta de Santo Tomás Street",
+            "Santo Tomas Archaeological Ruins Complex"
+          ]
+        },
+        {
+          "step": "A tu alrededor",
+          "pois": [
+            "Francisco de los Cobos Palace",
+            "Old Convent of San Andrés",
+            "Hospital of the Honorable Old People of El Salvador",
+            "Santa Lucía Viewpoints",
+            "House of the Granada Venegas",
+            "Huerto del Carmen",
+            "Santa Lucía Gate"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "trip/4246",
+      "name": "Disfruta Úbeda",
+      "description": "Un paseo por Úbeda es perderse en una de las ciudades más monumentales de Andalucí­a. Sus iglesias, conventos, palacios, casas señoriales, museos y animadas calles te animarán a quedarte con nosotros o a querer volver cuanto antes...",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/4246",
+      "itinerary": [
+        {
+          "step": "Cerca de ti",
+          "pois": [
+            "Ordoñez Sandoval Hotel"
+          ]
+        },
+        {
+          "step": "A tu alrededor",
+          "pois": [
+            "Alojamientos",
+            "Palacios y casas señoriales",
+            "Iglesias y conventos",
+            "Museos",
+            "Miradores",
+            "Otros lugares de interés"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "trip/4247",
+      "name": "Viaje Promocional",
+      "description": "Descubre Úbeda. Ciudad Patrimonio de la Humanidad.",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/4247",
+      "itinerary": [
+        {
+          "step": "Cerca de ti",
+          "pois": [
+            "Ordoñez Sandoval Hotel",
+            "Andalusian Art Museum House"
+          ]
+        },
+        {
+          "step": "A tu alrededor",
+          "pois": [
+            "Palace of the Marquess of Contadero",
+            "Vela de los Cobos Palace",
+            "Orozco Palace",
+            "Church of San Pedro",
+            "Royal Monastery of Santa Clara",
+            "Anguis de Medinilla Palace",
+            "Church of Santo Domingo",
+            "House of the Morales",
+            "Palacio de los Medinilla",
+            "Interpretation Center \"The Walls of Úbeda: Tower of the Portillo del Santo Cristo\""
+          ]
+        }
+      ]
+    },
+    {
+      "id": "trip/4248",
+      "name": "Disfruta Úbeda",
+      "description": "Un paseo por Úbeda es perderse en una de las ciudades más monumentales de Andalucí­a. Sus iglesias, conventos, palacios, casas señoriales, museos y animadas calles te animarán a quedarte con nosotros o a querer volver cuanto antes...",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/4248",
+      "itinerary": [
+        {
+          "step": "Cerca de ti",
+          "pois": [
+            "Hotel Palace of the Marquis of La Rambla"
+          ]
+        },
+        {
+          "step": "A tu alrededor",
+          "pois": [
+            "Alojamientos",
+            "Palacios y casas señoriales",
+            "Iglesias y conventos",
+            "Museos",
+            "Miradores",
+            "Otros lugares de interés"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "trip/4249",
+      "name": "Viaje Promocional",
+      "description": "Descubre Úbeda. Ciudad Patrimonio de la Humanidad.",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/4249",
+      "itinerary": [
+        {
+          "step": "Cerca de ti",
+          "pois": [
+            "Hotel Palace of the Marquis of La Rambla",
+            "Andalusian Art Museum House"
+          ]
+        },
+        {
+          "step": "A tu alrededor",
+          "pois": [
+            "Palace of the Marquess of Contadero",
+            "Vela de los Cobos Palace",
+            "Orozco Palace",
+            "Church of San Pedro",
+            "Royal Monastery of Santa Clara",
+            "Anguis de Medinilla Palace",
+            "Church of Santo Domingo",
+            "House of the Morales",
+            "Palacio de los Medinilla",
+            "Interpretation Center \"The Walls of Úbeda: Tower of the Portillo del Santo Cristo\""
+          ]
+        }
+      ]
+    },
+    {
+      "id": "trip/4250",
+      "name": "Disfruta Úbeda",
+      "description": "Un paseo por Úbeda es perderse en una de las ciudades más monumentales de Andalucí­a. Sus iglesias, conventos, palacios, casas señoriales, museos y animadas calles te animarán a quedarte con nosotros o a querer volver cuanto antes...",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/4250",
+      "itinerary": [
+        {
+          "step": "Cerca de ti",
+          "pois": [
+            "Hotel Álvaro de Torres"
+          ]
+        },
+        {
+          "step": "A tu alrededor",
+          "pois": [
+            "Alojamientos",
+            "Palacios y casas señoriales",
+            "Iglesias y conventos",
+            "Museos",
+            "Miradores",
+            "Otros lugares de interés"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "trip/4251",
+      "name": "Viaje Promocional",
+      "description": "Descubre Úbeda. Ciudad Patrimonio de la Humanidad.",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/4251",
+      "itinerary": [
+        {
+          "step": "Cerca de ti",
+          "pois": [
+            "Hotel Álvaro de Torres",
+            "Anguis de Medinilla Palace",
+            "Royal Monastery of Santa Clara"
+          ]
+        },
+        {
+          "step": "A tu alrededor",
+          "pois": [
+            "Vela de los Cobos Palace",
+            "Water Synagogue",
+            "Palace of the Marquess of Contadero",
+            "Church of San Pedro",
+            "Hotel Palacio de Úbeda G.L. Restaurant \"El Ábside\"",
+            "Andalusian Art Museum House"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "trip/4252",
+      "name": "Disfruta Úbeda",
+      "description": "Un paseo por Úbeda es perderse en una de las ciudades más monumentales de Andalucí­a. Sus iglesias, conventos, palacios, casas señoriales, museos y animadas calles te animarán a quedarte con nosotros o a querer volver cuanto antes...",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/4252",
+      "itinerary": [
+        {
+          "step": "Cerca de ti",
+          "pois": [
+            "Santa María de Úbeda Hostel"
+          ]
+        },
+        {
+          "step": "A tu alrededor",
+          "pois": [
+            "Alojamientos",
+            "Palacios y casas señoriales",
+            "Iglesias y conventos",
+            "Museos",
+            "Miradores",
+            "Otros lugares de interés"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "trip/4253",
+      "name": "Viaje Promocional",
+      "description": "Descubre Úbeda. Ciudad Patrimonio de la Humanidad.",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/4253",
+      "itinerary": [
+        {
+          "step": "Cerca de ti",
+          "pois": [
+            "Santa María de Úbeda Hostel",
+            "Vázquez de Molina Palace",
+            "Basilica of Saint Mary of the Royal Alcazars"
+          ]
+        },
+        {
+          "step": "A tu alrededor",
+          "pois": [
+            "Palace of the Marquis of Mancera",
+            "House of the Morales",
+            "Church of Santo Domingo",
+            "Church of San Lorenzo",
+            "House of the Towers",
+            "Puerta de Granada",
+            "House of Juan de Valencia"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "trip/4254",
+      "name": "Disfruta Úbeda",
+      "description": "Un paseo por Úbeda es perderse en una de las ciudades más monumentales de Andalucí­a. Sus iglesias, conventos, palacios, casas señoriales, museos y animadas calles te animarán a quedarte con nosotros o a querer volver cuanto antes...",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/4254",
+      "itinerary": [
+        {
+          "step": "Cerca de ti",
+          "pois": [
+            "CR Cortijo Spiritu Santo"
+          ]
+        },
+        {
+          "step": "A tu alrededor",
+          "pois": [
+            "Alojamientos",
+            "Palacios y casas señoriales",
+            "Iglesias y conventos",
+            "Museos",
+            "Miradores",
+            "Otros lugares de interés"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "trip/4255",
+      "name": "Viaje Promocional",
+      "description": "Descubre Úbeda. Ciudad Patrimonio de la Humanidad.",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/4255",
+      "itinerary": [
+        {
+          "step": "Cerca de ti",
+          "pois": [
+            "CR Cortijo Spiritu Santo",
+            "Úbeda - Heritage City"
+          ]
+        },
+        {
+          "step": "A tu alrededor",
+          "pois": [
+            "Hospital de Santiago",
+            "Basilica of Saint Mary of the Royal Alcazars",
+            "Archaeological Museum - Mudéjar House",
+            "Walls and Losal Gate",
+            "Anguis de Medinilla Palace",
+            "San Miguel Church"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "trip/4256",
+      "name": "Disfruta Úbeda",
+      "description": "Un paseo por Úbeda es perderse en una de las ciudades más monumentales de Andalucí­a. Sus iglesias, conventos, palacios, casas señoriales, museos y animadas calles te animarán a quedarte con nosotros o a querer volver cuanto antes...",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/4256",
+      "itinerary": [
+        {
+          "step": "Cerca de ti",
+          "pois": [
+            "CR La Casería de Tito"
+          ]
+        },
+        {
+          "step": "A tu alrededor",
+          "pois": [
+            "Alojamientos",
+            "Palacios y casas señoriales",
+            "Iglesias y conventos",
+            "Museos",
+            "Miradores",
+            "Otros lugares de interés"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "trip/4257",
+      "name": "Viaje Promocional",
+      "description": "Descubre Úbeda. Ciudad Patrimonio de la Humanidad.",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/4257",
+      "itinerary": [
+        {
+          "step": "Cerca de ti",
+          "pois": [
+            "CR La Casería de Tito",
+            "Úbeda - Heritage City"
+          ]
+        },
+        {
+          "step": "A tu alrededor",
+          "pois": [
+            "Hospital de Santiago",
+            "Basilica of Saint Mary of the Royal Alcazars",
+            "Archaeological Museum - Mudéjar House",
+            "Walls and Losal Gate",
+            "Anguis de Medinilla Palace",
+            "San Miguel Church"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "trip/4258",
+      "name": "Disfruta Úbeda",
+      "description": "Un paseo por Úbeda es perderse en una de las ciudades más monumentales de Andalucí­a. Sus iglesias, conventos, palacios, casas señoriales, museos y animadas calles te animarán a quedarte con nosotros o a querer volver cuanto antes...",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/4258",
+      "itinerary": [
+        {
+          "step": "Cerca de ti",
+          "pois": [
+            "Paco Tito Pottery Museum"
+          ]
+        },
+        {
+          "step": "A tu alrededor",
+          "pois": [
+            "Alojamientos",
+            "Palacios y casas señoriales",
+            "Iglesias y conventos",
+            "Museos",
+            "Miradores",
+            "Otros lugares de interés"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "trip/4259",
+      "name": "Viaje Promocional",
+      "description": "Descubre Úbeda. Ciudad Patrimonio de la Humanidad.",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/4259",
+      "itinerary": [
+        {
+          "step": "Cerca de ti",
+          "pois": [
+            "Paco Tito Pottery Museum",
+            "Church of San Nicolás",
+            "Valencia Street"
+          ]
+        },
+        {
+          "step": "A tu alrededor",
+          "pois": [
+            "Convent of the Conception",
+            "Church of San Millán",
+            "Octagonal Tower",
+            "Palacio de los Bussianos",
+            "Palace of Don Luis de la Cueva",
+            "Olive Oil and Olive Grove Interpretation Center",
+            "Walls and Losal Gate",
+            "Abastos Market",
+            "Huerto del Carmen"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "trip/4260",
+      "name": "Disfruta Úbeda",
+      "description": "Un paseo por Úbeda es perderse en una de las ciudades más monumentales de Andalucí­a. Sus iglesias, conventos, palacios, casas señoriales, museos y animadas calles te animarán a quedarte con nosotros o a querer volver cuanto antes...",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/4260",
+      "itinerary": [
+        {
+          "step": "Cerca de ti",
+          "pois": [
+            "Hospital de Santiago"
+          ]
+        },
+        {
+          "step": "A tu alrededor",
+          "pois": [
+            "Alojamientos",
+            "Palacios y casas señoriales",
+            "Iglesias y conventos",
+            "Museos",
+            "Miradores",
+            "Otros lugares de interés"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "trip/4261",
+      "name": "Viaje Promocional",
+      "description": "Descubre Úbeda. Ciudad Patrimonio de la Humanidad.",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/4261",
+      "itinerary": [
+        {
+          "step": "Cerca de ti",
+          "pois": [
+            "Hospital de Santiago",
+            "Plaza de Toros de Úbeda",
+            "Church of Saint John the Baptist",
+            "North Park",
+            "Úbeda Bus Station"
+          ]
+        },
+        {
+          "step": "A tu alrededor",
+          "pois": [
+            "Ancient Butcheries",
+            "Church of San Nicolás",
+            "Palacio de los Bussianos",
+            "Church and Convent of the Most Holy Trinity",
+            "Church of San Isidoro",
+            "Clock Tower",
+            "Ortega's Head Groom Cover",
+            "Post and Telegraph Building",
+            "Úbeda Parking Lots"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "trip/4262",
+      "name": "Disfruta Úbeda",
+      "description": "Un paseo por Úbeda es perderse en una de las ciudades más monumentales de Andalucí­a. Sus iglesias, conventos, palacios, casas señoriales, museos y animadas calles te animarán a quedarte con nosotros o a querer volver cuanto antes...",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/4262",
+      "itinerary": [
+        {
+          "step": "Cerca de ti",
+          "pois": [
+            "Sacra Capilla del Salvador"
+          ]
+        },
+        {
+          "step": "A tu alrededor",
+          "pois": [
+            "Alojamientos",
+            "Palacios y casas señoriales",
+            "Iglesias y conventos",
+            "Museos",
+            "Miradores",
+            "Otros lugares de interés"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "trip/4263",
+      "name": "Viaje Promocional",
+      "description": "Descubre Úbeda. Ciudad Patrimonio de la Humanidad.",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/4263",
+      "itinerary": [
+        {
+          "step": "Cerca de ti",
+          "pois": [
+            "Sacra Capilla del Salvador",
+            "Dean Ortega Palace. Tourism Parador",
+            "Santa Lucía Viewpoints",
+            "Palacio de los Manueles"
+          ]
+        },
+        {
+          "step": "A tu alrededor",
+          "pois": [
+            "Vázquez de Molina Palace",
+            "Palace of the Marquis of Mancera",
+            "Basilica of Saint Mary of the Royal Alcazars",
+            "Hospital of the Honorable Old People of El Salvador",
+            "Francisco de los Cobos Palace",
+            "Renaissance Fountain",
+            "Old Granary"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "trip/4264",
+      "name": "Disfruta Úbeda",
+      "description": "Un paseo por Úbeda es perderse en una de las ciudades más monumentales de Andalucí­a. Sus iglesias, conventos, palacios, casas señoriales, museos y animadas calles te animarán a quedarte con nosotros o a querer volver cuanto antes...",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/4264",
+      "itinerary": [
+        {
+          "step": "Cerca de ti",
+          "pois": [
+            "Water Synagogue"
+          ]
+        },
+        {
+          "step": "A tu alrededor",
+          "pois": [
+            "Alojamientos",
+            "Palacios y casas señoriales",
+            "Iglesias y conventos",
+            "Museos",
+            "Miradores",
+            "Otros lugares de interés"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "trip/4265",
+      "name": "Viaje Promocional",
+      "description": "Descubre Úbeda. Ciudad Patrimonio de la Humanidad.",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/4265",
+      "itinerary": [
+        {
+          "step": "Cerca de ti",
+          "pois": [
+            "Water Synagogue",
+            "Church of Saint Paul",
+            "Old Town Hall Buildings"
+          ]
+        },
+        {
+          "step": "A tu alrededor",
+          "pois": [
+            "Archaeological Museum - Mudéjar House",
+            "Vela de los Cobos Palace",
+            "Hotel Palacio de Úbeda G.L. Restaurant \"El Ábside\"",
+            "Old Convent of San Andrés",
+            "Palacio de los Torrente",
+            "Anguis de Medinilla Palace",
+            "Palacio de los Porceles"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "trip/4266",
+      "name": "Disfruta Úbeda",
+      "description": "Un paseo por Úbeda es perderse en una de las ciudades más monumentales de Andalucí­a. Sus iglesias, conventos, palacios, casas señoriales, museos y animadas calles te animarán a quedarte con nosotros o a querer volver cuanto antes...",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/4266",
+      "itinerary": [
+        {
+          "step": "Cerca de ti",
+          "pois": [
+            "Church of San Lorenzo"
+          ]
+        },
+        {
+          "step": "A tu alrededor",
+          "pois": [
+            "Alojamientos",
+            "Palacios y casas señoriales",
+            "Iglesias y conventos",
+            "Museos",
+            "Miradores",
+            "Otros lugares de interés"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "trip/4267",
+      "name": "Viaje Promocional",
+      "description": "Descubre Úbeda. Ciudad Patrimonio de la Humanidad.",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/4267",
+      "itinerary": [
+        {
+          "step": "Cerca de ti",
+          "pois": [
+            "Church of San Lorenzo",
+            "House of the Towers",
+            "Puerta de Granada",
+            "San Lorenzo Viewpoints"
+          ]
+        },
+        {
+          "step": "A tu alrededor",
+          "pois": [
+            "Palacio de los Medinilla",
+            "Interpretation Center \"The Walls of Úbeda: Tower of the Portillo del Santo Cristo\"",
+            "Old Convent of San Francisco",
+            "Cava Gardens and Children's Playground"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "trip/4268",
+      "name": "Disfruta Úbeda",
+      "description": "Un paseo por Úbeda es perderse en una de las ciudades más monumentales de Andalucí­a. Sus iglesias, conventos, palacios, casas señoriales, museos y animadas calles te animarán a quedarte con nosotros o a querer volver cuanto antes...",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/4268",
+      "itinerary": [
+        {
+          "step": "Cerca de ti",
+          "pois": [
+            "Basilica of Saint Mary of the Royal Alcazars"
+          ]
+        },
+        {
+          "step": "A tu alrededor",
+          "pois": [
+            "Alojamientos",
+            "Palacios y casas señoriales",
+            "Iglesias y conventos",
+            "Museos",
+            "Miradores",
+            "Otros lugares de interés"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "trip/4269",
+      "name": "Viaje Promocional",
+      "description": "Descubre Úbeda. Ciudad Patrimonio de la Humanidad.",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/4269",
+      "itinerary": [
+        {
+          "step": "Cerca de ti",
+          "pois": [
+            "Basilica of Saint Mary of the Royal Alcazars",
+            "Vázquez de Molina Palace",
+            "Cárcel Del Obispo",
+            "Old Granary"
+          ]
+        },
+        {
+          "step": "A tu alrededor",
+          "pois": [
+            "Palace of the Marquis of Mancera",
+            "House of the Morales",
+            "Palacio de los Carvajales",
+            "Church of Santo Domingo",
+            "Church of San Lorenzo",
+            "House of the Towers",
+            "Puerta de Granada",
+            "House of Juan de Valencia"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "trip/4406",
+      "name": "Paseo entre murallas y olivares.",
+      "description": "Vistas fotográficas desde los distintos miradores hacia la ciudad y el valle del Guadalquivir, ofreciendo una vista panorámica y un paisaje repleto de olivares y huertas. Los distintos tramos de muralla descubren acogedores rincones con históricas puertas y torreones. ",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/4406",
+      "itinerary": [
+        {
+          "step": "Clock Tower",
+          "pois": []
+        },
+        {
+          "step": "Octagonal Tower",
+          "pois": []
+        },
+        {
+          "step": "Walls and Losal Gate",
+          "pois": []
+        },
+        {
+          "step": "Huerto del Carmen",
+          "pois": []
+        },
+        {
+          "step": "Santa Lucía Gate",
+          "pois": []
+        },
+        {
+          "step": "Santa Lucía Viewpoints",
+          "pois": []
+        },
+        {
+          "step": "Viewpoint Round",
+          "pois": []
+        },
+        {
+          "step": "Saludeja Fountain",
+          "pois": []
+        },
+        {
+          "step": "Puerta de Granada",
+          "pois": []
+        },
+        {
+          "step": "San Lorenzo Viewpoints",
+          "pois": []
+        },
+        {
+          "step": "Viewpoint and monument of Álferez Rojas Navarrete",
+          "pois": []
+        },
+        {
+          "step": "Interpretation Center \"The Walls of Úbeda: Tower of the Portillo del Santo Cristo\"",
+          "pois": []
+        }
+      ]
+    },
+    {
+      "id": "trip/4407",
+      "name": "SABOREA ÚBEDA",
+      "description": "Disfruta de nuestra gastronomía en la gran variedad de restaurantes y bares de tapas propios de la provincia, con productos locales que no dejarán indiferente al comensal.",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/4407",
+      "itinerary": [
+        {
+          "step": "Restaurants",
+          "pois": [
+            "Restaurant \"Asador de Santiago\"",
+            "Restaurant \"Four Seasons\"",
+            "Restaurant Grill \"Al-Andalus\"",
+            "Restaurant Grill \"El Trujal\"",
+            "Restaurant \"Antique\"",
+            "Restaurant \"La Imprenta\"",
+            "Restaurant \"Cantina La Estación\"",
+            "Restaurant \"Casa Luciano\"",
+            "Restaurant \"Rosaleda de don Pedro\"",
+            "Restaurant \"Salón Condestable\"",
+            "Restaurant Mesón \"Gabino\"",
+            "D'Angelo Pizzeria Restaurant",
+            "Restaurant Pizzeria \"Venice\"",
+            "Restaurant \"El Zaguán\"",
+            "Restaurant Hermitage of Mother of God",
+            "Dean Ortega Palace. Tourism Parador"
+          ]
+        },
+        {
+          "step": "Tapas area",
+          "pois": [
+            "Royal Street Totem",
+            "Plaza 1º de Mayo tapas area",
+            "Tapas area at the Town Hall Square",
+            "Taperías area, Lower Street of El Salvador",
+            "Taperías area on Cristo Rey Avenue"
+          ]
+        },
+        {
+          "step": "Buy local products",
+          "pois": [
+            "Úbeda Pastry Shop",
+            "Los Baezanos Nougat Shop",
+            "Alejo & Doña Rosita Café",
+            "Croissant Bakery The Good Bread",
+            "Los Portalillos Pastry and Coffee Shop",
+            "Vandelvira Bakery",
+            "Paniaceite Bakery"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "trip/4413",
+      "name": "PARA DESCANSAR...",
+      "description": "Distintos alojamientos para pernoctar y descansar durante su visita; desde los más modernos con todo su equipamiento, a acogedores habitaciones en preciosos palacios renacentistas. ",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/4413",
+      "itinerary": [
+        {
+          "step": "Tourist Apartments \"El Losal\"",
+          "pois": []
+        },
+        {
+          "step": "Hotel Las Casas del Cónsul",
+          "pois": []
+        },
+        {
+          "step": "Hotel Las Casas del Cónsul",
+          "pois": []
+        },
+        {
+          "step": "Santa María de Úbeda Hostel",
+          "pois": []
+        },
+        {
+          "step": "Hotel Afán de Rivera",
+          "pois": []
+        },
+        {
+          "step": "Hotel María De Molina",
+          "pois": []
+        },
+        {
+          "step": "Hotel Nine Legends",
+          "pois": []
+        },
+        {
+          "step": "Yit El Postigo Hotel",
+          "pois": []
+        },
+        {
+          "step": "Tourist Apartments \"Palacio del Agua\"",
+          "pois": []
+        },
+        {
+          "step": "Ordoñez Sandoval Hotel",
+          "pois": []
+        },
+        {
+          "step": "Hotel Palace of the Marquis of La Rambla",
+          "pois": []
+        },
+        {
+          "step": "Hotel Ciudad de Úbeda",
+          "pois": []
+        },
+        {
+          "step": "Hotel La Paz",
+          "pois": []
+        },
+        {
+          "step": "Hotel Don Juan Boutique",
+          "pois": []
+        },
+        {
+          "step": "Tourist Apartments \"Fuente Redonda\"",
+          "pois": []
+        },
+        {
+          "step": "Apartamentos Turísticos\" Quotidianum\"",
+          "pois": []
+        },
+        {
+          "step": "Hotel Álvar Fáñez",
+          "pois": []
+        },
+        {
+          "step": "Hotel Álvaro de Torres",
+          "pois": []
+        },
+        {
+          "step": "Tourist Apartments \"Sol Real\"",
+          "pois": []
+        },
+        {
+          "step": "Tourist Apartments \"Architettura\"",
+          "pois": []
+        },
+        {
+          "step": "Yamaríes Inn",
+          "pois": []
+        },
+        {
+          "step": "Rosaleda De Don Pedro Hotel",
+          "pois": []
+        },
+        {
+          "step": "Dean Ortega Palace. Tourism Parador",
+          "pois": []
+        },
+        {
+          "step": "Hotel Palacio de Úbeda G.L. Restaurant \"El Ábside\"",
+          "pois": []
+        }
+      ]
+    },
+    {
+      "id": "trip/4419",
+      "name": "VISITAS GUIADAS",
+      "description": "Descubre la ciudad en las mejores manos.",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/4419",
+      "itinerary": [
+        {
+          "step": "Visit ubedaybaeza.com",
+          "pois": []
+        },
+        {
+          "step": "Vandelvira Tourism",
+          "pois": []
+        },
+        {
+          "step": "Semer Tourism",
+          "pois": []
+        },
+        {
+          "step": "Discover \n\nÚbeda",
+          "pois": []
+        },
+        {
+          "step": "Atlante",
+          "pois": []
+        },
+        {
+          "step": "Seturja",
+          "pois": []
+        },
+        {
+          "step": "Artisans",
+          "pois": []
+        },
+        {
+          "step": "A.P.I.T. Professional Association of Tourist Guides.",
+          "pois": []
+        },
+        {
+          "step": "Fenice",
+          "pois": []
+        },
+        {
+          "step": "Iberian Lynx Land",
+          "pois": []
+        }
+      ]
+    },
+    {
+      "id": "trip/4420",
+      "name": "RUTAS POR ÚBEDA",
+      "description": "Paseando por sus entramadas calles, la sorpresa aparece en cualquier esquina; un perfecto equilibrio entre el panorama renacentista, enriquecido por airosos volúmenes árabes, góticos y barrocos. Una muestra de la diversa impronta de civilizaciones que contribuyeron a la conformación de Úbeda.",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/4420",
+      "itinerary": [
+        {
+          "step": "Qué no perderte",
+          "pois": [
+            "Vázquez de Molina Palace",
+            "Plaza Vázquez de Molina",
+            "Renaissance Fountain",
+            "Dean Ortega Palace. Tourism Parador",
+            "Sacra Capilla del Salvador",
+            "Hospital of the Honorable Old People of El Salvador",
+            "Old Granary",
+            "Palace of the Marquis of Mancera",
+            "Cárcel Del Obispo",
+            "Basilica of Saint Mary of the Royal Alcazars",
+            "Pasea por la ciudad I",
+            "Pasea por la ciudad II",
+            "Pasea por la ciudad III",
+            "Pasea por la ciudad IV"
+          ]
+        },
+        {
+          "step": "I Barrios del Alcázar, San Lorenzo y Santo Domingo",
+          "pois": [
+            "Viewpoint Round",
+            "Saludeja Fountain",
+            "Palacio de los Carvajales",
+            "Puerta de Granada",
+            "House of the Towers",
+            "Church of San Lorenzo",
+            "San Lorenzo Viewpoints",
+            "Viewpoint and monument of Álferez Rojas Navarrete",
+            "Old Convent of San Francisco",
+            "Interpretation Center \"The Walls of Úbeda: Tower of the Portillo del Santo Cristo\"",
+            "Palacio de los Medinilla",
+            "Church of Santo Domingo",
+            "House of the Morales",
+            "Palace of the Marquess of Contadero",
+            "House of Juan de Valencia"
+          ]
+        },
+        {
+          "step": "II Barrios de San Pedro y San Isidoro",
+          "pois": [
+            "Plaza de San Pedro",
+            "Church of San Pedro",
+            "Orozco Palace",
+            "Ordoñez Sandoval Hotel",
+            "Hotel Palace of the Marquis of La Rambla",
+            "Plaza de Toros de Úbeda",
+            "Hospital de Santiago",
+            "Mesones and Obispo Cobos Streets",
+            "Old Convent of La Victoria",
+            "Church of San Isidoro",
+            "Plateresque Facade on Gradas Street",
+            "Plaza de Andalucía",
+            "Ancient Butcheries",
+            "Clock Tower",
+            "Church and Convent of the Most Holy Trinity"
+          ]
+        },
+        {
+          "step": "III Barrios de San Pablo y San Nicolás",
+          "pois": [
+            "Palace of Don Luis de la Cueva",
+            "Palacio de los Porceles",
+            "Octagonal Tower",
+            "Olive Oil and Olive Grove Interpretation Center",
+            "Post and Telegraph Building",
+            "Palacio de los Bussianos",
+            "Ortega's Head Groom Cover",
+            "Church of San Nicolás",
+            "Abastos Market",
+            "Convent of the Conception"
+          ]
+        },
+        {
+          "step": "IV Barrios de San Millán y Santo Tomás",
+          "pois": [
+            "Ruins of the Convent of La Merced",
+            "Church of San Millán",
+            "Huerto del Carmen",
+            "Santa Lucía Gate",
+            "Santa Lucía Viewpoints",
+            "Francisco de los Cobos Palace",
+            "Jewish Houses on Gradeta de Santo Tomás Street",
+            "Santo Tomas Archaeological Ruins Complex"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "trip/4421",
+      "name": "ÚBEDA EN FAMILIA",
+      "description": "Rutas alternativas para descubrir la Ciudad Monumental en todo su esplendor, a la vez que encontramos lugares de ocio y recreo para relajarse en familia y con los más pequeños.",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/4421",
+      "itinerary": [
+        {
+          "step": "Heritage Route",
+          "pois": [
+            "Ancient Butcheries",
+            "Clock Tower",
+            "Plateresque Facade on Gradas Street",
+            "Church of San Isidoro",
+            "Small playground",
+            "Hospital de Santiago",
+            "Option A",
+            "Option B"
+          ]
+        },
+        {
+          "step": "Route 1",
+          "pois": [
+            "Clock Tower",
+            "Plateresque Facade on Gradas Street",
+            "Church of San Isidoro",
+            "Small playground",
+            "Plaza de Toros de Úbeda",
+            "Hospital de Santiago",
+            "North Park"
+          ]
+        },
+        {
+          "step": "Route 2",
+          "pois": [
+            "Church and Convent of the Most Holy Trinity",
+            "Palacio de los Bussianos",
+            "Ortega's Head Groom Cover",
+            "Church of San Nicolás",
+            "Red Rooster Playground",
+            "Vandelvira Park"
+          ]
+        },
+        {
+          "step": "Route 3",
+          "pois": [
+            "Olive Oil and Olive Grove Interpretation Center",
+            "Cocolet game room and playroom",
+            "Octagonal Tower",
+            "Palace of Don Luis de la Cueva",
+            "Convent of the Conception",
+            "Church of Saint Paul",
+            "Archaeological Museum - Mudéjar House",
+            "Water Synagogue",
+            "House of the Granada Venegas",
+            "Convent and Museum of San Juan de la Cruz",
+            "Walls and Losal Gate",
+            "Church of San Millán",
+            "Paco Tito Pottery Museum"
+          ]
+        },
+        {
+          "step": "Route 4",
+          "pois": [
+            "Hotel Palace of the Marquis of La Rambla",
+            "Church of San Pedro",
+            "Hotel Palacio de Úbeda G.L. Restaurant \"El Ábside\"",
+            "Anguis de Medinilla Palace",
+            "Royal Monastery of Santa Clara",
+            "Ideal Cinema Theater",
+            "Vela de los Cobos Palace",
+            "Vázquez de Molina Palace",
+            "Church of Santo Domingo",
+            "Andalusian Art Museum House",
+            "Escape Room"
+          ]
+        },
+        {
+          "step": "Route 5",
+          "pois": [
+            "Interpretation Center \"The Walls of Úbeda: Tower of the Portillo del Santo Cristo\"",
+            "Cava Gardens and Children's Playground",
+            "Viewpoint and monument of Álferez Rojas Navarrete",
+            "San Lorenzo Viewpoints",
+            "Church of San Lorenzo",
+            "House of the Towers",
+            "Tiznajo Forge Workshop",
+            "Puerta de Granada",
+            "Plaza Vázquez de Molina",
+            "Santa Lucía Viewpoints",
+            "Huerto del Carmen Children's Park",
+            "Ronda Antonio Muñoz Molina Children's Park"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "trip/4422",
+      "name": "DE COMPRAS",
+      "description": "Úbeda es una ciudad con un comercio vivo. Con variedad y abundancia de locales. Lugares preparados para poder realizar un descanso, tomar una tapa o un café, o jugar con los más pequeños en un parque. También comprar productos locales en obradores, panaderías o talleres artesanales.",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/4422",
+      "itinerary": [
+        {
+          "step": "Royal Street Totem",
+          "pois": []
+        },
+        {
+          "step": "Trinidad Street",
+          "pois": []
+        },
+        {
+          "step": "Mesones and Obispo Cobos Streets",
+          "pois": []
+        },
+        {
+          "step": "City of Linares Avenue",
+          "pois": []
+        },
+        {
+          "step": "Ramón y Cajal Avenue",
+          "pois": []
+        },
+        {
+          "step": "Avenida de la Libertad",
+          "pois": []
+        },
+        {
+          "step": "Local products: food",
+          "pois": [
+            "Abastos Market",
+            "Convent of the Conception",
+            "Royal Monastery of Santa Clara",
+            "Royal Street Totem",
+            "Vandelvira Bakery",
+            "Paniaceite Bakery",
+            "Los Portalillos Pastry and Coffee Shop",
+            "Úbeda Pastry Shop",
+            "Croissant Bakery The Good Bread",
+            "Los Baezanos Nougat Shop",
+            "Alejo & Doña Rosita Café"
+          ]
+        },
+        {
+          "step": "Local products: handicrafts and souvenirs",
+          "pois": []
+        }
+      ]
+    },
+    {
+      "id": "trip/4430",
+      "name": "Plaza Vázquez de Molina",
+      "description": "La emblemática plaza que constituye el mayor centro neurálgico del casco antiguo de la ciudad. A su alrededor se erigen los edificios más importantes y representativos. Muestra actual del poder de la nobleza pujante ubetense del momento.",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/4430",
+      "itinerary": [
+        {
+          "step": "Cerca",
+          "pois": [
+            "Plaza Vázquez de Molina",
+            "Vázquez de Molina Palace",
+            "Basilica of Saint Mary of the Royal Alcazars",
+            "Cárcel Del Obispo",
+            "Palace of the Marquis of Mancera",
+            "Old Granary",
+            "Renaissance Fountain",
+            "Sacra Capilla del Salvador",
+            "Dean Ortega Palace. Tourism Parador",
+            "Atlante",
+            "Artisans",
+            "Seturja"
+          ]
+        },
+        {
+          "step": "Alrededor",
+          "pois": [
+            "Hospital of the Honorable Old People of El Salvador",
+            "Santa Lucía Viewpoints",
+            "Santa Lucía Gate",
+            "Francisco de los Cobos Palace",
+            "Palacio de los Manueles"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "trip/4433",
+      "name": "ARTESANÍA",
+      "description": "Talleres de alfarería, esparto, forja, cantería...",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/4433",
+      "itinerary": [
+        {
+          "step": "SCULPTURE AND RESTORATION",
+          "pois": [
+            "Sculpture and Restoration Workshop"
+          ]
+        },
+        {
+          "step": "ESPARTO",
+          "pois": [
+            "UBEDÍES handicrafts, esparto workshop."
+          ]
+        },
+        {
+          "step": "GOLDSMITHING AND JEWELRY",
+          "pois": [
+            "Ferrandidz Jewelry"
+          ]
+        },
+        {
+          "step": "MUDÉJAR WOODEN CEILINGS",
+          "pois": [
+            "Mudéjar coffered ceilings"
+          ]
+        },
+        {
+          "step": "FORGING WORKSHOPS",
+          "pois": [
+            "Tiznajo Forge Workshop",
+            "Forging Workshop Úbeda.",
+            "ARTESUR Forge Workshop and Store"
+          ]
+        },
+        {
+          "step": "POTTERY",
+          "pois": [
+            "Alfar Alfonso Góngora",
+            "Melchor Tito Pottery",
+            "Pedro Góngora Pottery",
+            "Almarza Pottery",
+            "Fco. Expósito Tito Pottery",
+            "Paco Tito Pottery Museum",
+            "Valencia Street",
+            "Plaza de los Olleros",
+            "Juan Tito Pottery"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "trip/4434",
+      "name": "CULTURA Y OCIO",
+      "description": "PINCHA EN EL LINK PARA CONSULTAR LAS ACTIVIDADES CULTURALES Y DEPORTIVAS QUE PUEDES DISFRUTAR.",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/4434",
+      "itinerary": [
+        {
+          "step": "UPCOMING ACTIVITIES",
+          "pois": [
+            "BULLRING ACTIVITIES"
+          ]
+        },
+        {
+          "step": "BUILDINGS FOR CULTURE AND LEISURE",
+          "pois": [
+            "Ideal Cinema Theater",
+            "AUDITORIUM OF THE HOSPITAL OF SANTIAGO"
+          ]
+        },
+        {
+          "step": "SPORTS FACILITIES",
+          "pois": [
+            "UBEDA SPORT GYM",
+            "MUNICIPAL SPORTS CENTER \"EL VIEJO\"",
+            "North Park",
+            "Municipal swimming pools",
+            "Municipal sports facilities",
+            "AQUASPORT",
+            "FACTORY GYM-SPA",
+            "Vandelvira Park"
+          ]
+        },
+        {
+          "step": "OTHERS",
+          "pois": [
+            "Escape Room"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "trip/4435",
+      "name": "ANIMALES DE COMPAÑÍA",
+      "description": "Podremos encontrar VETERINARIOS, PELUQUERÍAS Y BAÑO PERROS, ALIMENTACIÓN ANIMALES...",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/4435",
+      "itinerary": []
+    },
+    {
+      "id": "trip/4436",
+      "name": "OTROS SERVICIOS",
+      "description": "Se incluyen gasolineras, Policía, supermercados, bomberos...",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/4436",
+      "itinerary": [
+        {
+          "step": "CIVIL PROTECTION",
+          "pois": [
+            "Civil Protection"
+          ]
+        },
+        {
+          "step": "FIREFIGHTERS",
+          "pois": [
+            "Firefighters",
+            "TAXI STANDS",
+            "BUS STATION"
+          ]
+        },
+        {
+          "step": "POLICE",
+          "pois": [
+            "Old Granary"
+          ]
+        },
+        {
+          "step": "GAS STATIONS",
+          "pois": [
+            "RED AZUL Gas Station",
+            "Carrefour Gas Station",
+            "Gas station.",
+            "Gas station",
+            "San Miguel Gas Station",
+            "El Polígono Gas Station",
+            "ELECTRIC VEHICLE CHARGING POINTS"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "trip/4438",
+      "name": "Plaza de San Lorenzo",
+      "description": "La plaza en sí se sitúa frente al Palacio de la Casa de las Torres. Esta bonita zona abarca también las entramadas cuestas que llevan a la iglesia con el mismo nombre, y hasta la puerta de Granada por el lateral del palacio.",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/4438",
+      "itinerary": [
+        {
+          "step": "Cerca",
+          "pois": [
+            "Plaza de San Lorenzo",
+            "House of the Towers",
+            "Church of San Lorenzo",
+            "San Lorenzo Viewpoints"
+          ]
+        },
+        {
+          "step": "Alrededor",
+          "pois": [
+            "Puerta de Granada",
+            "Palacio de los Medinilla"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "trip/4439",
+      "name": "Plaza de Andalucía",
+      "description": "Uno de los puntos de encuentro más importantes de la ciudad, y donde confluyen tres de las vías principales de la zona.",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/4439",
+      "itinerary": [
+        {
+          "step": "Cerca",
+          "pois": [
+            "Plaza de Andalucía",
+            "Clock Tower",
+            "Ancient Butcheries"
+          ]
+        },
+        {
+          "step": "Alrededor",
+          "pois": [
+            "Church and Convent of the Most Holy Trinity",
+            "Church of San Isidoro"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "trip/4440",
+      "name": "Santo Domingo",
+      "description": "Delante de la actual sede de la Unión de Cofradías. La portada frente a la que se abre la plaza destaca por ser la primera en estilo plateresco, y también por su calidad. ",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/4440",
+      "itinerary": [
+        {
+          "step": "Cerca ",
+          "pois": [
+            "Santo Domingo Square",
+            "Church of Santo Domingo",
+            "House of the Morales"
+          ]
+        },
+        {
+          "step": "Alrededor",
+          "pois": [
+            "Palace of the Marquess of Contadero",
+            "Andalusian Art Museum House"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "trip/4441",
+      "name": "Plaza de San Pedro",
+      "description": "Esta acogedora plaza reúne los edificios de la Iglesia de San Pedro a un lado, al frente el Palacio de los Orozco y al otro lado, Santa Clara. Un poco más adelante, en la inmediatez de la iglesia, encontramos también el Palacio de los Condes de Guadiana.",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/4441",
+      "itinerary": [
+        {
+          "step": "Cerca",
+          "pois": [
+            "Plaza de San Pedro",
+            "Church of San Pedro",
+            "Orozco Palace"
+          ]
+        },
+        {
+          "step": "Alrededor",
+          "pois": [
+            "Royal Monastery of Santa Clara",
+            "Hotel Palacio de Úbeda G.L. Restaurant \"El Ábside\"",
+            "Royal Street Totem",
+            "Ideal Cinema Theater",
+            "Vela de los Cobos Palace"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "trip/4442",
+      "name": "Palacio Anguís Medinilla",
+      "description": "Plaza enmarcada por el Convento de Santa Clara y el Palacio Anguís de Medinilla. ",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/4442",
+      "itinerary": [
+        {
+          "step": "Cerca",
+          "pois": [
+            "Anguis de Medinilla Palace",
+            "Plaza Álvaro de Torres",
+            "Royal Monastery of Santa Clara",
+            "Hotel Álvaro de Torres"
+          ]
+        },
+        {
+          "step": "Alrededor",
+          "pois": [
+            "Ideal Cinema Theater",
+            "Vela de los Cobos Palace",
+            "Plaza de San Pedro"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "trip/4443",
+      "name": "Hospital de Santiago",
+      "description": "Uno de los lugares más transitados, en una zona comercial importante donde está presente el antiguo Hospital de Santiago, uno de los centros culturales más potentes.",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/4443",
+      "itinerary": [
+        {
+          "step": "Cerca",
+          "pois": [
+            "Hospital de Santiago",
+            "Plaza de Toros de Úbeda"
+          ]
+        },
+        {
+          "step": "Alrededor",
+          "pois": [
+            "Church of Saint John the Baptist",
+            "Old Convent of La Victoria",
+            "Church of San Isidoro"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "trip/4444",
+      "name": "BIENVENIDO A ÚBEDA - Tarjeta NFC",
+      "description": "Es la ciudad monumental por excelencia, exponente máximo del Renacimiento andaluz y Patrimonio de la Humanidad de la UNESCO. Zona de Interés Artesanal de Andalucía y tierra de la Gastronomía y el Aceite de Oliva Virgen Extra. De viva cultura y el destino perfecto para los amantes de lo auténtico.",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/4444",
+      "itinerary": [
+        {
+          "step": "1. Qué no perderte",
+          "pois": [
+            "1.1 Plaza Vázquez de Molina",
+            "1.2 Plaza Primero de Mayo",
+            "1.3 Plaza del Ayuntamiento",
+            "1.4 Muralla; torres y miradores",
+            "1.5 Centros Culturales",
+            "1.6 Otros imprescindibles"
+          ]
+        },
+        {
+          "step": "2. Descubre más ",
+          "pois": [
+            "Ancient Butcheries",
+            "Plaza de Andalucía",
+            "Church and Convent of the Most Holy Trinity",
+            "Palacio de los Bussianos",
+            "Olive Oil and Olive Grove Interpretation Center",
+            "Convent of the Conception",
+            "Palacio de los Torrente",
+            "Water Synagogue",
+            "Church of San Millán",
+            "Convent and Museum of San Juan de la Cruz",
+            "San Miguel Church",
+            "Church of Santo Domingo",
+            "Anguis de Medinilla Palace",
+            "Royal Monastery of Santa Clara",
+            "Church of San Pedro",
+            "Orozco Palace",
+            "Palacio de los Medinilla",
+            "Plaza de Toros de Úbeda",
+            "Paco Tito Pottery Museum",
+            "Valencia Street",
+            "Andalusian Art Museum House",
+            "Palacio de los Carvajales",
+            "Cava Gardens and Children's Playground",
+            "Conoce en profundidad"
+          ]
+        },
+        {
+          "step": "3. Dónde comer",
+          "pois": [
+            "Restaurant \"Four Seasons\"",
+            "Restaurant \"El Zaguán\"",
+            "Restaurant Pizzeria \"Venice\"",
+            "Restaurant \"Asador de Santiago\"",
+            "Restaurant Grill \"Al-Andalus\"",
+            "Restaurant Grill \"El Trujal\"",
+            "Restaurant \"La Imprenta\"",
+            "Royal Street Totem",
+            "D'Angelo Pizzeria Restaurant",
+            "Restaurant \"Antique\"",
+            "Tapas area at the Town Hall Square",
+            "Restaurant \"Casa Luciano\"",
+            "Restaurant \"Rosaleda de don Pedro\"",
+            "Plaza 1º de Mayo tapas area",
+            "Cocolet game room and playroom",
+            "Restaurant \"Cantina La Estación\"",
+            "Restaurant Mesón \"Gabino\"",
+            "Restaurant \"Salón Condestable\"",
+            "Taperías area, Lower Street of El Salvador",
+            "Taperías area on Cristo Rey Avenue",
+            "Restaurant Hermitage of Mother of God",
+            "Dean Ortega Palace. Tourism Parador"
+          ]
+        },
+        {
+          "step": "4. Dónde dormir",
+          "pois": [
+            "Hotel Álvar Fáñez",
+            "Hotel Don Juan Boutique",
+            "Hotel Ciudad de Úbeda",
+            "Hotel Arcco Ubeda",
+            "Yit El Postigo Hotel",
+            "Hotel Nine Legends",
+            "Hotel María De Molina",
+            "Rosaleda De Don Pedro Hotel",
+            "Hotel Afán de Rivera",
+            "Hotel La Paz",
+            "Hotel Las Casas del Cónsul",
+            "Ordoñez Sandoval Hotel",
+            "Hotel Palace of the Marquis of La Rambla",
+            "Hotel Álvaro de Torres",
+            "Hotel Palacio de Úbeda G.L. Restaurant \"El Ábside\"",
+            "Dean Ortega Palace. Tourism Parador",
+            "Yamaríes Inn",
+            "Santa María de Úbeda Hostel",
+            "Tourist Apartments \"Palacio del Agua\"",
+            "Tourist Apartments \"Sol de Mayo\"",
+            "Tourist Apartments \"Architettura\"",
+            "Apartamentos Turísticos\" Quotidianum\"",
+            "Tourist Apartments \"El Losal\"",
+            "Tourist Apartments \"Fuente Redonda\"",
+            "Tourist Apartments \"Sol Real\"",
+            "CR Cortijo Spiritu Santo",
+            "CR La Casería de Tito"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "trip/4445",
+      "name": "Casa de la Tercia y torreón",
+      "description": "Actual Centro de Interpretación Olivar y Aceite y, al lado, la torre octogonal. ",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/4445",
+      "itinerary": [
+        {
+          "step": "Cerca",
+          "pois": [
+            "Olive Oil and Olive Grove Interpretation Center",
+            "Octagonal Tower",
+            "Church and Convent of the Most Holy Trinity",
+            "Convent of the Conception"
+          ]
+        },
+        {
+          "step": "Alrededor",
+          "pois": [
+            "Palacio de los Bussianos",
+            "Church of San Nicolás",
+            "Archaeological Museum - Mudéjar House",
+            "Royal Street Totem"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "trip/4446",
+      "name": "Yacimiento Arqueológico Eras del Alcázar",
+      "description": "Es el yacimiento más importante de nuestra comunidad en el ámbito histórico principalmente por dos motivos: su antigüedad y su estado de conservación.",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/4446",
+      "itinerary": [
+        {
+          "step": "Cerca",
+          "pois": [
+            "Archaeological Site \"Eras del Alcázar\"",
+            "Viewpoint Round",
+            "Santa Lucía Viewpoints"
+          ]
+        },
+        {
+          "step": "Alrededor",
+          "pois": [
+            "Plaza Vázquez de Molina"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "trip/4447",
+      "name": "Plaza de Santa Lucía",
+      "description": "Extraordinaria plaza ubicada en la entrada trasera al Palacio de Francisco de los Cobos, y con unas maravillosas vistas al mar de olivos que embellecen a la ciudad de Úbeda. En el centro de su coqueta explanada se alza un farol de forja y una sencilla fuente con dos caños.",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/4447",
+      "itinerary": [
+        {
+          "step": "Cerca",
+          "pois": [
+            "Santa Lucía Square",
+            "Santa Lucía Gate",
+            "Santa Lucía Viewpoints",
+            "Santo Tomas Archaeological Ruins Complex",
+            "Jewish Houses on Gradeta de Santo Tomás Street",
+            "Francisco de los Cobos Palace",
+            "Hospital of the Honorable Old People of El Salvador"
+          ]
+        },
+        {
+          "step": "Alrededor",
+          "pois": [
+            "Sacra Capilla del Salvador",
+            "Plaza Vázquez de Molina",
+            "Old Granary",
+            "Palace of the Marquis of Mancera",
+            "Cárcel Del Obispo",
+            "Basilica of Saint Mary of the Royal Alcazars",
+            "Vázquez de Molina Palace",
+            "Palacio de los Manueles"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "trip/4448",
+      "name": "I Barrios del Alcázar, San Lorenzo y Santo Domingo",
+      "description": "Paseando por sus entramadas calles, la sorpresa aparece en cualquier esquina; un perfecto equilibrio entre el panorama renacentista, enriquecido por airosos volúmenes árabes, góticos y barrocos. Una muestra de la diversa impronta de civilizaciones que contribuyeron a la conformación de Úbeda.",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/4448",
+      "itinerary": [
+        {
+          "step": "I Barrios del Alcázar, San Lorenzo y Santo Domingo",
+          "pois": [
+            "Viewpoint Round",
+            "Saludeja Fountain",
+            "Palacio de los Carvajales",
+            "Puerta de Granada",
+            "House of the Towers",
+            "Church of San Lorenzo",
+            "San Lorenzo Viewpoints",
+            "Viewpoint and monument of Álferez Rojas Navarrete",
+            "Old Convent of San Francisco",
+            "Interpretation Center \"The Walls of Úbeda: Tower of the Portillo del Santo Cristo\"",
+            "Palacio de los Medinilla",
+            "Church of Santo Domingo",
+            "House of the Morales",
+            "Palace of the Marquess of Contadero",
+            "House of Juan de Valencia"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "trip/4449",
+      "name": "II Barrios de San Pedro y San Isidoro",
+      "description": "Paseando por sus entramadas calles, la sorpresa aparece en cualquier esquina; un perfecto equilibrio entre el panorama renacentista, enriquecido por airosos volúmenes árabes, góticos y barrocos. Una muestra de la diversa impronta de civilizaciones que contribuyeron a la conformación de Úbeda.",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/4449",
+      "itinerary": [
+        {
+          "step": "II Barrios de San Pedro y San Isidoro",
+          "pois": [
+            "Plaza de San Pedro",
+            "Church of San Pedro",
+            "Orozco Palace",
+            "Ordoñez Sandoval Hotel",
+            "Hotel Palace of the Marquis of La Rambla",
+            "Plaza de Toros de Úbeda",
+            "Hospital de Santiago",
+            "Mesones and Obispo Cobos Streets",
+            "Old Convent of La Victoria",
+            "Church of San Isidoro",
+            "Plateresque Facade on Gradas Street",
+            "Plaza de Andalucía",
+            "Ancient Butcheries",
+            "Clock Tower",
+            "Church and Convent of the Most Holy Trinity"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "trip/4450",
+      "name": "III Barrios de San Pablo y San Nicolás",
+      "description": "Paseando por sus entramadas calles, la sorpresa aparece en cualquier esquina; un perfecto equilibrio entre el panorama renacentista, enriquecido por airosos volúmenes árabes, góticos y barrocos. Una muestra de la diversa impronta de civilizaciones que contribuyeron a la conformación de Úbeda.",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/4450",
+      "itinerary": [
+        {
+          "step": "III Barrios de San Pablo y San Nicolás",
+          "pois": [
+            "Palace of Don Luis de la Cueva",
+            "Palacio de los Porceles",
+            "Octagonal Tower",
+            "Olive Oil and Olive Grove Interpretation Center",
+            "Post and Telegraph Building",
+            "Palacio de los Bussianos",
+            "Ortega's Head Groom Cover",
+            "Church of San Nicolás",
+            "Abastos Market",
+            "Convent of the Conception"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "trip/4451",
+      "name": "IV Barrios de San Millán y Santo Tomás",
+      "description": "Paseando por sus entramadas calles, la sorpresa aparece en cualquier esquina; un perfecto equilibrio entre el panorama renacentista, enriquecido por airosos volúmenes árabes, góticos y barrocos. Una muestra de la diversa impronta de civilizaciones que contribuyeron a la conformación de Úbeda.",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/4451",
+      "itinerary": [
+        {
+          "step": "IV Barrios de San Millán y Santo Tomás",
+          "pois": [
+            "Ruins of the Convent of La Merced",
+            "Church of San Millán",
+            "Huerto del Carmen",
+            "Santa Lucía Gate",
+            "Santa Lucía Viewpoints",
+            "Francisco de los Cobos Palace",
+            "Jewish Houses on Gradeta de Santo Tomás Street",
+            "Santo Tomas Archaeological Ruins Complex"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "trip/4452",
+      "name": "Ú. en Familia-R. Secundaria 1",
+      "description": "Rutas alternativas para descubrir la Ciudad Monumental en todo su esplendor, a la vez que encontramos lugares de ocio y recreo para relajarse en familia y con los más pequeños.",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/4452",
+      "itinerary": [
+        {
+          "step": "Ruta 1",
+          "pois": [
+            "Clock Tower",
+            "Plateresque Facade on Gradas Street",
+            "Church of San Isidoro",
+            "Small playground",
+            "Plaza de Toros de Úbeda",
+            "Hospital de Santiago",
+            "Vandelvira Park",
+            "North Park"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "trip/4453",
+      "name": "Ú. en Familia-R. Secundaria 2",
+      "description": "Rutas alternativas para descubrir la Ciudad Monumental en todo su esplendor, a la vez que encontramos lugares de ocio y recreo para relajarse en familia y con los más pequeños.",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/4453",
+      "itinerary": [
+        {
+          "step": "Ruta 2",
+          "pois": [
+            "Church and Convent of the Most Holy Trinity",
+            "Palacio de los Bussianos",
+            "Ortega's Head Groom Cover",
+            "Church of San Nicolás",
+            "Red Rooster Playground",
+            "Vandelvira Park"
+          ]
+        }
+      ]
+    }
+  ],
+  "paths": [],
+  "interest_levels": {
+    "1": "Imprescindible",
+    "2": "Interesante",
+    "3": "Destacado"
+  },
+  "tourist_types": {
+    "SAFARI TOURISM": "Safari",
+    "ADVENTURE TOURISM": "Aventura",
+    "ARCHITECTURE TOURISM": "Arquitectura",
+    "ASTRONOMY TOURISM": "Astronómico",
+    "BACKPACKING TOURISM": "Mochila",
+    "BEACH AND SUN TOURISM": "Sol y Playa",
+    "BEER TOURISM": "Cerveza",
+    "BIRDING TOURISM": "Ornitológico",
+    "BULLFIGHTING TOURISM": "Tauromaquia",
+    "BUSINESS TOURISM": "Negocios",
+    "COMMUNITY-BASED TOURISM": "Comunitario",
+    "CRUISE TOURISM": "Cruceros",
+    "CULTURAL TOURISM": "Cultura",
+    "CYCLING TOURISM": "Cicloturismo",
+    "DIVING TOURISM": "Buceo",
+    "ECOTOURISM": "Ecológico",
+    "EVENTS AND FESTIVALS TOURISM": "Evento & Festival",
+    "FAMILY TOURISM": "Familia",
+    "FILM TOURISM": "Cine",
+    "FISHING TOURISM": "Pesca",
+    "FOOD TOURISM": "Gastronómico",
+    "GAMBLING TOURISM": "Juego",
+    "GEOLOGICAL TOURISM": "Geológico",
+    "HERITAGE TOURISM": "Patrimonio",
+    "HUNTING TOURISM": "Caza",
+    "INDUSTRIAL TOURISM": "Industria",
+    "LANGUAGE TOURISM": "Idiomático",
+    "LGTBI TOURISM": "LGBTI",
+    "LUXURY TOURISM": "Lujo",
+    "MEDICAL TOURISM": "Médico",
+    "MEMORIAL TOURISM": "Memoria histórica",
+    "MICE TOURISM": "MICE",
+    "NATURE TOURISM": "Naturaleza",
+    "OLIVE OIL TOURISM": "Oleológico",
+    "PARTY TOURISM": "Fiesta",
+    "PHOTOGRAPHY TOURISM": "Fotográfico",
+    "RELIGIOUS TOURISM": "Religioso",
+    "ROMANTIC TOURISM": "Pareja",
+    "RURAL TOURISM": "Rural",
+    "SAILING TOURISM": "Náutico",
+    "SENIOR TOURISM": "Senior",
+    "SHOPPING TOURISM": "Compras",
+    "SHORT BREAK TOURISM": "Escapadas",
+    "SINGLES TOURISM": "Solteros",
+    "SPORTS TOURISM": "Deportes",
+    "TOMBSTONE TOURISM": "Cementerios",
+    "TREKKING TOURISM": "Senderismo",
+    "URBAN TOURISM": "Urbano",
+    "WATER SPORTS TOURISM": "Deportes acuáticos",
+    "WEDDING & HONEYMOON TOURISM": "Bodas y lunas de miel",
+    "WELLNESS TOURISM": "Bienestar",
+    "WHISKY TOURISM": "Whisky",
+    "WINE TOURISM": "Enológico",
+    "WINTER SPORTS TOURISM": "Deportes de Invierno",
+    "WOMEN TOURISM": "Mujeres",
+    "YOUTH TOURISM": "Juventud"
+  }
+}
