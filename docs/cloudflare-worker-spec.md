@@ -1,16 +1,24 @@
 # Cloudflare Worker — Inventrip RAG: Technical Specification
 
-**Version:** 1.2  
-**Status:** Draft  
-**Scope:** 200 tourist destinations × 16 languages  
-**Relates to:** `scripts/chat_demo.py`, `scripts/run_eval.py`, `docs/cloudflare-worker-spec.md`
+**Version:** 2.0
+**Status:** Draft
+**Scope:** 200 tourist destinations × 16 languages
+**Relates to:** `scripts/build_index.py`, `scripts/index_tools.py`,
+  `scripts/run_eval.py`, `scripts/chat_demo.py`
+
+> **v2.0 update:** the corpus format changed from `{structure.json + guide.md}`
+> (PageIndex tree + Markdown) to a single self-contained POI-aware index
+> (`indexes/{dest}_{lang}.json`) produced by `scripts/build_index.py`.
+> The Worker no longer manipulates Markdown line ranges; it serves five
+> dict-lookup tools (`list_sections`, `get_section`, `get_poi`,
+> `find_poi_by_name`, `filter_pois`) directly off the index.
 
 ---
 
 ## 1. Goals
 
-Move the PageIndex RAG orchestration layer out of GKE into a Cloudflare
-Worker so that:
+Move the RAG orchestration layer out of GKE into a Cloudflare Worker so
+that:
 
 - The service runs at Cloudflare's edge (300+ PoPs) with no additional
   infrastructure to manage.
@@ -46,9 +54,9 @@ Cloudflare Worker  (this spec)
     │     │   └── all_destinations.json  ← cross-destination meta-index
     │     └── destinations/
     │         ├── ubeda/
-    │         │   ├── index/structure.json
-    │         │   ├── index/destination.json
-    │         │   └── corpus/guide_en.md   ← (+ guide_es.md, etc. in v2)
+    │         │   ├── ubeda_en.json    ← POI-aware index (built by build_index.py)
+    │         │   ├── ubeda_es.json    ← Spanish index
+    │         │   └── ubeda_fr.json    ← (additional languages as needed)
     │         └── baeza/ ... granada/ ...
     ├── Durable Objects: RagSession    ← session: language + history
     │
@@ -57,15 +65,20 @@ Cloudflare Worker  (this spec)
     └── fetch → external APIs         ← weather, events, etc.
 ```
 
-The Worker implements the complete two-level navigation loop in
-TypeScript. No Python runtime is involved in the request path.
+The Worker implements the complete agentic loop in TypeScript. No
+Python runtime is involved in the request path. The retrieval tools
+are the same five exposed by `scripts/index_tools.py` (Python) — the
+TypeScript port loads the index JSON once per request and serves
+`get_section`, `get_poi`, `find_poi_by_name`, `filter_pois`, and
+`list_sections` from in-memory dicts.
 
-**Single-destination query** (most requests): load the destination
-corpus from R2, run the two-level navigation loop, stream the answer.
+**Single-destination query** (most requests): load the
+`{destination}_{lang}.json` index from R2, run the agentic loop, stream
+the answer.
 
-**Cross-destination query** (e.g. “best restaurants in Spain”): load
+**Cross-destination query** (e.g. "best restaurants in Spain"): load
 the meta-index from R2, identify the top-N relevant destinations, run
-one navigation loop per destination in parallel, merge and stream a
+one agentic loop per destination in parallel, merge and stream a
 synthesised answer.
 
 ---
@@ -73,8 +86,9 @@ synthesised answer.
 ## 3. R2 Bucket Structure
 
 One bucket (**`inventrip-rag`**) holds all 200 destinations. The path
-scheme is `destinations/{slug}/` so adding a destination never requires
-a Worker re-deploy.
+scheme is `destinations/{slug}/{slug}_{lang}.json` — one self-contained
+POI-aware index per `(destination, language)` pair. Adding a destination
+or language never requires a Worker re-deploy.
 
 ```
 inventrip-rag/
@@ -82,25 +96,27 @@ inventrip-rag/
 │   └── all_destinations.json      # ← see §17: cross-destination index
 └── destinations/
     ├── ubeda/
-    │   ├── index/
-    │   │   ├── structure.json       # PageIndex tree + section summaries
-    │   │   └── destination.json     # trips, tourist types, interest levels
-    │   └── corpus/
-    │       ├── guide_en.md          # English corpus (v1)
-    │       ├── guide_es.md          # Spanish corpus (v2, optional)
-    │       └── guide_fr.md          # French corpus (v2, optional)
+    │   ├── ubeda_en.json          # POI-aware index (English)
+    │   ├── ubeda_es.json          # POI-aware index (Spanish)
+    │   └── ubeda_fr.json          # additional languages as needed
     ├── baeza/
     │   └── ...
     └── ... (198 more)
 ```
 
-**Storage estimate (v1, English-only):**
-200 destinations × ~290 KB = **58 MB** total. R2 at $0.015/GB/month ≈
-$0.001/month. Negligible.
+Each index file contains everything the Worker needs: destination
+overview, trips, sections with deterministic summaries, all POIs
+keyed by id, facet lookups, and the name index for fuzzy search.
+No Markdown, no separate metadata file, no LLM-generated summaries.
 
-**Storage estimate (v2, per-language corpora):**
-200 destinations × 16 languages × ~290 KB = **928 MB**. Still cheap
-($0.014/month) but the data pipeline becomes 16× heavier.
+**Storage estimate (v1, English-only):**
+200 destinations × ~720 KB = **144 MB** total. R2 at $0.015/GB/month
+≈ $0.002/month. Negligible.
+
+**Storage estimate (v2, all languages):**
+200 destinations × 16 languages × ~720 KB = **2.3 GB**. Still cheap
+($0.035/month). The data-pipeline cost (Inventrip API calls + index
+build) is the real constraint, not R2 storage.
 
 Objects are **immutable during a session** — they change only when the
 Inventrip data pipeline runs (weekly Cloud Run job). The Worker caches
@@ -109,30 +125,27 @@ subsequent requests on the same PoP serve them from memory.
 
 [wcache]: https://developers.cloudflare.com/workers/runtime-apis/cache/
 
-### Uploading corpus files
+### Uploading index files
 
-Local artifact names follow the `{dest}_{type}_{lang}` convention.
-The upload maps them to the R2 path scheme `destinations/{dest}/`:
+Local artifact names follow the `{dest}_{lang}.json` convention.
+The upload mirrors them straight into R2:
 
 ```bash
 # Upload a single (destination, language) pair:
 DEST=ubeda
 LANG=en
 
-wrangler r2 object put inventrip-rag/destinations/$DEST/index/structure_${LANG}.json \
-  --file results/${DEST}_guide_${LANG}_structure.json
-wrangler r2 object put inventrip-rag/destinations/$DEST/index/destination_${LANG}.json \
-  --file data/${DEST}_destination_${LANG}.json
-wrangler r2 object put inventrip-rag/destinations/$DEST/corpus/guide_${LANG}.md \
-  --file data/${DEST}_guide_${LANG}.md
+wrangler r2 object put inventrip-rag/destinations/$DEST/${DEST}_${LANG}.json \
+  --file indexes/${DEST}_${LANG}.json
 
 # Upload the meta-index (after all destinations are processed):
 wrangler r2 object put inventrip-rag/meta/all_destinations.json \
   --file data/all_destinations.json
 ```
 
-The Cloud Run data pipeline iterates all `(destination, language)` pairs
-and calls this upload sequence for each, then rebuilds `all_destinations.json`.
+The Cloud Run data pipeline iterates all `(destination, language)` pairs,
+runs `scripts/build_index.py` for each, uploads the resulting index, and
+then rebuilds `all_destinations.json`.
 
 ---
 
@@ -219,11 +232,12 @@ Content-Type: application/json
 
 **Rule 1 — session with destination set → strict single-destination mode.**
 Every `/v1/chat` call on a session that has a `destination` field loads
-*only* the corpus for that destination from R2. The navigation tools
-(`get_poi_list`, `get_page_content`) operate exclusively on that
-destination’s in-memory structure and Markdown. There is no code path
-that can read another destination’s data during the same session.
-Any answer the model produces is grounded solely in the loaded corpus.
+*only* the index for that destination from R2. The five retrieval tools
+(`get_section`, `get_poi`, `find_poi_by_name`, `filter_pois`,
+`list_sections`) operate exclusively on that destination's in-memory
+index. There is no code path that can read another destination's data
+during the same session. Any answer the model produces is grounded
+solely in the loaded index.
 
 ```
 Session { destination: "baeza" }  →  R2: destinations/baeza/**
@@ -318,67 +332,116 @@ async function loadAsset(
 
 ## 7. Navigation Helpers (TypeScript port)
 
-These are direct ports of the Python functions in `run_eval.py`.
+These are direct ports of the Python helpers in `scripts/index_tools.py`.
+All five operate on a single `Index` object loaded once per request.
 
 ```typescript
-interface SectionNode {
-  node_id: string;
-  title:   string;
-  line_num: number;
-  summary?: string;
-  nodes?:  SectionNode[];
+interface Section {
+  section_id: string;
+  title:      string;
+  summary:    string;
+  poi_ids:    string[];
 }
 
-function getSections(structure: { structure: SectionNode[] }): SectionNode[] {
-  return structure.structure[0]?.nodes ?? [];
+interface Poi {
+  poi_id:                 string;
+  name:                   string;
+  normalized_name:        string;
+  description:            string;
+  display_type:           string;
+  display_tourist_types:  string[];
+  interest_level:         number | null;
+  interest_level_label:   string | null;
+  zoom_level:             number | null;
+  street_address:         string;
+  address_locality:       string;
+  postal_code:            string;
+  country:                string;
+  latitude:               number | null;
+  longitude:              number | null;
+  telephone:              string[];
+  email:                  string[];
+  url:                    string[];
+  booking_url:            string;
+  image_urls:             string[];
+  audio_urls:             string[];
+  subject_of_urls:        string[];
+  // ...other fields from build_index.py
 }
 
-function buildSectionsText(structure: { structure: SectionNode[]; doc_name: string; line_count: number }): string {
-  const sections  = getSections(structure);
-  const lineCount = structure.line_count;
-  const docName   = structure.doc_name ?? "guide";
+interface Index {
+  meta:                  { destination: string; destination_display: string;
+                           lang: string; poi_count: number };
+  destination_overview:  string;
+  trips:                 { trip_id: string; name: string;
+                           description: string; steps: { step: string; pois: string[] }[] }[];
+  sections:              Section[];
+  pois:                  Record<string, Poi>;
+  facets: {
+    by_section:        Record<string, string[]>;
+    by_type:           Record<string, string[]>;
+    by_tourist_type:   Record<string, string[]>;
+    by_interest_level: Record<string, string[]>;
+    by_zoom_bucket:    Record<string, string[]>;
+    indispensable:     string[];
+  };
+  name_index:            Record<string, string>;
+  tourist_type_display:  Record<string, string>;
+  interest_levels:       Record<string, string>;
+}
+
+function normalize(text: string): string {
+  return text
+    .normalize("NFKD")
+    .replace(/\p{Diacritic}/gu, "")
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}\s]+/gu, " ")
+    .trim()
+    .replace(/\s+/g, " ");
+}
+
+function formatSectionsOverview(idx: Index): string {
   const lines: string[] = [
-    `Document: ${docName}  (${lineCount} lines)`,
+    `Destination: ${idx.meta.destination_display}  (${idx.meta.poi_count} POIs across ${idx.sections.length} sections)`,
     "",
-    `SECTIONS (${sections.length} total):`,
+    "SECTIONS:",
   ];
-  sections.forEach((sec, i) => {
-    const endLine = sections[i + 1]?.line_num
-      ? sections[i + 1].line_num - 1
-      : lineCount;
-    lines.push(`  [${sec.node_id}] ${sec.title}`);
-    lines.push(`      lines ${sec.line_num}–${endLine}  (${sec.nodes?.length ?? 0} POIs)`);
-    if (sec.summary) lines.push(`      Summary: ${sec.summary}`);
-  });
+  for (const s of idx.sections) {
+    lines.push(`  [${s.section_id}] ${s.title}  (${s.poi_ids.length} POIs)`);
+    if (s.summary) lines.push(`      ${s.summary}`);
+  }
   return lines.join("\n");
 }
 
-function buildPoiListText(sectionTitle: string, structure: { structure: SectionNode[] }): string {
-  const sections = getSections(structure);
-  const match    = sections.find(
-    s => s.title.toLowerCase() === sectionTitle.toLowerCase()
-        || s.title.toLowerCase().includes(sectionTitle.toLowerCase())
-  );
-  if (!match) {
-    const titles = sections.map(s => s.title);
-    return `[ERROR] Section '${sectionTitle}' not found. Available: ${JSON.stringify(titles)}`;
-  }
-  const pois = match.nodes ?? [];
-  return [
-    `POIs in '${match.title}' (${pois.length} entries):`,
-    ...pois.map(p => `  [${p.node_id}] ${p.title}  (line ${p.line_num})`),
-  ].join("\n");
+function findSection(idx: Index, key: string): Section | null {
+  if (!key) return null;
+  const exact = idx.sections.find(s => s.section_id === key);
+  if (exact) return exact;
+  const lower = key.toLowerCase();
+  return idx.sections.find(s => s.title.toLowerCase() === lower)
+      ?? idx.sections.find(s => s.title.toLowerCase().includes(lower))
+      ?? null;
 }
 
-function getLines(mdLines: string[], spec: string): string {
-  const [startStr, endStr] = spec.includes("-")
-    ? spec.split("-")
-    : [spec, spec];
-  const start = Math.max(1, parseInt(startStr, 10));
-  const end   = Math.min(mdLines.length, parseInt(endStr, 10));
-  return mdLines.slice(start - 1, end).join("\n");
+function shortPreview(p: Poi): string {
+  const parts: string[] = [];
+  if (p.display_type) parts.push(p.display_type);
+  if (p.interest_level_label && p.interest_level_label !== "Outstanding")
+    parts.push(p.interest_level_label);
+  if (p.description) {
+    const sentenceEnd = p.description.match(/[.!?](\s|$)/);
+    const snippet = sentenceEnd
+      ? p.description.slice(0, sentenceEnd.index! + 1)
+      : p.description.slice(0, 90);
+    parts.push(snippet.trim());
+  }
+  return parts.join(" — ");
 }
 ```
+
+The full TypeScript port (`formatSection`, `formatPoi`, `findPoiByName`,
+`filterPois`) mirrors the Python helpers in `scripts/index_tools.py`
+1:1 — same input shapes, same output strings, same fallback rules.
 
 ---
 
@@ -389,34 +452,49 @@ type ToolResult = { text: string; cacheHit: boolean };
 
 function executeTool(
   name:         string,
-  args:         Record<string, string>,
+  args:         Record<string, unknown>,
+  idx:          Index,
   sectionsText: string,
-  structure:    { structure: SectionNode[] },
-  mdLines:      string[],
-  poiCache:     Map<string, string>,
+  cache:        Map<string, string>,
 ): ToolResult {
-  if (name === "get_sections") {
+  if (name === "list_sections") {
     return { text: sectionsText, cacheHit: true };
   }
-  if (name === "get_poi_list") {
-    const key   = (args.section_title ?? "").toLowerCase();
-    const cached = poiCache.get(key);
-    if (cached) return { text: cached, cacheHit: true };
-    const text = buildPoiListText(args.section_title ?? "", structure);
-    poiCache.set(key, text);
+  if (name === "get_section") {
+    const key = JSON.stringify(["get_section", args]);
+    const hit = cache.get(key);
+    if (hit) return { text: hit, cacheHit: true };
+    const text = formatSection(idx, String(args.section_id ?? ""),
+                                String(args.sort ?? "interest"),
+                                Number(args.limit ?? 50));
+    cache.set(key, text);
     return { text, cacheHit: false };
   }
-  if (name === "get_page_content") {
-    const text = getLines(mdLines, args.lines ?? "1-20");
-    return { text: text || "[WARNING] No content found for that range.", cacheHit: false };
+  if (name === "get_poi") {
+    const key = JSON.stringify(["get_poi", args.poi_id]);
+    const hit = cache.get(key);
+    if (hit) return { text: hit, cacheHit: true };
+    const text = formatPoi(idx, String(args.poi_id ?? ""));
+    cache.set(key, text);
+    return { text, cacheHit: false };
+  }
+  if (name === "find_poi_by_name") {
+    const text = formatFindPoiByName(idx,
+                                     String(args.query ?? ""),
+                                     Number(args.limit ?? 5));
+    return { text, cacheHit: false };
+  }
+  if (name === "filter_pois") {
+    const text = formatFilterPois(idx, args);
+    return { text, cacheHit: false };
   }
   return { text: `[ERROR] Unknown tool: ${name}`, cacheHit: false };
 }
 ```
 
-The `poiCache` (`Map<string, string>`) is created per request. Because
-all 20 sections are pre-warmed at the start of each request (see §10),
-every `get_poi_list` call is a cache hit — zero R2 reads after startup.
+The `cache` (`Map<string, string>`) is created per request. All sections
+are pre-warmed at the start of each request (see §10), so every
+`get_section` call is a cache hit — zero recomputation after startup.
 
 ---
 
@@ -430,25 +508,67 @@ const TOOL_DEFS = [
   {
     type: "function",
     function: {
-      name:        "get_poi_list",
-      description: "Returns all POI names and line numbers inside a section.",
+      name:        "get_section",
+      description: "List the POIs inside one section. Returns id + name + 1-line preview.",
       parameters:  {
         type: "object",
-        properties: { section_title: { type: "string" } },
-        required:   ["section_title"],
+        properties: {
+          section_id: { type: "string", description: "Section id or title." },
+          sort:       { type: "string", enum: ["interest", "name", "zoom"] },
+          limit:      { type: "integer" },
+        },
+        required: ["section_id"],
       },
     },
   },
   {
     type: "function",
     function: {
-      name:        "get_page_content",
-      description: "Returns the raw Markdown text for a line range (e.g. '9-28').",
+      name:        "get_poi",
+      description: "Return the full record of one POI by id (no truncation).",
       parameters:  {
         type: "object",
-        properties: { lines: { type: "string" } },
-        required:   ["lines"],
+        properties: { poi_id: { type: "string" } },
+        required:   ["poi_id"],
       },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name:        "find_poi_by_name",
+      description: "Diacritic-insensitive fuzzy lookup against POI names.",
+      parameters:  {
+        type: "object",
+        properties: { query: { type: "string" }, limit: { type: "integer" } },
+        required:   ["query"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name:        "filter_pois",
+      description: "Facet query (interest_level, type, tourist_type, section_id, indispensable).",
+      parameters:  {
+        type: "object",
+        properties: {
+          interest_level: { type: "integer" },
+          type:           { type: "string" },
+          tourist_type:   { type: "string" },
+          section_id:     { type: "string" },
+          indispensable:  { type: "boolean" },
+          limit:          { type: "integer" },
+        },
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name:        "list_sections",
+      description: "Return the section catalogue (already in the system prompt).",
+      parameters:  { type: "object", properties: {} },
     },
   },
 ];
@@ -458,16 +578,15 @@ async function* ragLoop(
     question:     string;
     systemPrompt: string;
     sectionsText: string;
-    structure:    { structure: SectionNode[] };
-    mdLines:      string[];
+    index:        Index;
     history:      ChatMessage[];
     llmEndpoint:  string;
     llmApiKey:    string;
-    poiCache:     Map<string, string>;
+    cache:        Map<string, string>;
   }
 ): AsyncGenerator<RagEvent> {
-  const { question, systemPrompt, sectionsText, structure,
-          mdLines, history, llmEndpoint, llmApiKey, poiCache } = params;
+  const { question, systemPrompt, sectionsText, index,
+          history, llmEndpoint, llmApiKey, cache } = params;
 
   const messages: ChatMessage[] = [
     { role: "system",  content: systemPrompt },
@@ -565,13 +684,17 @@ async function* ragLoop(
       try { args = JSON.parse(tc.arguments || "{}"); } catch {}
 
       // Emit status event for the client spinner
-      if (tc.name === "get_poi_list")
-        yield { type: "status", text: `Searching ${args.section_title ?? "section"}…` };
-      else if (tc.name === "get_page_content")
-        yield { type: "status", text: `Reading guide lines ${args.lines ?? "…"}` };
+      if (tc.name === "get_section")
+        yield { type: "status", text: `Loading section ${args.section_id ?? ""}…` };
+      else if (tc.name === "get_poi")
+        yield { type: "status", text: `Loading POI ${args.poi_id ?? ""}…` };
+      else if (tc.name === "find_poi_by_name")
+        yield { type: "status", text: `Searching '${args.query ?? ""}'…` };
+      else if (tc.name === "filter_pois")
+        yield { type: "status", text: `Filtering POIs…` };
 
       const { text, cacheHit } = executeTool(
-        tc.name, args, sectionsText, structure, mdLines, poiCache
+        tc.name, args, index, sectionsText, cache
       );
       messages.push({ role: "tool", tool_call_id: tc.id, content: text });
     }
@@ -605,30 +728,33 @@ export default {
     const lang        = session?.lang        ?? body.lang        ?? "en";
     const history: ChatMessage[] = session?.history ?? [];
 
-    const prefix = `destinations/${destination}`;
-    const lang_suffix = lang !== "en" ? `_${lang}` : "";
+    const indexKey = `destinations/${destination}/${destination}_${lang}.json`;
 
-    // Load corpus (cached after first request per PoP)
-    const [structureJson, destinationJson, mdText] = await Promise.all([
-      loadAsset(env, cache, `${prefix}/index/structure.json`),
-      loadAsset(env, cache, `${prefix}/index/destination.json`),
-      // v1: always English corpus; v2: prefer language-specific, fall back to EN
-      loadAsset(env, cache, `${prefix}/corpus/guide${lang_suffix}.md`)
-        .catch(() => loadAsset(env, cache, `${prefix}/corpus/guide_en.md`)),
-    ]);
+    // Load index from R2 (cached per PoP).  Falls back to English if the
+    // requested language has not been built yet.
+    let indexJson: string;
+    try {
+      indexJson = await loadAsset(env, cache, indexKey);
+    } catch {
+      indexJson = await loadAsset(env, cache,
+        `destinations/${destination}/${destination}_en.json`);
+    }
+    const index = JSON.parse(indexJson) as Index;
 
-    const structure   = JSON.parse(structureJson);
-    const mdLines     = mdText.split("\n");
-
-    // Pre-warm POI cache (all 20 sections, ~2 ms, pure JS)
-    const poiCache = new Map<string, string>();
-    for (const sec of getSections(structure)) {
-      poiCache.set(sec.title.toLowerCase(), buildPoiListText(sec.title, structure));
+    // Pre-warm session cache (one entry per section; pure JS, ~2 ms)
+    const sessionCache = new Map<string, string>();
+    for (const sec of index.sections) {
+      sessionCache.set(
+        JSON.stringify(["get_section", { section_id: sec.section_id, sort: "interest", limit: 50 }]),
+        formatSection(index, sec.section_id, "interest", 50),
+      );
     }
 
-    // Build system prompt
-    const sectionsText  = buildSectionsText(structure);
-    const systemPrompt  = makeSystemPrompt(sectionsText, lang);
+    // Build system prompt (same template as scripts/run_eval.py)
+    const sectionsText  = formatSectionsOverview(index);
+    const systemPrompt  = makeSystemPrompt(sectionsText, lang,
+                                           index.meta.destination_display,
+                                           index.destination_overview);
 
     // Optional: parallel context enrichment
     const enrichedContext = await enrichContext(enrich, env);
@@ -648,23 +774,22 @@ export default {
 
     ctx.waitUntil((async () => {
       const start = Date.now();
-      let toolCalls = 0, cacheHits = 0;
+      let toolCalls = 0;
       try {
         for await (const event of ragLoop({
           question, systemPrompt: finalPrompt, sectionsText,
-          structure, mdLines, history,
+          index, history,
           llmEndpoint: env.LLM_ENDPOINT, llmApiKey: env.LLM_API_KEY,
-          poiCache,
+          cache: sessionCache,
         })) {
           await writeEvent(event);
-          if (event.type === "token") { /* count */ }
           if (event.type === "status") toolCalls++;
         }
         await writeEvent({
           type: "done",
           latency_ms: Date.now() - start,
           tool_calls: toolCalls,
-          cache_hits: poiCache.size,   // all hits after pre-warm
+          cache_hits: sessionCache.size,   // all hits after pre-warm
         });
       } catch (err) {
         await writeEvent({ type: "error", text: String(err) });
@@ -772,12 +897,13 @@ All figures measured on the existing Apple Silicon / MLX stack.
 
 | Phase | Time | Notes |
 |---|---|---|
-| R2 load (cold, first PoP hit) | ~10 ms | Three objects, ~290 KB total |
+| R2 load (cold, first PoP hit) | ~10 ms | One index object, ~720 KB |
 | R2 load (warm, cached PoP) | < 1 ms | Served from Workers Cache API |
-| POI cache pre-warm (20 sections) | < 2 ms | Pure JS dict traversal |
+| Index parse (`JSON.parse`) | ~5 ms | Done once per request |
+| Session-cache pre-warm (18 sections) | < 2 ms | Pure JS dict traversal |
 | Context enrichment (weather) | ~50 ms | One `fetch()`, runs in parallel |
 | First LLM token (TTFT) | ~2–3 s | Depends on LLM load |
-| Full answer (streaming) | 20–30 s | Wall time; CPU time ≈ 5 ms |
+| Full answer (streaming) | 20–30 s | Wall time; CPU time ≈ 10 ms |
 | SSE relay overhead | ~0 ms | TransformStream is zero-copy |
 
 The Worker itself consumes < 5 ms of CPU time per request. Cloudflare
@@ -800,18 +926,22 @@ Streaming responses have no wall-time limit.
 - English corpus for all destinations; model responds in requested language
 - Weather + events enrichment modules
 
-**v3 — all 200 destinations + per-language corpora:**
+**v3 — all 200 destinations + per-language indexes:**
 - Cloud Run pipeline processes all 200 destinations × 16 languages
-- R2 holds `guide_en.md`, `guide_es.md`, etc. per destination
-- Worker falls back to English corpus if language-specific corpus is missing
+- R2 holds `{dest}_en.json`, `{dest}_es.json`, etc. per destination
+- Worker falls back to English index if the requested language is missing
 - Cross-destination meta-index (`meta/all_destinations.json`) enabled
 - `POST /v1/meta-chat` for cross-destination queries
 
-**Corpus update pipeline (Cloud Run cron, weekly):**
-1. For each destination × language: fetch POIs → generate Markdown → build index → upload to R2
-2. Regenerate section summaries in English only (model handles translation)
-3. Rebuild `meta/all_destinations.json`
-4. Purge Workers Cache API entries for updated destinations (R2 ETag change handles this automatically)
+**Index update pipeline (Cloud Run cron, weekly):**
+1. For each `(destination, language)` pair:
+   `extract_pois.py` → `extract_destination_data.py` → `build_index.py`
+   → upload `indexes/{dest}_{lang}.json` to R2.
+2. Section summaries are deterministic (no LLM call) and rebuilt as part
+   of step 1.
+3. Rebuild `meta/all_destinations.json` once all destinations finish.
+4. Workers Cache API entries are invalidated automatically when the R2
+   ETag changes — no purge needed.
 
 ---
 
@@ -850,30 +980,27 @@ corpus and the answer is synthesised in French.
 instead of `Miradores de Santa Lucía`). The model's translation is
 generally accurate but may lose local terminology or branding.
 
-### v2: Per-language corpora
+### v2: Per-language indexes
 
-The local pipeline already supports per-language corpora. Run the
-full 5-step pipeline with `--lang {code}` for each desired language:
+The local pipeline already supports per-language artifacts. Run the
+full 3-step pipeline with `--lang {code}` for each desired language:
 
 ```bash
-# Spanish corpus for Ubeda
+# Spanish index for Ubeda
 scripts/extract_pois.py             --destination ubeda --lang es
 scripts/extract_destination_data.py --destination ubeda --lang es
-scripts/json_to_markdown.py         --destination ubeda --lang es
-pageindex/run_pageindex.py --md_path data/ubeda_guide_es.md ...
-scripts/add_section_summaries.py --structure results/ubeda_guide_es_structure.json --lang es
+scripts/build_index.py              --destination ubeda --lang es
 ```
 
-This produces `data/ubeda_guide_es.md` and
-`results/ubeda_guide_es_structure.json`, which upload to
-`corpus/guide_es.md` and `index/structure_es.json` in R2.
-The Worker tries the language-specific corpus first and falls back
-to the English corpus if the requested language is not available.
+This produces `indexes/ubeda_es.json`, which uploads to
+`destinations/ubeda/ubeda_es.json` in R2. The Worker tries the
+language-specific index first and falls back to the English index if
+the requested language is not available.
 
-Storage: 200 destinations × 16 languages × 290 KB = 928 MB (negligible
-cost; data pipeline cost is the real constraint).
+Storage: 200 destinations × 16 languages × 720 KB ≈ 2.3 GB (negligible
+cost; data-pipeline compute is the real constraint).
 
-**Recommendation:** Start with v1. Generate per-language corpora only
+**Recommendation:** Start with v1. Generate per-language indexes only
 for the top 3 languages by traffic (likely es, fr, de), measuring
 grounding quality improvement before expanding to all 16.
 

@@ -1,318 +1,340 @@
-# PageIndex + Gemma 4: Multi-Destination Tourism RAG
+# Inventrip POI-Index RAG: Multi-Destination Tourism Assistant
 
-## ✅ Project Complete
+## ✅ Project status
 
-**Final result: `gemma4:26b` with enriched corpus, multilingual, multi-destination pipeline**
-Repository: https://github.com/sismotur/pageindex-demo
+Production pipeline using a **custom POI-aware index** built directly
+from the Inventrip API, with retrieval driven by `litellm` tool calls
+to a local `gemma4:26b` model (Ollama / MLX).
 
-## Progress
+Repository: <https://github.com/sismotur/pageindex-demo>
 
-| Step | Status | Output |
-|------|--------|--------|
-| 1 — Clone PageIndex + venv | ✅ Done | `pageindex/`, `.venv/` |
-| 2 — Smoke test | ⏭ Deferred (setup confirmed working) | — |
-| 3 — Extract Úbeda POIs | ✅ Done | `data/ubeda_pois_raw.json` (408 POIs) |
-| 4 — JSON → Markdown | ✅ Done | `data/ubeda_guide.md` (160 KB, 18 sections, 408 POIs) |
-| 5 — PageIndex indexing | ✅ Done | `results/ubeda_guide_structure.json` (427 nodes: 1 root, 18 sections, 408 POIs) |
-| 6 — Question set | ✅ Done | `eval/questions.json` (20 questions, easy/medium/hard) |
-| 7 — Run Q&A eval (E2B) | ✅ Done | `results/eval_gemma4-e2b.json` (649s, 32.5s/q avg) |
-| 8 — Score + compare | ✅ Done | `results/scored_gemma4-e2b.json` — E2B: 54.1% grounding, 60% retrieval |
-| 9 — Run Q&A eval (E4B) | ✅ Done | `results/eval_gemma4-e4b.json` (1593s, 79.7s/q avg) |
-| 10 — Cross-model comparison | ✅ Done | `results/comparison_table.md` — E4B: 82.5% grounding ✅ PASS |
-| 11 — Two-level navigation | ✅ Done | `scripts/run_eval.py` rewritten; `get_sections` + `get_poi_list` |
-| 12 — Section summaries | ✅ Done | `scripts/add_section_summaries.py`; 18 summaries in structure JSON |
-| 13 — E4B re-eval (improved) | ✅ Done | `results/eval_gemma4-e4b.json` (1182s, 59.1s/q avg) |
-| 14 — Merge + document | ✅ Done | `master`: 85.9% grounding ✅, −26% latency; README updated |
-| 15 — Run Q&A eval (26B) | ✅ Done | `results/eval_gemma4-26b.json` (706s, 35.3s/q avg) |
-| 16 — Final comparison | ✅ Done | 26B: 90.0% grounding ✅, 95% retrieval, best on all metrics |
-| 17 — Rubric + safety net fixes | ✅ Done | Q12 fixed; rubric corrected; 26B run 2: 90% grounding ✅, 37.5 s/q |
-| 18 — Content-based summaries (#3) | ✅ Done | `scripts/add_section_summaries.py` rewritten; 18 summaries regenerated with POI content |
-| 19 — Rubric fixes (#1) + tests | ✅ Done | Q03/Q15/Q17/Q20 corrected; `tests/test_rubric.py` 18/18 pass |
-| 20 — Cache pre-warm (#6) | ✅ Done | All 18 sections loaded at session start; 50% cache hit rate |
-| 21 — Final eval (all improvements) | ✅ Done | 100.0% grounding ✅, 100% retrieval, composite 1.000, 19.7 s/q |
-| 22 — Destination corpus (#8) | ✅ Done | `extract_destination_data.py`; 22 trips, Indispensable labels, zoom labels, type names |
-| 23 — Final eval (enriched corpus) | ✅ Done | 90.0% grounding ✅, 85% retrieval, composite 0.915, 27.2 s/q |
-| 24 — Enrich POI Markdown | ✅ Done | Added coordinates, postal code, country (ISO→name), region, image links, audio guide links, booking URL to `json_to_markdown.py` |
-| 25 — Remove destination hardcoding | ✅ Done | All 6 scripts fully destination- and language-agnostic; `--destination` + `--lang` CLI args throughout |
-| 26 — Language in artifact filenames | ✅ Done | `{dest}_{type}_{lang}` convention; `ubeda_guide.md` → `ubeda_guide_en.md`; no (dest, lang) pair can overwrite another |
-| 27 — Rename extract_ubeda.py | ✅ Done | `scripts/extract_ubeda.py` → `scripts/extract_pois.py` |
+The project previously used [PageIndex](https://github.com/VectifyAI/PageIndex)
+to index a generated Markdown document. That stack has been retired
+because the source data is already a fully-typed UNE 178503 dataset and
+benefits from direct indexing. See the README's "Quick summary" table
+for the before/after metrics.
+
+## Latest results (gemma4:26b)
+
+| Run                      | Grounding | Retrieval | Composite | Avg latency |
+|--------------------------|-----------|-----------|-----------|-------------|
+| English (POI-index)      | 90.0%     | 95.0%     | 0.935     | 26.9 s      |
+| Spanish (POI-index)      | 85.0%     | 95.0%     | 0.915     | 19.7 s¹     |
+| English (PageIndex base) | 92.5%     | 80.0%     | 0.910     | 26.5 s      |
+| Spanish (PageIndex base) | 80.0%     | 80.0%     | 0.850     | 47.3 s      |
+
+¹ Median latency excluding three Spanish questions where the model
+loops; mean including outliers is 132.5 s.
+
+The "Sections accessed" rubric input is now derived from the actual
+tools called (`get_section`, `get_poi`, `find_poi_by_name`,
+`filter_pois`) instead of mapping line ranges to section titles.
 
 ---
 
 ## Purpose
 
-Evaluate whether **PageIndex** (vectorless, reasoning-based RAG) combined
-with **Gemma 4** models served via **Ollama** can answer grounded tourism
-questions for **any tourist destination in any language** using real
-Inventrip POI data. Reference dataset: Úbeda, Spain.
+Answer grounded tourism questions for **any tourist destination** in
+**any language** using the Inventrip POI catalogue. The reference dataset
+is Úbeda, Spain (367 POIs in English, 369 in Spanish).
 
-Start with `gemma4:e2b` (smallest, smartphone-viable). Escalate to `e4b`,
-`26b`, and `31b` only if answer quality is insufficient at the smaller size.
+Decision: keep `gemma4:26b` as the recommended model. All four Gemma 4
+variants (`e2b`, `e4b`, `26b`, `31b`) fit in this machine's 128 GB
+unified memory; escalation is unnecessary for this corpus size.
 
 ---
 
-## Technical Decisions
+## Technical decisions
 
-### Data source: HTTP API, not direct database
+### Source: HTTP API, not direct database
 
-The Inventrip `it.get_objects_une_v121` PostgreSQL function is already
-wrapped by the API route `/v120/pois`. Use that endpoint instead of a
-direct DB connection because:
-- keeps credentials out of this demo environment,
-- follows the same path the mobile app uses,
-- respects the production database constraint (no DDL or risky queries on
-  `inventrip-postgres-f24a92b2`).
+The Inventrip `it.get_objects_une_v121` PostgreSQL function is wrapped
+by `/v120/pois`. Use that endpoint instead of a direct DB connection
+because:
+
+- Keeps credentials out of this demo environment.
+- Follows the same path the mobile app uses.
+- Respects the production database constraint (no DDL or risky queries
+  on `inventrip-postgres-f24a92b2`).
 
 Set `INVENTRIP_API_BASE_URL` and `INVENTRIP_API_KEY` as environment
-variables. Scripts must validate these on startup and fail early if missing.
+variables in `.env`. Scripts validate these on startup and fail early
+when missing.
 
-### Document format: Markdown, not raw JSON
+### Index format: structured JSON, not Markdown
 
-PageIndex's tree-builder anchors on `#` heading hierarchy to identify node
-boundaries. A flat JSON blob would produce a single undifferentiated node
-with no semantic hierarchy, degrading retrieval quality regardless of model
-size. The Markdown document must group POIs into named sections:
+The pipeline produces a single artifact per `(destination, language)`
+pair: `indexes/{destination}_{lang}.json`. The shape is:
 
 ```
-# Úbeda Tourism Guide
-## UNESCO World Heritage Monuments
-## Museums and Galleries
-## Churches and Religious Heritage
-## Gastronomy and Local Food
-## Practical Information
+{
+  "meta":                 { destination, lang, poi_count, ... },
+  "destination_overview": "...",
+  "trips":                [ { trip_id, name, description, steps: [...] } ],
+  "sections":             [ { section_id, title, summary, poi_ids } ],
+  "pois":                 { "poi/5155": { full record + computed fields } },
+  "facets": {
+    "by_section":        { section_id: [poi_ids] },
+    "by_type":           { "OilMill": [poi_ids], ... },
+    "by_tourist_type":   { "FOOD TOURISM": [poi_ids], ... },
+    "by_interest_level": { "1": [poi_ids], ... },
+    "by_zoom_bucket":    { "<=14": [...], "15-16": [...], "17-19": [...] },
+    "indispensable":     [poi_ids]
+  },
+  "name_index":           { "normalized_name": "poi_id" },
+  "tourist_type_display": { code -> human label },
+  "interest_levels":      { "1": "Indispensable", "2": ..., "3": ... }
+}
 ```
 
-Retain the raw JSON alongside the Markdown so evaluation can be traced back
-to the original source facts.
+Each POI value contains the raw API fields plus computed fields:
+`display_type`, `display_tourist_types`, `interest_level_label`,
+`image_urls` (resolved API URLs), `audio_urls`, `subject_of_urls`,
+`country` (ISO code → human name), `normalized_name` (used by
+`find_poi_by_name`).
+
+Section titles match the `expected_section` strings in
+`eval/questions.json`, so the rubric does not need to change.
+
+### Section grouping
+
+Sections are derived deterministically from the POI `type` list. The
+priority list (`SECTIONS` in `scripts/build_index.py`) places overlapping
+types in the most appropriate bucket:
+
+```
+UNESCO World Heritage and City Overview      ← WorldHeritageSite, City
+Accommodation                                ← Hotel, BoutiqueHotel, ...
+Civil and Historical Monuments               ← CivilBuilding, MilitaryBuilding
+Religious Heritage                           ← PlaceOfWorship
+Museums and Culture                          ← Museum, CultureCenter
+Archaeological Sites                         ← ArchaeologicalArea
+Tourist Attractions and Viewpoints           ← TouristAttraction, ViewPoint
+Squares, Parks and Natural Areas             ← Square, Park, LeisureArea
+Gastronomy                                   ← Restaurant, OilMill, ...
+Guided Tours and Itineraries                 ← TouristTrip
+Events and Festivals                         ← BusinessEvent, ...
+Shopping                                     ← ShoppingCenter, Store
+Tourist Information and Services             ← TouristInformationCenter
+Health and Beauty                            ← Pharmacy, ...
+Practical Information                        ← ParkingFacility, ...
+Sports and Leisure Activities                ← SportsActivityLocation, ...
+Quality, Rules and Visitor Advice            ← Certification, VisitRule
+Other Points of Interest                     ← fallback
+```
+
+Accommodation appears before Civil and Historical Monuments so that
+dual-typed POIs (e.g. paradores typed as both `Hotel` and `CivilBuilding`)
+land in Accommodation.
+
+### Section summaries
+
+Deterministic, computed by `build_section_summary()` in
+`scripts/build_index.py`. The previous LLM-summary step
+(`scripts/add_section_summaries.py`) is **gone** — it cost ~8 minutes
+per `(destination, language)` pair and had to be re-run after every
+Markdown rebuild. Each summary now reports POI count, breakdown by
+interest level, top tourist types, and the three notable POIs:
+
+> "30 POIs (3 Indispensable, 6 Interesting, 21 Outstanding). Top
+> interests: Architecture, Cultural, Heritage. Notable: Hotel Spa Rosaleda
+> de Don Pedro, Hostería Los Cerros, Apartamentos Don Sancho."
 
 ### Model backend: Ollama OpenAI-compatible endpoint
 
-PageIndex uses `litellm` for LLM calls. Configure it to point at the local
-Ollama endpoint:
+`litellm` routes `openai/*` strings to the local Ollama endpoint:
 
 - Base URL: `http://localhost:11434/v1`
 - API key: `ollama` (any non-empty string)
-- Model string for litellm: `openai/gemma4:e2b` (or whichever variant)
+- Model string: `openai/gemma4:26b` (recommended) or `openai/gemma4:e4b`
 
-All four Gemma 4 variants fit in this machine's 128 GB unified memory:
+All Gemma 4 variants fit in this machine's 128 GB unified memory:
 
-| Model           | Ollama tag       | Size   | Context |
-|-----------------|------------------|--------|---------|
-| Gemma 4 E2B     | `gemma4:e2b`     | 7.2 GB | 128K    |
-| Gemma 4 E4B     | `gemma4:e4b`     | 9.6 GB | 128K    |
-| Gemma 4 26B MoE | `gemma4:26b`     | 18 GB  | 256K    |
-| Gemma 4 31B     | `gemma4:31b`     | 20 GB  | 256K    |
+| Model           | Tag           | Size   | Context |
+|-----------------|---------------|--------|---------|
+| Gemma 4 E2B     | `gemma4:e2b`  | 7.2 GB | 128K    |
+| Gemma 4 E4B     | `gemma4:e4b`  | 9.6 GB | 128K    |
+| Gemma 4 26B MoE | `gemma4:26b`  | 18 GB  | 256K    |
+| Gemma 4 31B     | `gemma4:31b`  | 20 GB  | 256K    |
 
 ---
 
-## Implementation Steps
+## Implementation steps
 
-### Step 1 — Clone PageIndex and validate config
+### Step 1 — Extract from the Inventrip API
 
-```bash
-git clone https://github.com/VectifyAI/PageIndex.git pageindex
-cd pageindex
-pip install -r requirements.txt
-```
-
-Inspect `config.yaml` and confirm the model and API base URL fields.
-The key fields to override for Ollama:
-
-```yaml
-model: openai/gemma4:e2b
-```
-
-And set env vars:
+Two scripts, both accept `--destination` and `--lang`:
 
 ```bash
-export OPENAI_API_KEY=ollama
-export OPENAI_API_BASE=http://localhost:11434/v1
+.venv/bin/python scripts/extract_pois.py             --destination ubeda --lang en
+.venv/bin/python scripts/extract_destination_data.py --destination ubeda --lang en
 ```
 
-### Step 2 — Smoke test: PageIndex + Ollama on a tiny Markdown file
+Outputs:
 
-Create `smoke_test.md` (a short, 3-section Markdown document) and run:
+- `data/{destination}_pois_raw_{lang}.json` — raw `/v120/pois` array.
+- `data/{destination}_destination_{lang}.json` — destination overview,
+  trips, paths, interest-level taxonomy, tourist-type display-name map.
 
-```bash
-python3 pageindex/run_pageindex.py --md_path smoke_test.md --model openai/gemma4:e2b
-```
+The relevant query parameters (from `params-builder.js`):
 
-Confirm the tree JSON is produced in `results/`. If this fails, fix the
-Ollama config before proceeding.
-
-### Step 3 — Extract POIs from Inventrip API
-
-Script: `scripts/extract_pois.py` (formerly `extract_ubeda.py`)
-
-Calls `GET /v120/pois?tourist_destination={dest}&language={lang}&strip_nulls=true`.
-Accepts `--destination` and `--lang` CLI args (defaults: `ubeda`, `en`).
-
-Saves to `data/{destination}_pois_raw_{lang}.json`.
-
-Also run `scripts/extract_destination_data.py --destination {dest} --lang {lang}`
-to fetch trips, tourist types, and interest-level taxonomy.
-Saves to `data/{destination}_destination_{lang}.json`.
-
-The relevant query params (from `params-builder.js`):
 - `tourist_destination` → `filter.name_implan`
 - `language` → `id_language`
-- `strip_nulls=true` → removes null fields from output
+- `strip_nulls=true` → drop null fields from the response
 
-### Step 4 — Transform JSON into Markdown
-
-Script: `scripts/json_to_markdown.py`
-
-Accepts `--destination` and `--lang` CLI args.
-Input:  `data/{destination}_pois_raw_{lang}.json`
-Output: `data/{destination}_guide_{lang}.md`
-
-Group POIs by UNE 178503 type into `##` sections. For each POI, emit a
-`###` heading with: name, description, address, postal code, country,
-region, coordinates, phone, website, booking URL, tourist type tags,
-image links, and audio guide links.
-
-### Step 5 — Run PageIndex indexing
-
-Two modes:
-
-**Fast (structural only, no LLM calls — recommended):**
-Builds the tree from heading hierarchy alone. Instant, deterministic.
+### Step 2 — Build the POI-aware index
 
 ```bash
-.venv/bin/python pageindex/run_pageindex.py \
-  --md_path data/ubeda_guide_en.md \
+.venv/bin/python scripts/build_index.py --destination ubeda --lang en
+# → indexes/ubeda_en.json   (~720 KB; sub-second; deterministic)
+```
+
+`build_index.py` consumes only the two JSON artifacts from Step 1. No
+LLM calls. No Markdown intermediate. Re-runnable any time without side
+effects.
+
+### Step 3 — Run the agentic Q&A evaluation
+
+```bash
+# English (default)
+.venv/bin/python scripts/run_eval.py \
   --model openai/gemma4:26b \
-  --if-add-node-summary no \
-  --if-add-doc-description no
-# → produces results/ubeda_guide_en_structure.json
-```
+  --index indexes/ubeda_en.json
 
-Output filename mirrors the input Markdown name: `{dest}_guide_{lang}_structure.json`.
-The `results/` directory is created automatically if it does not exist.
-The `.env` file in the project root is loaded automatically (OPENAI_API_KEY + OPENAI_API_BASE).
-
-After indexing, run section summaries (one-time per (destination, language)):
-
-```bash
-.venv/bin/python scripts/add_section_summaries.py \
-  --structure results/ubeda_guide_en_structure.json --lang en
-```
-
-### Step 6 — Define the evaluation question set
-
-File: `eval/questions.json`
-
-A curated list of ~20 questions covering:
-- UNESCO monuments (simple factual lookup)
-- Opening hours and visit logistics
-- Museums and cultural venues
-- Churches and religious heritage
-- Gastronomy and local food
-- Short itinerary planning (light reasoning)
-- Direct POI lookup by name
-
-Mix of simple retrieval and light synthesis questions to distinguish
-retrieval quality (PageIndex) from generation quality (Gemma 4).
-
-### Step 7 — Run Q&A and capture results
-
-Script: `scripts/run_eval.py`
-
-Key options: `--model`, `--questions`, `--structure`, `--lang`.
-The destination name and Markdown path are derived automatically from the
-structure file. Run in escalation order:
-
-```bash
-# English eval
-.venv/bin/python scripts/run_eval.py --model openai/gemma4:e2b
-.venv/bin/python scripts/run_eval.py --model openai/gemma4:26b   # recommended
-
-# Spanish eval
+# Spanish
 .venv/bin/python scripts/run_eval.py \
   --model openai/gemma4:26b \
   --questions eval/questions_es.json \
-  --structure results/ubeda_guide_es_structure.json \
+  --index indexes/ubeda_es.json \
   --lang es
 
-# Interactive chat (any language)
-.venv/bin/python scripts/chat_demo.py --interactive --lang es
+# Interactive chat
+.venv/bin/python scripts/chat_demo.py --interactive --model openai/gemma4:26b
+.venv/bin/python scripts/chat_demo.py --interactive --lang es \
+  --index indexes/ubeda_es.json
 ```
 
-### Step 8 — Evaluate and compare
+`--structure` is accepted as a deprecated alias for `--index` — when
+given an old `results/{name}_structure.json` path, it remaps to
+`indexes/{name}.json` if that exists.
 
-Script: `scripts/score_results.py`
+### Step 4 — Score and report
 
-Applies the shared rubric to each `results/eval_*.json`:
+```bash
+.venv/bin/python scripts/score_results.py --file results/eval_gemma4-26b.json
+.venv/bin/python scripts/score_results.py --file results/eval_gemma4-26b_es.json
+```
 
-| Dimension          | Pass threshold                              |
-|--------------------|---------------------------------------------|
-| Factual grounding  | Claim traceable to a POI in the source JSON |
-| Completeness       | Covers what the question asks               |
-| Hallucination rate | < 20 % of answers add unsupported facts     |
-| Retrieval accuracy | Correct section surfaced by PageIndex       |
-| Latency            | Wall-clock seconds per question             |
-
-**Stop escalating when**: ≥ 70 % of answers are factually grounded AND
-hallucination rate < 20 %.
-
-Produces `results/comparison_table.md` — a cross-model summary.
+Rubric details in `scripts/score_results.py`. The `_CONTENT_FETCH_TOOLS`
+set lists every tool that counts as "the model retrieved real content"
+(`get_poi`, `get_section`, `find_poi_by_name`, `filter_pois`); legacy
+tool names from older result files are also accepted so historical
+files still score.
 
 ---
 
-## Project Layout
+## LLM tool surface
+
+Five tools, all pure dict lookups against the index. No I/O, no
+LLM-in-the-loop, no line slicing.
+
+| Tool | Purpose |
+|---|---|
+| `list_sections()` | Section catalogue (pre-loaded in the system prompt). |
+| `get_section(section_id, sort, limit)` | List POIs in one section, sorted by `(interest_level, zoom_level)`. |
+| `get_poi(poi_id)` | Full record of one POI by id. |
+| `find_poi_by_name(query, limit)` | Diacritic-insensitive fuzzy lookup by name. |
+| `filter_pois(interest_level, type, tourist_type, section_id, indispensable, limit)` | Facet query, all filters AND together. |
+
+Typical flows handled by the model:
+
+- **"Tell me about X"** → `find_poi_by_name(X)` → `get_poi(id)` → answer
+  includes the description paragraph, address, phone, etc.
+- **"What X exist?"** → `get_section("…")` → answer from the previews.
+- **"Indispensable POIs"** → `filter_pois(indispensable=true)`.
+- **"Indispensable food spots"** →
+  `filter_pois(indispensable=true, tourist_type="FOOD TOURISM")`.
+
+Pre-warm: every section's `get_section(id, "interest", 50)` result is
+cached at session start, so subsequent calls are instant.
+
+---
+
+## Project layout
 
 ```
 pageindex-demo/
-├── AGENTS.md                        ← this file
+├── AGENTS.md                          ← this file
 ├── README.md
 ├── docs/
 │   └── cloudflare-worker-spec.md
-├── pageindex/                       ← cloned VectifyAI/PageIndex repo
-├── data/                            ← {dest}_{type}_{lang} naming
-│   ├── ubeda_pois_raw_en.json   ← 367 POIs from Inventrip API
-│   ├── ubeda_destination_en.json← trips, tourist types, interest levels
-│   └── ubeda_guide_en.md        ← structured Markdown (240 KB, 20 sections)
+│
+├── data/                              ← raw API output, tracked in git
+│   ├── ubeda_pois_raw_en.json
+│   ├── ubeda_pois_raw_es.json
+│   ├── ubeda_destination_en.json
+│   └── ubeda_destination_es.json
+│
+├── indexes/                           ← build_index.py output, tracked
+│   ├── ubeda_en.json
+│   └── ubeda_es.json
+│
 ├── eval/
-│   ├── questions.json           ← 20 English visitor questions
-│   ├── questions_es.json        ← 20 Spanish visitor questions
-│   └── conversations.json       ← multi-turn conversation threads
-├── results/
-│   ├── ubeda_guide_en_structure.json  ← PageIndex tree index (gitignored)
-│   └── eval_gemma4-26b.json           ← Q&A results
+│   ├── questions.json                 ← 20 visitor questions (English)
+│   ├── questions_es.json              ← Spanish translations
+│   └── conversations.json             ← multi-turn threads for chat_demo
+│
+├── results/                           ← gitignored
+│   ├── eval_gemma4-26b.json
+│   ├── eval_gemma4-26b_es.json
+│   ├── scored_gemma4-26b.json
+│   └── scored_gemma4-26b_es.json
+│
 └── scripts/
-    ├── extract_pois.py          ← Step 3a: fetch POIs (--destination, --lang)
-    ├── extract_destination_data.py  ← Step 3b: fetch trips & metadata
-    ├── json_to_markdown.py      ← Step 4: JSON → Markdown (--destination, --lang)
-    ├── add_section_summaries.py ← Step 5: LLM section summaries (--structure, --lang)
-    ├── run_eval.py              ← Step 6: PageIndex Q&A runner
-    ├── score_results.py         ← Step 7: scoring and comparison
-    └── chat_demo.py             ← interactive / scripted conversation demo
+    ├── extract_pois.py                ← Step 1a: fetch POIs
+    ├── extract_destination_data.py    ← Step 1b: fetch trips & taxonomies
+    ├── build_index.py                 ← Step 2: build POI-aware index
+    ├── index_tools.py                 ← read-side helpers
+    ├── run_eval.py                    ← Step 3: agentic eval
+    ├── chat_demo.py                   ← interactive / scripted chat demo
+    ├── score_results.py               ← Step 4: score grounding + retrieval
+    └── json_to_markdown.py            ← optional human-readable export
+```
+
+### Naming convention
+
+```
+data/{destination}_pois_raw_{lang}.json
+data/{destination}_destination_{lang}.json
+indexes/{destination}_{lang}.json
+results/eval_{model}_{lang}.json     (results/ is gitignored)
 ```
 
 ---
 
-## Environment Variables Required
+## Environment variables
 
 ```bash
-# Data extraction (extract_pois.py, extract_destination_data.py)
+# Inventrip API (extract_pois.py, extract_destination_data.py)
 INVENTRIP_API_BASE_URL=https://api.inventrip.com
 INVENTRIP_API_KEY=your_api_key_here
 
-# LLM inference via Ollama (all eval/chat/summary scripts)
-OPENAI_API_KEY=ollama                  # literal string
+# LLM inference via Ollama (run_eval.py, chat_demo.py)
+OPENAI_API_KEY=ollama
 OPENAI_API_BASE=http://localhost:11434/v1
 
-# Apple Silicon MLX engine (all latency figures use this)
+# Apple Silicon MLX engine — all latency figures use this
 OLLAMA_NEW_ENGINE=true
 OLLAMA_KV_CACHE_TYPE=q8_0
 ```
 
 ---
 
-## Key External References
+## Key external references
 
-- PageIndex repo: <https://github.com/VectifyAI/PageIndex>
 - Ollama Gemma 4 tags: <https://ollama.com/library/gemma4/tags>
 - Inventrip API source: `/Users/fsanti/Development/inventrip_api`
   - POI route: `src/modules/v120/pois/routes.js`
   - Params builder: `src/modules/v120/pois/params-builder.js`
+  - POI v3 schema: `src/schemas/poi_v3.js`
+- Cloudflare Worker spec: `docs/cloudflare-worker-spec.md`
