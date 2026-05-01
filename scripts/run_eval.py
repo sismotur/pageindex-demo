@@ -1,18 +1,43 @@
 #!/usr/bin/env python3
 """
-run_eval.py — PageIndex Úbeda Q&A evaluation runner.
+run_eval.py — Q&A evaluation runner over the POI-aware index.
 
-Uses litellm tool calling (Ollama backend) to navigate the PageIndex tree
-and answer each question in eval/questions.json.
+Loads indexes/{destination}_{lang}.json (built by build_index.py) and
+runs each question in eval/questions.json through litellm tool calling.
+
+Five tools are exposed to the model:
+
+    get_section(section_id, sort, limit)
+        List the POIs inside one section, sorted by (interest_level,
+        zoom_level) by default.  Returns id + name + 1-line preview.
+
+    get_poi(poi_id)
+        Full record of one POI by ID.  All fields, all paragraphs,
+        no truncation, no line slicing.
+
+    find_poi_by_name(query, limit)
+        Fuzzy lookup against POI names.  Diacritic-insensitive.
+
+    filter_pois(interest_level, type, tourist_type, section_id,
+                indispensable, limit)
+        Facet query.  Combine multiple filters with AND.
+
+    list_sections()
+        Section catalogue with deterministic 1-line summaries.
+        Embedded into the system prompt at startup, so the model
+        rarely needs to call it explicitly.
 
 Usage:
     .venv/bin/python scripts/run_eval.py
     .venv/bin/python scripts/run_eval.py --model openai/gemma4:e4b
+    .venv/bin/python scripts/run_eval.py --lang es \
+        --questions eval/questions_es.json --index indexes/ubeda_es.json
 """
+
+from __future__ import annotations
 
 import argparse
 import json
-import re
 import sys
 import time
 from pathlib import Path
@@ -26,12 +51,27 @@ import litellm
 litellm.drop_params = True
 litellm.set_verbose = False
 
+# Make `from index_tools import ...` work whether you run as a script or module
+sys.path.insert(0, str(Path(__file__).parent))
+from index_tools import (
+    load_index,
+    format_sections_overview,
+    format_section,
+    format_poi,
+    format_find_poi_by_name,
+    format_filter_pois,
+    find_poi_by_name as ix_find_poi_by_name,
+    filter_pois as ix_filter_pois,
+    find_section,
+    get_poi as ix_get_poi,
+)
+
 # ── Constants ──────────────────────────────────────────────────────────────────
-QUESTIONS_FILE    = PROJECT_ROOT / "eval" / "questions.json"
-DEFAULT_STRUCTURE = PROJECT_ROOT / "results" / "ubeda_guide_en_structure.json"
-RESULTS_DIR       = PROJECT_ROOT / "results"
-DEFAULT_MODEL     = "openai/gemma4:e2b"
-MAX_TOOL_ROUNDS   = 14
+QUESTIONS_FILE  = PROJECT_ROOT / "eval" / "questions.json"
+DEFAULT_INDEX   = PROJECT_ROOT / "indexes" / "ubeda_en.json"
+RESULTS_DIR     = PROJECT_ROOT / "results"
+DEFAULT_MODEL   = "openai/gemma4:e2b"
+MAX_TOOL_ROUNDS = 14
 
 _LANG_RULES = {
     "en": "Always respond in English, regardless of the language of any retrieved content.",
@@ -40,7 +80,6 @@ _LANG_RULES = {
     "de": "Antworten Sie immer auf Deutsch, unabhängig von der Sprache des abgerufenen Inhalts.",
 }
 
-# Recovery messages: sent as a final user turn when the loop ends without an answer.
 _RECOVERY_MSGS = {
     "en": "Based on what you have retrieved above, please give your final answer now.",
     "es": "Basándote en lo que has recuperado, da tu respuesta final ahora.",
@@ -49,301 +88,349 @@ _RECOVERY_MSGS = {
 }
 
 _SYSTEM_PROMPT_TEMPLATE = """\
-You are a tourism assistant for {destination}. You answer questions using the \
-{destination} Tourism Guide document.
+You are a tourism assistant for {destination}.  You answer visitor \
+questions using the {destination} POI index, which is a structured catalogue \
+of every point of interest, trip and itinerary in the destination.
 
-The 18 sections of the guide are already listed below — you do NOT need to \
-call any tool to discover them. Use this information directly.
+The full section catalogue is listed below — you do NOT need to call any \
+tool to discover it.  Use this information directly.
 
-You have TWO tools:
-- get_poi_list(section_title): returns all POI names and their exact line \
-  numbers inside a section. Use the section titles exactly as shown below.
-- get_page_content(lines): returns the raw Markdown text for a line range \
-  (e.g. "9-28").
+You have FIVE tools.  Pick the one that fits the question:
 
---- GUIDE SECTIONS (pre-loaded, do not fetch again) ---
+  • get_section(section_id, sort?, limit?)
+        List POIs inside one section.  Returns id + name + a one-line preview.
+        Use when the user asks "what X exist?", "list all Y in <category>".
+
+  • get_poi(poi_id)
+        Full record of one POI: type, address, phone, coordinates, images, \
+links, AND the full description paragraph.
+        Use when you need facts (address, phone, dates, description) about \
+a specific named POI.
+
+  • find_poi_by_name(query, limit?)
+        Fuzzy lookup by POI name.  Returns up to `limit` candidates with id + \
+section + preview.  Use when the user names a place but you don't know \
+which section it lives in.  Always follow up with get_poi() on the best \
+match before answering specific facts.
+
+  • filter_pois(interest_level?, type?, tourist_type?, section_id?, \
+indispensable?, limit?)
+        Facet query.  All filters AND together.  Examples:
+          - filter_pois(indispensable=true) → must-see POIs
+          - filter_pois(tourist_type="FOOD TOURISM", limit=10) → food spots
+          - filter_pois(type="OilMill") → all olive-oil mills
+          - filter_pois(interest_level=1, section_id="religious-heritage")
+
+  • list_sections()
+        Returns the catalogue below.  Rarely needed — sections are \
+pre-loaded.
+
+--- DESTINATION OVERVIEW ---
+{destination_overview}
+
+--- SECTIONS (pre-loaded, do not fetch again) ---
 {sections_text}
 --- END SECTIONS ---
 
-STRATEGY — choose the path that fits the question:
-
-A) LISTING questions ("what X exist?", "list all Y")
-   1. Call get_poi_list(section_title) using the relevant section above.
-   2. Use the POI names to compose your answer.
-   You do NOT need to call get_page_content for every POI in a list.
-
-B) SPECIFIC FACT questions (address, phone, description, dates, measurements,
-   or any question about a named place: "tell me about X", "what is X?",
-   "describe X", "what are the opening hours of X")
-   1. Call get_poi_list(section_title) to get the exact POI line number.
-   2. Call get_page_content(lines="start-end") to read the POI text (15-30 lines).
-      Each POI has ~10 bullet-point fields PLUS a description paragraph after a
-      blank line — always fetch enough lines to include the blank line and paragraph.
-   Never answer specific facts from a POI title alone.
-
-RULES FOR ALL QUESTIONS:
-- Answer based ONLY on the text retrieved by your tools. Do not use outside knowledge.
-- Include exact names, addresses, phones, coordinates, and dates when present.
-- Always include the description paragraph (the text after the bullet-point block)
-  when answering questions about a specific place — it often contains the most
-  useful information.
-- If information is not in the guide, say so clearly.
+RULES:
+- Answer based ONLY on what your tools return.  Do not use outside knowledge.
+- Always include the description paragraph from get_poi() when answering \
+about a specific place — it carries the most useful detail.
+- Quote exact names, addresses, phones, coordinates, and dates when present.
+- For "what should I not miss?" / "best of" questions, use \
+filter_pois(indispensable=true) before browsing sections.
+- For "tell me about <name>" / "what is <name>" questions, call \
+find_poi_by_name() first, then get_poi() on the best match.
+- If information is not in the index, say so clearly.
 - {{lang_rule}}
 """
 
 
-def make_system_prompt(sections_text: str, lang: str = "en",
-                       destination: str = "this destination") -> str:
-    """Build the system prompt with sections pre-embedded and the correct language rule."""
+def make_system_prompt(sections_text: str, destination: str,
+                       destination_overview: str, lang: str = "en") -> str:
+    """Build the system prompt with sections and overview embedded."""
     lang_rule = _LANG_RULES.get(lang, _LANG_RULES["en"])
+    overview = destination_overview.strip() or "(no overview available)"
     return _SYSTEM_PROMPT_TEMPLATE.replace("{{lang_rule}}", lang_rule).format(
         sections_text=sections_text,
         destination=destination,
+        destination_overview=overview,
     )
 
-# get_sections() is removed from the tool list: sections are embedded in the
-# system prompt and returned instantly from cache if the model calls it anyway.
+
+# ── Tool definitions exposed to the LLM ─────────────────────────────────────
+
 TOOL_DEFS = [
     {
         "type": "function",
         "function": {
-            "name": "get_poi_list",
+            "name": "get_section",
             "description": (
-                "Returns the names and line numbers of every POI inside one section. "
-                "Use the section_title exactly as returned by get_sections(). "
-                "Use the line numbers to target get_page_content() at specific POIs."
+                "List the POIs inside one section.  Returns id + name + "
+                "a one-line preview for each POI.  Pass the section_id "
+                "from the catalogue above (preferred) OR the exact title."
             ),
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "section_title": {
+                    "section_id": {
                         "type": "string",
-                        "description": "Exact section title from get_sections().",
-                    }
+                        "description": "Section id or title.",
+                    },
+                    "sort": {
+                        "type": "string",
+                        "enum": ["interest", "name", "zoom"],
+                        "description": "Sort order; default 'interest' (most important first).",
+                    },
+                    "limit": {
+                        "type": "integer",
+                        "description": "Max POIs to return (default 50).",
+                    },
                 },
-                "required": ["section_title"],
+                "required": ["section_id"],
             },
         },
     },
     {
         "type": "function",
         "function": {
-            "name": "get_page_content",
+            "name": "get_poi",
             "description": (
-                "Returns the raw Markdown text for a line range. "
-                "Use line_num values from get_poi_list() as anchors. "
-                "Each POI has ~10 bullet fields plus a description paragraph — "
-                "request 15-30 lines to capture both."
+                "Return the full record of one POI: address, phone, "
+                "coordinates, images, AND the full description paragraph.  "
+                "Pass either the full id ('poi/12345') or the bare number."
             ),
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "lines": {
+                    "poi_id": {
                         "type": "string",
-                        "description": "Line range like '100-125' or single line '50'.",
-                    }
+                        "description": "POI id, e.g. 'poi/5155' or '5155'.",
+                    },
                 },
-                "required": ["lines"],
+                "required": ["poi_id"],
             },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "find_poi_by_name",
+            "description": (
+                "Fuzzy POI name lookup.  Diacritic-insensitive.  Returns "
+                "id + name + section + preview for up to `limit` matches.  "
+                "Always follow up with get_poi() on the best match."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "query": {
+                        "type": "string",
+                        "description": "Free-form POI name to search for.",
+                    },
+                    "limit": {
+                        "type": "integer",
+                        "description": "Max results (default 5).",
+                    },
+                },
+                "required": ["query"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "filter_pois",
+            "description": (
+                "Facet query.  All filters AND together.  Use for "
+                "'indispensable POIs', 'all OilMills', 'food-tourism POIs in "
+                "<section>', etc."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "interest_level": {
+                        "type": "integer",
+                        "description": "1=Indispensable, 2=Interesting, 3=Outstanding.",
+                    },
+                    "type": {
+                        "type": "string",
+                        "description": "UNE 178503 type code, e.g. 'OilMill', 'Museum'.",
+                    },
+                    "tourist_type": {
+                        "type": "string",
+                        "description": "Tourist-type code, e.g. 'FOOD TOURISM', 'HERITAGE TOURISM'.",
+                    },
+                    "section_id": {
+                        "type": "string",
+                        "description": "Restrict to a section.",
+                    },
+                    "indispensable": {
+                        "type": "boolean",
+                        "description": "Shortcut for interest_level=1.",
+                    },
+                    "limit": {
+                        "type": "integer",
+                        "description": "Max POIs to return (default 20).",
+                    },
+                },
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "list_sections",
+            "description": (
+                "Return the section catalogue.  Already embedded in your "
+                "system prompt — call only as a refresher."
+            ),
+            "parameters": {"type": "object", "properties": {}},
         },
     },
 ]
 
 
-# ── Two-level navigation helpers ────────────────────────────────────────────
+# ── Tool dispatch ──────────────────────────────────────────────────────────
 
-def _get_sections(structure_data: dict) -> list[dict]:
-    """Return the list of top-level section nodes (## level)."""
-    root_nodes = structure_data.get("structure", [])
-    if not root_nodes:
-        return []
-    # Direct children of the document root are the ## sections
-    return root_nodes[0].get("nodes", [])
+def execute_tool(name: str, args: dict, index: dict,
+                 sections_text: str, cache: dict) -> tuple[str, bool]:
+    """Run a tool call against the index.
 
-
-def build_sections_text(structure_data: dict) -> str:
-    """Return a compact sections-only overview for get_sections() tool."""
-    doc_name   = structure_data.get("doc_name", "Document")
-    line_count = structure_data.get("line_count", 0)
-    sections   = _get_sections(structure_data)
-
-    lines = [f"Document: {doc_name}  ({line_count} lines)",
-             f"",
-             f"SECTIONS ({len(sections)} total):"]
-
-    for i, sec in enumerate(sections):
-        title   = sec.get("title", "?")
-        lnum    = sec.get("line_num", "?")
-        summary = sec.get("summary", "")
-        pois    = sec.get("nodes") or []
-        n_pois  = len(pois)
-
-        # Compute end line: start of next section - 1, or end of doc
-        if i + 1 < len(sections):
-            end_line = (sections[i + 1].get("line_num") or line_count) - 1
-        else:
-            end_line = line_count
-
-        lines.append(f"  [{sec.get('node_id','?')}] {title}")
-        lines.append(f"      lines {lnum}–{end_line}  ({n_pois} POIs)")
-        if summary:
-            lines.append(f"      Summary: {summary}")
-
-    return "\n".join(lines)
-
-
-def build_poi_list_text(section_title: str, structure_data: dict) -> str:
-    """Return POI names + line numbers for a given section title."""
-    sections = _get_sections(structure_data)
-    # Case-insensitive match
-    match = next(
-        (s for s in sections
-         if s.get("title", "").lower() == section_title.lower()),
-        None,
-    )
-    if not match:
-        # Try partial match
-        match = next(
-            (s for s in sections
-             if section_title.lower() in s.get("title", "").lower()),
-            None,
-        )
-    if not match:
-        titles = [s.get("title") for s in sections]
-        return f"[ERROR] Section '{section_title}' not found. Available: {titles}"
-
-    pois = match.get("nodes") or []
-    if not pois:
-        return f"[INFO] Section '{match['title']}' has no POI children."
-
-    lines = [f"POIs in '{match['title']}' ({len(pois)} entries):"]
-    for poi in pois:
-        lines.append(f"  [{poi.get('node_id','?')}] {poi.get('title','?')}  (line {poi.get('line_num','?')})")
-    return "\n".join(lines)
-
-
-# ── Content retrieval ──────────────────────────────────────────────────────────
-
-def parse_line_spec(spec: str) -> tuple[int, int]:
-    """Parse '100-150' or '50' into (start, end) 1-indexed line numbers."""
-    spec = spec.strip()
-    m = re.match(r"^(\d+)-(\d+)$", spec)
-    if m:
-        return int(m.group(1)), int(m.group(2))
-    m = re.match(r"^(\d+)$", spec)
-    if m:
-        n = int(m.group(1))
-        return n, n
-    raise ValueError(f"Cannot parse line spec: {spec!r}")
-
-
-def get_lines(md_lines: list[str], spec: str) -> str:
-    """Return Markdown text for the given line spec (1-indexed, inclusive)."""
-    try:
-        start, end = parse_line_spec(spec)
-    except ValueError as exc:
-        return f"[ERROR] {exc}"
-    start = max(1, start)
-    end   = min(len(md_lines), end)
-    if start > end:
-        return f"[ERROR] Invalid range {spec}: start > end"
-    return "\n".join(md_lines[start - 1 : end])
-
-
-# ── Section mapping ────────────────────────────────────────────────────────────
-
-def build_section_map(nodes: list, parent_section: str = "") -> dict[int, str]:
-    """Map every line_num in the tree to its nearest ## section title."""
-    mapping = {}
-    for node in nodes:
-        lnum = node.get("line_num")
-        # Detect ## sections (depth 1 children of root)
-        title = node.get("title", "")
-        section = title if not parent_section else parent_section
-        if lnum:
-            mapping[lnum] = section
-        if node.get("nodes"):
-            mapping.update(build_section_map(node["nodes"], section))
-    return mapping
-
-
-def sections_from_tool_calls(tool_calls_made: list, section_map: dict) -> list[str]:
-    """Derive accessed section names from get_poi_list and get_page_content calls."""
-    sections = []
-    for call in tool_calls_made:
-        # Direct hit: get_poi_list names the section explicitly
-        if call["tool"] == "get_poi_list":
-            sec = call.get("args", {}).get("section_title", "")
-            if sec and sec not in sections:
-                sections.append(sec)
-            continue
-        # Indirect: get_page_content — map lines back to section
-        if call["tool"] == "get_page_content":
-            spec = call.get("args", {}).get("lines", "")
-            try:
-                start, end = parse_line_spec(spec)
-            except ValueError:
-                continue
-            for lnum, sec in section_map.items():
-                if start <= lnum <= end and sec not in sections:
-                    sections.append(sec)
-    return sections
-
-
-# ── Agentic loop ───────────────────────────────────────────────────────────────
-
-def execute_tool(name: str, args: dict, sections_text: str,
-                 poi_list_fn, md_lines: list[str],
-                 poi_cache: dict) -> tuple[str, bool]:
+    Returns (text_result, cache_hit).  `cache` is shared across calls within
+    a session and is keyed by (tool, normalised-arg-tuple).
     """
-    Dispatch a tool call and return (result_text, cache_hit).
+    if name == "list_sections":
+        return sections_text, True   # always pre-warmed
 
-    poi_cache is a session-level dict that persists across all questions.
-    get_poi_list results are stored keyed by lowercase section title.
-    get_sections is handled as a fallback even though it's not in TOOL_DEFS.
-    """
-    if name == "get_sections":
-        # Fallback if the model calls it despite it being pre-loaded
-        return sections_text, True  # always a "cache hit"
+    if name == "get_section":
+        section_id = (args.get("section_id") or "").strip()
+        sort = (args.get("sort") or "interest").lower()
+        limit = int(args.get("limit") or 50)
+        key = ("get_section", section_id.lower(), sort, limit)
+        if key in cache:
+            return cache[key], True
+        result = format_section(index, section_id, sort=sort, limit=limit)
+        cache[key] = result
+        return result, False
 
-    if name == "get_poi_list":
-        section_title = args.get("section_title", "")
-        key = section_title.lower()
-        if key not in poi_cache:
-            poi_cache[key] = poi_list_fn(section_title)
-            return poi_cache[key], False  # cache miss, freshly computed
-        return poi_cache[key], True       # cache hit
+    if name == "get_poi":
+        poi_id = (args.get("poi_id") or "").strip()
+        key = ("get_poi", poi_id)
+        if key in cache:
+            return cache[key], True
+        result = format_poi(index, poi_id)
+        cache[key] = result
+        return result, False
 
-    if name == "get_page_content":
-        spec = args.get("lines", "1-20")
-        content = get_lines(md_lines, spec)
-        if not content.strip():
-            return "[WARNING] No content found for that line range.", False
-        return content, False
+    if name == "find_poi_by_name":
+        query = (args.get("query") or "").strip()
+        limit = int(args.get("limit") or 5)
+        key = ("find_poi_by_name", query.lower(), limit)
+        if key in cache:
+            return cache[key], True
+        result = format_find_poi_by_name(index, query, limit=limit)
+        cache[key] = result
+        return result, False
+
+    if name == "filter_pois":
+        active = {k: v for k, v in args.items()
+                  if v not in (None, "", [], {})}
+        limit = int(active.pop("limit", 20))
+        key = ("filter_pois", tuple(sorted(active.items())), limit)
+        if key in cache:
+            return cache[key], True
+        result = format_filter_pois(index, limit=limit, **active)
+        cache[key] = result
+        return result, False
 
     return f"[ERROR] Unknown tool: {name}", False
 
 
+# ── Section-access tracking (used by the rubric) ─────────────────────────────
+
+def _section_titles_for_poi(index: dict, poi_id: str) -> list[str]:
+    """Return section titles owning a POI (usually one)."""
+    by_section = (index.get("facets") or {}).get("by_section") or {}
+    out = []
+    for sid, ids in by_section.items():
+        if poi_id in ids:
+            sec = find_section(index, sid)
+            if sec:
+                out.append(sec.get("title", ""))
+    return out
+
+
+def sections_accessed_from_calls(tool_calls: list, index: dict) -> list[str]:
+    """Map a sequence of tool calls to the section titles touched.
+
+    This drives the eval rubric's retrieval-accuracy score.
+    """
+    seen: list[str] = []
+
+    def add(title: str) -> None:
+        if title and title not in seen:
+            seen.append(title)
+
+    for call in tool_calls:
+        tool = call.get("tool")
+        args = call.get("args") or {}
+
+        if tool == "get_section":
+            sec = find_section(index, (args.get("section_id") or ""))
+            if sec:
+                add(sec.get("title", ""))
+
+        elif tool == "get_poi":
+            poi_id = (args.get("poi_id") or "").strip()
+            poi = ix_get_poi(index, poi_id)
+            if poi:
+                for t in _section_titles_for_poi(index, poi["poi_id"]):
+                    add(t)
+
+        elif tool == "find_poi_by_name":
+            for poi in ix_find_poi_by_name(index,
+                                           args.get("query") or "",
+                                           limit=int(args.get("limit") or 5)):
+                for t in _section_titles_for_poi(index, poi["poi_id"]):
+                    add(t)
+
+        elif tool == "filter_pois":
+            facet_args = {k: v for k, v in args.items()
+                          if k != "limit" and v not in (None, "", [], {})}
+            if "section_id" in facet_args:
+                sec = find_section(index, facet_args["section_id"])
+                if sec:
+                    add(sec.get("title", ""))
+                continue
+            limit = int(args.get("limit") or 20)
+            for poi in ix_filter_pois(index, **facet_args)[:limit]:
+                for t in _section_titles_for_poi(index, poi["poi_id"]):
+                    add(t)
+
+        # list_sections doesn't access content
+    return seen
+
+
+# ── Agentic loop ───────────────────────────────────────────────────────────
+
 def run_agentic_loop(question: str, system_prompt: str,
-                     sections_text: str, poi_list_fn,
-                     md_lines: list[str], model: str,
-                     poi_cache: dict,
+                     index: dict, sections_text: str,
+                     model: str, cache: dict,
                      recovery_msg: str = "") -> dict:
-    """
-    Run the tool-calling loop for a single question.
-    poi_cache is shared across questions in the same session.
-    Returns a dict with answer, tool_calls, rounds, cache_hits, and any error.
-    """
+    """Run the tool-calling loop for one question."""
     messages = [
         {"role": "system", "content": system_prompt},
         {"role": "user",   "content": question},
     ]
     tool_calls_made = []
-    answer          = ""
-    error           = None
-    cache_hits      = 0
+    answer = ""
+    error  = None
+    cache_hits = 0
+    rounds = 0
 
     for round_num in range(MAX_TOOL_ROUNDS):
+        rounds = round_num + 1
         try:
             response = litellm.completion(
                 model=model,
@@ -359,7 +446,6 @@ def run_agentic_loop(question: str, system_prompt: str,
         choice  = response.choices[0]
         message = choice.message
 
-        # Build assistant message dict (some fields may be None)
         assistant_msg = {"role": "assistant", "content": message.content or ""}
         if message.tool_calls:
             assistant_msg["tool_calls"] = [
@@ -373,23 +459,19 @@ def run_agentic_loop(question: str, system_prompt: str,
             ]
         messages.append(assistant_msg)
 
-        # No more tool calls → final answer
         if not message.tool_calls:
             answer = (message.content or "").strip()
             break
 
-        # Execute each tool call
         for tc in message.tool_calls:
-            fn_name  = tc.function.name
-            fn_args  = {}
+            fn_name = tc.function.name
+            fn_args: dict = {}
             try:
                 fn_args = json.loads(tc.function.arguments or "{}")
             except json.JSONDecodeError:
                 pass
 
-            result, hit = execute_tool(
-                fn_name, fn_args, sections_text, poi_list_fn, md_lines, poi_cache
-            )
+            result, hit = execute_tool(fn_name, fn_args, index, sections_text, cache)
             if hit:
                 cache_hits += 1
             tool_calls_made.append({
@@ -398,22 +480,18 @@ def run_agentic_loop(question: str, system_prompt: str,
                 "result_preview": result[:300],
                 "cache_hit":      hit,
             })
-
             messages.append({
                 "role":         "tool",
                 "tool_call_id": tc.id,
                 "content":      result,
             })
 
-    # If the loop ended without a clean answer, take the last assistant message
     if not answer:
         for msg in reversed(messages):
             if msg["role"] == "assistant" and msg.get("content"):
                 answer = msg["content"].strip()
                 break
 
-    # Safety net: if still empty (model terminated without text after tool calls),
-    # make one final explicit generation request
     if not answer and not error:
         msg = recovery_msg or _RECOVERY_MSGS["en"]
         try:
@@ -427,104 +505,112 @@ def run_agentic_loop(question: str, system_prompt: str,
             error = f"recovery failed: {exc}"
 
     return {
-        "answer":         answer,
-        "tool_calls":     tool_calls_made,
-        "rounds":         round_num + 1,
-        "cache_hits":     cache_hits,
-        "error":          error,
+        "answer":     answer,
+        "tool_calls": tool_calls_made,
+        "rounds":     rounds,
+        "cache_hits": cache_hits,
+        "error":      error,
     }
 
 
-# ── Main ───────────────────────────────────────────────────────────────────────
+# ── Inputs & helpers ───────────────────────────────────────────────────────
 
 def load_inputs(questions_file: Path | None = None,
-                structure_file: Path | None = None,
-                md_file: Path | None = None) -> tuple[list, dict, list[str]]:
-    """Load questions, structure, and Markdown lines. Fail fast if missing."""
+                index_file: Path | None = None) -> tuple[list, dict]:
+    """Load questions and the POI index.  Fail fast if missing."""
     q_file = questions_file or QUESTIONS_FILE
-    s_file = structure_file or DEFAULT_STRUCTURE
-    # Derive Markdown path from structure filename when not given explicitly:
-    # results/foo_guide_structure.json  →  data/foo_guide.md
-    m_file = md_file or (
-        PROJECT_ROOT / "data" / s_file.name.replace("_structure.json", ".md")
-    )
-    for path in (q_file, s_file, m_file):
+    i_file = index_file or DEFAULT_INDEX
+    for path in (q_file, i_file):
         if not path.exists():
             print(f"[ERROR] Missing: {path}", file=sys.stderr)
             sys.exit(1)
-
     with open(q_file, encoding="utf-8") as f:
         questions = json.load(f)
-    with open(s_file, encoding="utf-8") as f:
-        structure_data = json.load(f)
-    with open(m_file, encoding="utf-8") as f:
-        md_lines = f.read().splitlines()
+    index = load_index(i_file)
+    return questions, index
 
-    return questions, structure_data, md_lines
+
+# ── Main ───────────────────────────────────────────────────────────────────
+
+def _resolve_index_arg(args) -> Path:
+    """Accept --index OR legacy --structure (with deprecation note)."""
+    if args.index:
+        path = Path(args.index)
+    elif args.structure:
+        # Legacy compatibility shim: try to remap old structure paths to
+        # the new index file by stripping '_guide' and '_structure'.
+        legacy = Path(args.structure)
+        guess_name = legacy.name.replace("_guide", "").replace(
+            "_structure.json", ".json")
+        guessed = legacy.parent.parent / "indexes" / guess_name
+        if guessed.exists():
+            print(f"[WARN] --structure is deprecated; using {guessed}",
+                  file=sys.stderr)
+            path = guessed
+        else:
+            path = legacy
+    else:
+        path = DEFAULT_INDEX
+    if not path.is_absolute():
+        path = PROJECT_ROOT / path
+    return path
 
 
 def main() -> None:
-    """Parse args, run all questions, save results."""
-    parser = argparse.ArgumentParser(description="Run PageIndex Q&A evaluation")
+    parser = argparse.ArgumentParser(description="Run POI-index Q&A evaluation")
     parser.add_argument("--model", default=DEFAULT_MODEL,
                         help=f"litellm model string (default: {DEFAULT_MODEL})")
     parser.add_argument("--questions", default=None,
                         help="Path to questions JSON (default: eval/questions.json)")
+    parser.add_argument("--index", default=None,
+                        help=f"Path to POI index JSON (default: {DEFAULT_INDEX})")
     parser.add_argument("--structure", default=None,
-                        help=f"Path to PageIndex structure JSON "
-                             f"(default: {DEFAULT_STRUCTURE})")
+                        help=argparse.SUPPRESS)  # legacy, hidden
     parser.add_argument("--lang", default="en",
                         help="Response language code: en, es, fr, de (default: en)")
     args = parser.parse_args()
 
     questions_file = Path(args.questions) if args.questions else QUESTIONS_FILE
-    structure_path = Path(args.structure) if args.structure else DEFAULT_STRUCTURE
-    if not structure_path.is_absolute():
-        structure_path = PROJECT_ROOT / structure_path
+    index_path     = _resolve_index_arg(args)
 
-    questions, structure_data, md_lines = load_inputs(questions_file, structure_path)
+    questions, index = load_inputs(questions_file, index_path)
 
-    # Derive destination name from root node title (e.g. "Úbeda Tourism Guide" → "Úbeda")
-    root_nodes = structure_data.get("structure", [])
-    root_title = root_nodes[0].get("title", "") if root_nodes else ""
-    destination = root_title.replace(" Tourism Guide", "").strip() or "this destination"
+    destination_display = (index.get("meta") or {}).get("destination_display") \
+                          or (index.get("meta") or {}).get("destination") \
+                          or "this destination"
+    sections_text = format_sections_overview(index)
+    overview_text = index.get("destination_overview", "")
+    system_prompt = make_system_prompt(
+        sections_text=sections_text,
+        destination=destination_display,
+        destination_overview=overview_text,
+        lang=args.lang,
+    )
+
+    # Pre-warm: cache get_section for every section (pure dict traversal,
+    # so this is essentially free).  Subsequent get_section calls hit cache.
+    cache: dict = {}
+    for sec in index.get("sections", []):
+        sid = sec.get("section_id", "")
+        if sid:
+            cache[("get_section", sid.lower(), "interest", 50)] = format_section(
+                index, sid, sort="interest", limit=50)
+    print(f"[INFO] Pre-warmed cache: {len(cache)} sections")
 
     recovery_msg = _RECOVERY_MSGS.get(args.lang, _RECOVERY_MSGS["en"])
-    sections_text = build_sections_text(structure_data)
-    system_prompt = make_system_prompt(sections_text, lang=args.lang,
-                                       destination=destination)
-    poi_list_fn   = lambda title: build_poi_list_text(title, structure_data)
 
-    # Session-level POI list cache: persists across all 20 questions
-    # Key: lowercase section title  Value: pre-rendered POI list text
-    poi_cache: dict[str, str] = {}
-
-    # Pre-warm: populate all 18 sections immediately.
-    # build_poi_list_text() is pure Python dict traversal (~2 ms total).
-    # Every get_poi_list() call in the session will be a cache hit.
-    for _sec in _get_sections(structure_data):
-        _title = _sec.get("title", "")
-        if _title:
-            poi_cache[_title.lower()] = poi_list_fn(_title)
-    print(f"[INFO] Cache pre-warmed: {len(poi_cache)} sections loaded")
-
-    # Build line→section map from the root's direct children (## sections)
-    root_nodes  = structure_data.get("structure", [])
-    section_map = {}
-    if root_nodes and root_nodes[0].get("nodes"):
-        section_map = build_section_map(root_nodes[0]["nodes"])
-
-    model_tag  = args.model.split("/")[-1].replace(":", "-")
+    model_tag   = args.model.split("/")[-1].replace(":", "-")
     lang_suffix = f"_{args.lang}" if args.lang != "en" else ""
     output_file = RESULTS_DIR / f"eval_{model_tag}{lang_suffix}.json"
     RESULTS_DIR.mkdir(exist_ok=True)
 
     print(f"[INFO] Model:          {args.model}")
     print(f"[INFO] Language:       {args.lang}")
+    print(f"[INFO] Index:          {index_path.name}  "
+          f"({(index.get('meta') or {}).get('poi_count', '?')} POIs)")
     print(f"[INFO] Questions:      {len(questions)}  ({questions_file.name})")
     print(f"[INFO] Output:         {output_file}")
-    print(f"[INFO] System prompt:  {len(system_prompt):,} chars "
-          f"(sections pre-embedded, get_sections() removed)\n")
+    print(f"[INFO] System prompt:  {len(system_prompt):,} chars\n")
 
     results = []
     total_start = time.time()
@@ -536,14 +622,13 @@ def main() -> None:
         print(f"[{i:2d}/{len(questions)}] {qid} ({difficulty})  {question[:70]}...")
         t0 = time.time()
 
-        loop_result = run_agentic_loop(
-            question, system_prompt, sections_text,
-            poi_list_fn, md_lines, args.model, poi_cache,
-            recovery_msg=recovery_msg,
+        loop = run_agentic_loop(
+            question, system_prompt, index, sections_text,
+            args.model, cache, recovery_msg=recovery_msg,
         )
 
         elapsed = round(time.time() - t0, 2)
-        sections = sections_from_tool_calls(loop_result["tool_calls"], section_map)
+        sections = sections_accessed_from_calls(loop["tool_calls"], index)
 
         result = {
             "id":               qid,
@@ -554,31 +639,23 @@ def main() -> None:
             "question":         question,
             "expected_section": q.get("expected_section"),
             "grounding_check":  q.get("grounding_check"),
-            "answer":           loop_result["answer"],
-            "tool_calls":       loop_result["tool_calls"],
-            "sections_accessed":sections,
-            "rounds":           loop_result["rounds"],
+            "answer":           loop["answer"],
+            "tool_calls":       loop["tool_calls"],
+            "sections_accessed": sections,
+            "rounds":           loop["rounds"],
+            "cache_hits":       loop["cache_hits"],
             "latency_seconds":  elapsed,
-            "error":            loop_result["error"],
+            "error":            loop["error"],
         }
         results.append(result)
 
-        answer_preview = loop_result["answer"][:120].replace("\n", " ")
-        tools_used  = [c["tool"] for c in loop_result["tool_calls"]]
-        hits        = loop_result.get("cache_hits", 0)
-        total_calls = len(loop_result["tool_calls"])
-        status      = "ERROR" if loop_result["error"] else "OK"
-        print(f"         [{status}] {elapsed}s | tools: {tools_used} | cache hits: {hits}/{total_calls}")
-        print(f"         → {answer_preview}...\n")
+        status = "ERROR" if loop["error"] else "OK"
+        tools = [c["tool"] for c in loop["tool_calls"]]
+        print(f"  [{status}] {elapsed}s  rounds={loop['rounds']}  "
+              f"tools={tools}  cache={loop['cache_hits']}")
 
-    elapsed_total   = round(time.time() - total_start, 1)
-    total_hits      = sum(r.get("tool_calls") and
-                          sum(1 for c in r["tool_calls"] if c.get("cache_hit"))
-                          for r in results)
-    total_tool_calls = sum(len(r.get("tool_calls") or []) for r in results)
-    print(f"[INFO] Finished {len(results)} questions in {elapsed_total}s")
-    print(f"[INFO] POI cache entries populated: {len(poi_cache)}")
-    print(f"[INFO] Cache hits across session:   {total_hits}/{total_tool_calls} tool calls")
+    total_elapsed = round(time.time() - total_start, 1)
+    print(f"\n[INFO] All questions complete in {total_elapsed}s")
 
     with open(output_file, "w", encoding="utf-8") as f:
         json.dump(results, f, indent=2, ensure_ascii=False)

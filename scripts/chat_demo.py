@@ -1,32 +1,25 @@
 #!/usr/bin/env python3
 """
-chat_demo.py — Multi-turn conversation demo for the Úbeda tourism assistant.
+chat_demo.py — Multi-turn conversation demo over the POI-aware index.
 
-Runs scripted conversation threads from eval/conversations.json, carrying
-the full message history across turns within each thread.  Each turn in a
-conversation sees everything the model said in previous turns, so later
-questions can reference earlier answers naturally ("you mentioned X — tell
-me more about it").
+Two modes:
+  • Scripted: runs every conversation thread in eval/conversations.json,
+    carrying the full message history across turns within a thread.
+  • Interactive: --interactive launches a chat where you type questions
+    and the answer streams back; the conversation context carries
+    across turns until you exit.
 
-The POI list cache is shared across all turns in a conversation, and the
-section context is pre-loaded in the system prompt (identical setup to
-run_eval.py).
-
-Key difference from run_eval.py:
-  - messages list is NOT reset between turns
-  - tool calls within a turn are appended to the shared history
-  - the next user question always follows the last assistant message
+Reuses the agentic loop and the five tools defined in run_eval.py.
 
 Usage:
-    # Scripted conversations
     .venv/bin/python scripts/chat_demo.py
     .venv/bin/python scripts/chat_demo.py --model openai/gemma4:e4b
-    .venv/bin/python scripts/chat_demo.py --conversation C01
-
-    # Interactive mode (type questions, get answers, conversation context carries)
     .venv/bin/python scripts/chat_demo.py --interactive
-    .venv/bin/python scripts/chat_demo.py --interactive --model openai/gemma4:26b
+    .venv/bin/python scripts/chat_demo.py --interactive --lang es \
+        --index indexes/ubeda_es.json
 """
+
+from __future__ import annotations
 
 import argparse
 import itertools
@@ -45,21 +38,21 @@ import litellm
 litellm.drop_params = True
 litellm.set_verbose = False
 
-# Import building blocks from run_eval without modifying it
+# Shared building blocks from run_eval.py
 sys.path.insert(0, str(PROJECT_ROOT / "scripts"))
-from run_eval import (
-    _get_sections,
-    build_sections_text,
-    build_poi_list_text,
-    make_system_prompt,
-    execute_tool,
+from run_eval import (   # noqa: E402
     TOOL_DEFS,
     MAX_TOOL_ROUNDS,
-    load_inputs,
+    execute_tool,
+    make_system_prompt,
     _LANG_RULES,
     _RECOVERY_MSGS,
-    DEFAULT_STRUCTURE,
-    PROJECT_ROOT,
+    DEFAULT_INDEX,
+)
+from index_tools import (   # noqa: E402
+    load_index,
+    format_sections_overview,
+    format_section,
 )
 
 # ── Constants ──────────────────────────────────────────────────────────────────
@@ -72,17 +65,16 @@ DEFAULT_MODEL      = "openai/gemma4:26b"
 
 class Spinner:
     """Lightweight terminal spinner that runs in a background thread."""
-    _FRAMES = ["\u28cb","\u28d9","\u28b9","\u28b8","\u28bc","\u28b4",
-               "\u28a6","\u28a7","\u2887","\u288f"]  # braille dots
+    _FRAMES = ["\u28cb", "\u28d9", "\u28b9", "\u28b8", "\u28bc", "\u28b4",
+               "\u28a6", "\u28a7", "\u2887", "\u288f"]
 
     def __init__(self) -> None:
-        self._msg    = "Thinking"
-        self._active = False
+        self._msg     = "Thinking"
+        self._active  = False
         self._thread: threading.Thread | None = None
-        self._lock   = threading.Lock()
+        self._lock    = threading.Lock()
 
     def update(self, msg: str) -> None:
-        """Change the status text while the spinner is running."""
         with self._lock:
             self._msg = msg
 
@@ -98,7 +90,6 @@ class Spinner:
                 break
             with self._lock:
                 text = self._msg
-            # \033[2K = erase entire current line; \r = go to start of line
             sys.stdout.write(f"\033[2K\r  {frame}  {text}\u2026")
             sys.stdout.flush()
             time.sleep(0.08)
@@ -107,28 +98,39 @@ class Spinner:
         self._active = False
         if self._thread:
             self._thread.join()
-        # Erase the spinner line completely and return cursor to start
         sys.stdout.write("\033[2K\r")
         sys.stdout.flush()
+
+
+def _status_for_call(name: str, args: dict) -> str:
+    """Produce a short status line shown by the spinner during tool calls."""
+    if name == "get_section":
+        return f"Loading section {args.get('section_id', '')}"
+    if name == "get_poi":
+        return f"Loading POI {args.get('poi_id', '')}"
+    if name == "find_poi_by_name":
+        return f"Searching '{args.get('query', '')}'"
+    if name == "filter_pois":
+        echo = ", ".join(f"{k}={v}" for k, v in args.items() if v not in (None, "", [], {}))
+        return f"Filtering POIs ({echo})"
+    if name == "list_sections":
+        return "Listing sections"
+    return f"Calling {name}"
 
 
 # ── Single-turn execution (appends to shared history) ─────────────────────
 
 def run_turn(question: str, messages: list[dict],
-             sections_text: str, poi_list_fn,
-             md_lines: list[str], model: str,
-             poi_cache: dict,
+             index: dict, sections_text: str,
+             model: str, cache: dict,
              on_status=None,
              on_stream_start=None,
              stream: bool = False,
              recovery_msg: str = "") -> dict:
-    """
-    Execute one conversation turn.
+    """Execute one conversation turn over the POI index.
 
-    Appends the user question to `messages`, runs the tool-calling loop,
-    appends all intermediate assistant/tool messages, and returns the
-    final answer dict.  `messages` is modified in-place so the next
-    turn sees the full history.
+    `messages` is mutated in-place with the new user/assistant/tool turns
+    so the next call sees full context.
     """
     messages.append({"role": "user", "content": question})
 
@@ -136,16 +138,16 @@ def run_turn(question: str, messages: list[dict],
     answer     = ""
     error      = None
     cache_hits = 0
+    rounds     = 0
 
     for round_num in range(MAX_TOOL_ROUNDS):
+        rounds = round_num + 1
+
         if stream:
-            # ── Streaming round ───────────────────────────────────────────
-            # Accumulate content + tool-call deltas from the stream.
-            # Text tokens are printed immediately; tool-call tokens are
-            # collected silently (spinner stays active until first text).
+            # ── Streaming round ──────────────────────────────────────────
             acc_content    = ""
-            acc_tool_calls: list[dict] = []  # [{id, name, arguments}]
-            streaming_live = False  # True once first text token printed
+            acc_tool_calls: list[dict] = []
+            streaming_live = False
 
             try:
                 response_stream = litellm.completion(
@@ -163,12 +165,10 @@ def run_turn(question: str, messages: list[dict],
             for chunk in response_stream:
                 delta = chunk.choices[0].delta
 
-                # ─ Text content token
                 if delta.content:
                     if not streaming_live:
-                        # Signal caller to stop the spinner, then start printing
                         if on_stream_start:
-                            on_stream_start()  # stops spinner + prints prefix
+                            on_stream_start()
                         else:
                             sys.stdout.write("\033[2K\rAssistant: ")
                             sys.stdout.flush()
@@ -177,7 +177,6 @@ def run_turn(question: str, messages: list[dict],
                     sys.stdout.write(delta.content)
                     sys.stdout.flush()
 
-                # ─ Tool-call delta (accumulate silently)
                 if delta.tool_calls:
                     for tc_delta in delta.tool_calls:
                         idx = tc_delta.index
@@ -192,9 +191,8 @@ def run_turn(question: str, messages: list[dict],
                                 acc_tool_calls[idx]["arguments"] += tc_delta.function.arguments
 
             if streaming_live:
-                print()   # newline after streamed answer
+                print()
 
-            # Build assistant message from accumulated deltas
             assistant_msg = {"role": "assistant", "content": acc_content or ""}
             if acc_tool_calls:
                 assistant_msg["tool_calls"] = [
@@ -212,7 +210,7 @@ def run_turn(question: str, messages: list[dict],
                 answer = acc_content.strip()
                 break
 
-            # Process accumulated tool calls
+            # Convert accumulated deltas to tool-call dispatch format
             raw_tool_calls = [
                 type("TC", (), {"id": tc["id"],
                                 "function": type("F", (), {
@@ -223,7 +221,7 @@ def run_turn(question: str, messages: list[dict],
             ]
 
         else:
-            # ── Non-streaming round (scripted / batch use) ──────────────
+            # ── Non-streaming round ──────────────────────────────────────
             try:
                 response = litellm.completion(
                     model=model,
@@ -258,27 +256,19 @@ def run_turn(question: str, messages: list[dict],
 
             raw_tool_calls = message.tool_calls
 
-        # Execute tools and append responses to history
+        # Execute tool calls and append results
         for tc in raw_tool_calls:
             fn_name = tc.function.name
-            fn_args = {}
+            fn_args: dict = {}
             try:
                 fn_args = json.loads(tc.function.arguments or "{}")
             except json.JSONDecodeError:
                 pass
 
-            # Update status so the spinner shows what's happening
             if on_status:
-                if fn_name == "get_poi_list":
-                    sec = fn_args.get("section_title", "section")
-                    on_status(f"Searching {sec}")
-                elif fn_name == "get_page_content":
-                    lines = fn_args.get("lines", "...")
-                    on_status(f"Reading guide lines {lines}")
+                on_status(_status_for_call(fn_name, fn_args))
 
-            result, hit = execute_tool(
-                fn_name, fn_args, sections_text, poi_list_fn, md_lines, poi_cache
-            )
+            result, hit = execute_tool(fn_name, fn_args, index, sections_text, cache)
             if hit:
                 cache_hits += 1
             tool_calls_made.append({
@@ -300,7 +290,6 @@ def run_turn(question: str, messages: list[dict],
                 answer = msg["content"].strip()
                 break
 
-    # Safety net for empty answers
     if not answer and not error:
         msg = recovery_msg or _RECOVERY_MSGS["en"]
         try:
@@ -316,58 +305,58 @@ def run_turn(question: str, messages: list[dict],
     return {
         "answer":     answer,
         "tool_calls": tool_calls_made,
-        "rounds":     round_num + 1,
+        "rounds":     rounds,
         "cache_hits": cache_hits,
         "error":      error,
     }
 
 
+# ── Cache pre-warm ─────────────────────────────────────────────────────────
+
+def prewarm_cache(index: dict) -> dict:
+    """Populate the per-session cache with one get_section per section."""
+    cache: dict = {}
+    for sec in index.get("sections", []):
+        sid = sec.get("section_id", "")
+        if sid:
+            cache[("get_section", sid.lower(), "interest", 50)] = format_section(
+                index, sid, sort="interest", limit=50)
+    return cache
+
+
 # ── Conversation runner ────────────────────────────────────────────────────────
 
 def run_conversation(thread: dict, system_prompt: str,
-                     sections_text: str, poi_list_fn,
-                     md_lines: list[str], model: str,
-                     structure_data: dict) -> dict:
-    """
-    Run all turns of a conversation thread.
-
-    A single `messages` list and `poi_cache` are shared across every turn,
-    giving the model full conversational context and instant POI lookups.
-    """
-    # Pre-warm POI cache for this conversation
-    poi_cache: dict[str, str] = {}
-    for sec in _get_sections(structure_data):
-        title = sec.get("title", "")
-        if title:
-            poi_cache[title.lower()] = poi_list_fn(title)
-
-    # Shared message history — starts with system prompt only
+                     index: dict, sections_text: str,
+                     model: str) -> dict:
+    """Run all turns of a conversation thread sharing one cache + history."""
+    cache    = prewarm_cache(index)
     messages: list[dict] = [{"role": "system", "content": system_prompt}]
 
-    turns_log  = []
+    turns_log = []
     conv_start = time.time()
 
     print(f"\n{'─'*70}")
     print(f"  {thread['id']}  {thread['title']}")
-    print(f"  {thread['description']}")
+    if thread.get("description"):
+        print(f"  {thread['description']}")
     print(f"{'─'*70}")
 
     for i, turn_spec in enumerate(thread["turns"], 1):
         question = turn_spec["question"]
         print(f"\n  Turn {i}/{len(thread['turns'])}: {question}")
 
-        t0     = time.time()
-        result = run_turn(
-            question, messages,
-            sections_text, poi_list_fn, md_lines, model, poi_cache,
-        )
+        t0 = time.time()
+        result = run_turn(question, messages,
+                          index, sections_text, model, cache)
         elapsed = round(time.time() - t0, 2)
 
         status = "ERROR" if result["error"] else "OK"
-        tools_used  = [c["tool"] for c in result["tool_calls"]]
-        hits        = result["cache_hits"]
+        tools_used = [c["tool"] for c in result["tool_calls"]]
+        hits = result["cache_hits"]
         total_calls = len(result["tool_calls"])
-        print(f"  [{status}] {elapsed}s | tools: {tools_used} | cache: {hits}/{total_calls}")
+        print(f"  [{status}] {elapsed}s | tools: {tools_used} | "
+              f"cache: {hits}/{total_calls}")
         print(f"  → {result['answer'][:200].replace(chr(10), ' ')}")
 
         turns_log.append({
@@ -380,10 +369,10 @@ def run_conversation(thread: dict, system_prompt: str,
             "error":      result["error"],
         })
 
-    total_time = round(time.time() - conv_start, 1)
-    total_cache_hits  = sum(t["cache_hits"] for t in turns_log)
-    total_tool_calls  = sum(len(t["tool_calls"]) for t in turns_log)
-    total_latency     = sum(t["latency"] for t in turns_log)
+    total_time      = round(time.time() - conv_start, 1)
+    total_cache_hits = sum(t["cache_hits"] for t in turns_log)
+    total_tool_calls = sum(len(t["tool_calls"]) for t in turns_log)
+    total_latency    = sum(t["latency"] for t in turns_log)
 
     print(f"\n  ✓ {thread['id']} done in {total_time}s | "
           f"cache hits: {total_cache_hits}/{total_tool_calls} | "
@@ -404,23 +393,12 @@ def run_conversation(thread: dict, system_prompt: str,
 
 # ── Interactive mode ───────────────────────────────────────────────────────────
 
-def run_interactive(system_prompt: str, sections_text: str, poi_list_fn,
-                    md_lines: list[str], model: str,
-                    structure_data: dict, lang: str = "en",
-                    destination_name: str = "Tourism",
-                    recovery_msg: str = "") -> None:
-    """Start an interactive chat session in the terminal.
-
-    Full conversation context carries across turns. Type 'exit', 'quit',
-    or press Ctrl+C / Ctrl+D to end the session.
-    """
-    # Pre-warm POI cache once for the whole session
-    poi_cache: dict[str, str] = {}
-    for sec in _get_sections(structure_data):
-        title = sec.get("title", "")
-        if title:
-            poi_cache[title.lower()] = poi_list_fn(title)
-
+def run_interactive(system_prompt: str, index: dict, sections_text: str,
+                    model: str, lang: str,
+                    destination_name: str,
+                    recovery_msg: str) -> None:
+    """Interactive chat session in the terminal."""
+    cache    = prewarm_cache(index)
     messages: list[dict] = [{"role": "system", "content": system_prompt}]
     turn = 0
 
@@ -428,7 +406,8 @@ def run_interactive(system_prompt: str, sections_text: str, poi_list_fn,
     print("─" * 60)
     print(f"  {destination_name} Assistant — Interactive Mode")
     print(f"  Model: {model}")
-    lang_label = {"en": "English", "es": "Español", "fr": "Français", "de": "Deutsch"}.get(lang, lang.upper())
+    lang_label = {"en": "English", "es": "Español",
+                  "fr": "Français", "de": "Deutsch"}.get(lang, lang.upper())
     print(f"  Language: {lang_label}")
     print("  Type your question and press Enter. 'exit' to quit.")
     print("─" * 60)
@@ -463,7 +442,7 @@ def run_interactive(system_prompt: str, sections_text: str, poi_list_fn,
 
         result = run_turn(
             question, messages,
-            sections_text, poi_list_fn, md_lines, model, poi_cache,
+            index, sections_text, model, cache,
             on_status=spinner.update,
             on_stream_start=on_stream_start,
             stream=True,
@@ -471,16 +450,13 @@ def run_interactive(system_prompt: str, sections_text: str, poi_list_fn,
         )
 
         if not spinner_stopped:
-            # Streaming didn't happen (empty answer / error): stop normally
             spinner.stop()
             print("Assistant:", result["answer"])
-        # else: answer was already streamed to the terminal
 
         elapsed = round(time.time() - t0, 2)
 
-        # Compact metadata line
         tools_used = [c["tool"].replace("get_", "") for c in result["tool_calls"]]
-        hits = result["cache_hits"]
+        hits  = result["cache_hits"]
         total = len(result["tool_calls"])
         meta = f"[{elapsed}s"
         if tools_used:
@@ -488,34 +464,83 @@ def run_interactive(system_prompt: str, sections_text: str, poi_list_fn,
         if total:
             meta += f" | cache {hits}/{total}"
         meta += f" | turn {turn}]"
-        print(f"\033[2m{meta}\033[0m")   # dim text
+        print(f"\033[2m{meta}\033[0m")
         print()
 
 
 # ── Main ───────────────────────────────────────────────────────────────────────
 
+def _resolve_index_arg(args) -> Path:
+    """Accept --index OR legacy --structure."""
+    if args.index:
+        path = Path(args.index)
+    elif args.structure:
+        legacy = Path(args.structure)
+        guess_name = legacy.name.replace("_guide", "").replace(
+            "_structure.json", ".json")
+        guessed = legacy.parent.parent / "indexes" / guess_name
+        if guessed.exists():
+            print(f"[WARN] --structure is deprecated; using {guessed}",
+                  file=sys.stderr)
+            path = guessed
+        else:
+            path = legacy
+    else:
+        path = DEFAULT_INDEX
+    if not path.is_absolute():
+        path = PROJECT_ROOT / path
+    return path
+
+
 def main() -> None:
-    """Load conversations or start interactive mode."""
-    parser = argparse.ArgumentParser(description="Multi-turn conversation demo")
+    parser = argparse.ArgumentParser(description="Multi-turn POI-index chat demo")
     parser.add_argument("--model",        default=DEFAULT_MODEL,
                         help=f"litellm model string (default: {DEFAULT_MODEL})")
     parser.add_argument("--interactive",  action="store_true",
                         help="Start an interactive chat session")
-    parser.add_argument("--lang",          default="en",
+    parser.add_argument("--lang",         default="en",
                         help="Response language: en, es, fr, de (default: en)")
+    parser.add_argument("--index",        default=None,
+                        help=f"POI index JSON (default: {DEFAULT_INDEX})")
     parser.add_argument("--structure",    default=None,
-                        help=f"PageIndex structure JSON "
-                             f"(default: {DEFAULT_STRUCTURE})")
+                        help=argparse.SUPPRESS)  # legacy, hidden
     parser.add_argument("--conversation", default=None,
                         help="Run only this conversation ID (e.g. C01)")
     parser.add_argument("--output",       default=None,
                         help="Output path (default: results/conversations_<model>.json)")
     args = parser.parse_args()
 
+    index_path = _resolve_index_arg(args)
+    if not index_path.exists():
+        print(f"[ERROR] Index not found: {index_path}", file=sys.stderr)
+        sys.exit(1)
+    index = load_index(index_path)
+
+    destination_display = (index.get("meta") or {}).get("destination_display") \
+                          or (index.get("meta") or {}).get("destination") \
+                          or "Tourism"
+    sections_text = format_sections_overview(index)
+    overview_text = index.get("destination_overview", "")
+    system_prompt = make_system_prompt(
+        sections_text=sections_text,
+        destination=destination_display,
+        destination_overview=overview_text,
+        lang=args.lang,
+    )
+    recovery_msg = _RECOVERY_MSGS.get(args.lang, _RECOVERY_MSGS["en"])
+
+    # Interactive mode
+    if args.interactive:
+        run_interactive(system_prompt, index, sections_text,
+                        args.model, args.lang,
+                        destination_name=destination_display,
+                        recovery_msg=recovery_msg)
+        return
+
+    # Scripted mode
     if not CONVERSATIONS_FILE.exists():
         print(f"[ERROR] Not found: {CONVERSATIONS_FILE}", file=sys.stderr)
         sys.exit(1)
-
     with open(CONVERSATIONS_FILE, encoding="utf-8") as f:
         threads = json.load(f)
 
@@ -526,51 +551,22 @@ def main() -> None:
                   file=sys.stderr)
             sys.exit(1)
 
-    structure_path = Path(args.structure) if args.structure else DEFAULT_STRUCTURE
-    if not structure_path.is_absolute():
-        structure_path = PROJECT_ROOT / structure_path
-    questions, structure_data, md_lines = load_inputs(structure_file=structure_path)
-
-    # Derive destination name from root node title
-    root_nodes = structure_data.get("structure", [])
-    root_title = root_nodes[0].get("title", "") if root_nodes else ""
-    destination_name = root_title.replace(" Tourism Guide", "").strip() or "Tourism"
-
-    recovery_msg  = _RECOVERY_MSGS.get(args.lang, _RECOVERY_MSGS["en"])
-    sections_text = build_sections_text(structure_data)
-    system_prompt = make_system_prompt(sections_text, lang=args.lang,
-                                       destination=destination_name)
-    poi_list_fn   = lambda title: build_poi_list_text(title, structure_data)
-
-    # ── Interactive mode ──────────────────────────────────────────────────────────────────
-    if args.interactive:
-        run_interactive(
-            system_prompt, sections_text, poi_list_fn,
-            md_lines, args.model, structure_data, lang=args.lang,
-            destination_name=destination_name, recovery_msg=recovery_msg,
-        )
-        return
-
-    # ── Scripted mode ───────────────────────────────────────────────────────
-    model_tag   = args.model.split("/")[-1].replace(":", "-")
+    model_tag = args.model.split("/")[-1].replace(":", "-")
     output_file = Path(args.output) if args.output \
                   else RESULTS_DIR / f"conversations_{model_tag}.json"
     RESULTS_DIR.mkdir(exist_ok=True)
 
     print(f"[INFO] Model:         {args.model}")
+    print(f"[INFO] Index:         {index_path.name}")
     print(f"[INFO] Conversations: {len(threads)}")
     print(f"[INFO] Output:        {output_file}")
 
-    results    = []
+    results = []
     total_start = time.time()
-
     for thread in threads:
-        result = run_conversation(
-            thread, system_prompt, sections_text,
-            poi_list_fn, md_lines, args.model, structure_data,
-        )
+        result = run_conversation(thread, system_prompt,
+                                  index, sections_text, args.model)
         results.append(result)
-
     total_elapsed = round(time.time() - total_start, 1)
     print(f"\n[INFO] All conversations complete in {total_elapsed}s")
 

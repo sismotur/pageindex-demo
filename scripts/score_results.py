@@ -156,17 +156,28 @@ def score_retrieval(result: dict) -> float:
     return 1.0 if _sections_match(accessed, expected) else 0.0
 
 
+# Tool names that count as "the model retrieved real content".
+# Includes the new POI-index tools (build_index.py / index_tools.py) and the
+# legacy PageIndex tools so old result files still score correctly.
+_CONTENT_FETCH_TOOLS = frozenset({
+    # POI-index tools
+    "get_poi", "get_section", "find_poi_by_name", "filter_pois",
+    # Legacy PageIndex tools
+    "get_page_content", "get_poi_list",
+})
+
+
 def score_content_fetched(result: dict, grounding: float = 0.0) -> float:
     """
-    1.0 if get_page_content was called, OR if grounding is perfect (1.0).
+    1.0 if any content-fetching tool was called, OR if grounding is perfect.
 
-    Listing questions (category_browse, accommodation overviews) correctly
-    answer from get_poi_list without fetching individual pages. If the
-    answer is fully grounded, the content was effectively retrieved through
-    another tool — penalising it would be a false negative.
+    Listing questions (category_browse, accommodation overviews) can correctly
+    answer from a section listing alone — if the answer is fully grounded,
+    the content was effectively retrieved through another tool and penalising
+    it would be a false negative.
     """
-    tool_names = [c["tool"] for c in result.get("tool_calls", [])]
-    if "get_page_content" in tool_names:
+    tool_names = {c["tool"] for c in result.get("tool_calls", [])}
+    if tool_names & _CONTENT_FETCH_TOOLS:
         return 1.0
     # Fully-grounded answers that used listing strategy are not hallucinations
     if grounding >= 1.0:
