@@ -34,6 +34,10 @@ TIMEOUT             = 60
 
 load_dotenv(PROJECT_ROOT / ".env")
 
+# Make `from lang_support import ...` work whether run as a script or module
+sys.path.insert(0, str(Path(__file__).parent))
+from lang_support import SUPPORTED_LANGS, is_supported  # noqa: E402
+
 
 # ── Helpers ────────────────────────────────────────────────────────────────────
 
@@ -59,17 +63,25 @@ def fetch(session: requests.Session, url: str, extra: dict | None = None) -> lis
     return resp.json()
 
 
-def get_english(entries: list[dict], key: str = "value") -> str:
-    """Return the English value from a multilingual list."""
+def get_localized(entries: list[dict], lang: str, key: str = "value") -> str:
+    """Return the value matching `lang` from a multilingual list.
+
+    Falls back to the first available entry if the requested language is
+    not present (e.g. when `strip_nulls=true` already filtered out the
+    other languages and only one entry survives).
+    """
+    if not entries:
+        return ""
     for e in entries:
-        if e.get("language") == "en" or e.get("id_language") == "en":
+        if e.get("language") == lang or e.get("id_language") == lang:
             return e.get(key, "") or e.get("value_text", "")
-    return entries[0].get(key, "") or entries[0].get("value_text", "") if entries else ""
+    first = entries[0]
+    return first.get(key, "") or first.get("value_text", "")
 
 
 # ── Fetchers ───────────────────────────────────────────────────────────────────
 
-def fetch_destination(session, base_url: str, destination: str) -> dict:
+def fetch_destination(session, base_url: str, destination: str, lang: str) -> dict:
     """Fetch the destination record for the given tourist destination."""
     data = fetch(session, f"{base_url}/v120/tourist-destinations",
                  {"tourist_destination": destination})
@@ -78,8 +90,8 @@ def fetch_destination(session, base_url: str, destination: str) -> dict:
         sys.exit(1)
     d = data[0]
     return {
-        "name":             get_english(d.get("name", []), "value_text"),
-        "description":      get_english(d.get("description", [])),
+        "name":             get_localized(d.get("name", []), lang, "value_text"),
+        "description":      get_localized(d.get("description", []), lang),
         "official_url":     (d.get("url") or [""])[0],
         "tourist_types":    [t["tourist_type"] for t in d.get("tourist_types", [])],
         "tourist_networks": d.get("tourist_networks", []),
@@ -90,21 +102,21 @@ def fetch_destination(session, base_url: str, destination: str) -> dict:
     }
 
 
-def fetch_trips(session, base_url: str, destination: str) -> list:
+def fetch_trips(session, base_url: str, destination: str, lang: str) -> list:
     """Fetch all curated trips with full itineraries."""
     raw = fetch(session, f"{base_url}/v120/trips",
                 {"tourist_destination": destination,
                  "add_itinerary": "true", "limit": 100, "offset": 0})
     trips = []
     for t in (raw if isinstance(raw, list) else []):
-        name     = get_english(t.get("name", []))
-        desc     = get_english(t.get("description", []))
+        name     = get_localized(t.get("name", []), lang)
+        desc     = get_localized(t.get("description", []), lang)
         itinerary = []
         for step in t.get("itinerary", []):
-            step_name = get_english(step.get("name", []))
+            step_name = get_localized(step.get("name", []), lang)
             pois = []
             for item in step.get("itemListElement", []):
-                poi_name = get_english(item.get("name", []))
+                poi_name = get_localized(item.get("name", []), lang)
                 if poi_name:
                     pois.append(poi_name)
             if step_name or pois:
@@ -120,7 +132,7 @@ def fetch_trips(session, base_url: str, destination: str) -> list:
     return trips
 
 
-def fetch_paths(session, base_url: str, route_ids: list) -> list:
+def fetch_paths(session, base_url: str, route_ids: list, lang: str) -> list:
     """Fetch individual path records by ID."""
     paths = []
     for rid in route_ids:
@@ -130,12 +142,12 @@ def fetch_paths(session, base_url: str, route_ids: list) -> list:
             if not isinstance(data, list) or not data:
                 continue
             p = data[0]
-            name = get_english(p.get("name", []))
-            desc = get_english(p.get("description", []))
+            name = get_localized(p.get("name", []), lang)
+            desc = get_localized(p.get("description", []), lang)
             waypoints = []
             for step in p.get("itinerary", []):
                 for item in step.get("itemListElement", []):
-                    wp = get_english(item.get("name", []))
+                    wp = get_localized(item.get("name", []), lang)
                     if wp:
                         waypoints.append(wp)
             paths.append({
@@ -150,25 +162,25 @@ def fetch_paths(session, base_url: str, route_ids: list) -> list:
     return paths
 
 
-def fetch_interest_levels(session, base_url: str) -> dict:
-    """Return dict mapping id_interest_level -> English label."""
+def fetch_interest_levels(session, base_url: str, lang: str) -> dict:
+    """Return dict mapping id_interest_level -> localized label."""
     data = fetch(session, f"{base_url}/v120/interest-levels")
     mapping = {}
     for item in (data if isinstance(data, list) else []):
         level_id = item.get("id_interest_level")
-        label    = get_english(item.get("name", []))
+        label    = get_localized(item.get("name", []), lang)
         if level_id and label:
             mapping[level_id] = label
     return mapping
 
 
-def fetch_tourist_types(session, base_url: str) -> dict:
-    """Return dict mapping touristType code -> English display name."""
+def fetch_tourist_types(session, base_url: str, lang: str) -> dict:
+    """Return dict mapping touristType code -> localized display name."""
     data = fetch(session, f"{base_url}/v120/tourist-types")
     mapping = {}
     for item in (data if isinstance(data, list) else []):
         code  = item.get("touristType", "")
-        label = get_english(item.get("name", []))
+        label = get_localized(item.get("name", []), lang)
         if code and label:
             mapping[code] = label
     return mapping
@@ -186,9 +198,16 @@ def main() -> None:
     )
     parser.add_argument(
         "--lang", default=DEFAULT_LANGUAGE,
-        help=f"Language code for content (default: {DEFAULT_LANGUAGE})",
+        help=(f"Language code for content (default: {DEFAULT_LANGUAGE}). "
+              f"One of: {', '.join(SUPPORTED_LANGS)}"),
     )
     args = parser.parse_args()
+
+    if not is_supported(args.lang):
+        print(f"[ERROR] Unsupported --lang '{args.lang}'. "
+              f"Supported codes: {', '.join(SUPPORTED_LANGS)}",
+              file=sys.stderr)
+        sys.exit(1)
 
     output_file = PROJECT_ROOT / "data" / f"{args.destination}_destination_{args.lang}.json"
 
@@ -199,28 +218,28 @@ def main() -> None:
     print(f"[INFO] Language:    {args.lang}")
 
     print("\n[1/5] Fetching tourist-destination overview...")
-    dest_record = fetch_destination(session, base_url, args.destination)
+    dest_record = fetch_destination(session, base_url, args.destination, args.lang)
     print(f"  {dest_record['name']}  "
           f"({len(dest_record['trip_ids'])} trips, "
           f"{len(dest_record['route_ids'])} routes)")
 
     print("\n[2/5] Fetching trips with itineraries...")
-    trips = fetch_trips(session, base_url, args.destination)
+    trips = fetch_trips(session, base_url, args.destination, args.lang)
     for t in trips:
         total_pois = sum(len(s["pois"]) for s in t["itinerary"])
         print(f"  {t['id']:12s}  \"{t['name']}\"  "
               f"({len(t['itinerary'])} steps, {total_pois} POIs)")
 
     print("\n[3/5] Fetching walking/driving routes...")
-    paths = fetch_paths(session, base_url, dest_record["route_ids"])
+    paths = fetch_paths(session, base_url, dest_record["route_ids"], args.lang)
 
     print("\n[4/5] Fetching interest-level taxonomy...")
-    interest_levels = fetch_interest_levels(session, base_url)
+    interest_levels = fetch_interest_levels(session, base_url, args.lang)
     for k, v in sorted(interest_levels.items()):
         print(f"  {k} = {v}")
 
     print("\n[5/5] Fetching tourist-type names...")
-    tourist_types = fetch_tourist_types(session, base_url)
+    tourist_types = fetch_tourist_types(session, base_url, args.lang)
     print(f"  {len(tourist_types)} type codes loaded")
 
     # Save combined output

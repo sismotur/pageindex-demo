@@ -65,27 +65,21 @@ from index_tools import (
     find_section,
     get_poi as ix_get_poi,
 )
+from lang_support import (
+    SUPPORTED_LANGS,
+    LANG_RULES as _LANG_RULES,         # re-exported for chat_demo.py
+    RECOVERY_MSGS as _RECOVERY_MSGS,   # re-exported for chat_demo.py
+    lang_rule,
+    recovery_msg,
+    is_supported,
+)
 
-# ── Constants ──────────────────────────────────────────────────────────────────
+# ── Constants ───────────────────────────────────────────────────────────────────────
 QUESTIONS_FILE  = PROJECT_ROOT / "eval" / "questions.json"
 DEFAULT_INDEX   = PROJECT_ROOT / "indexes" / "ubeda_en.json"
 RESULTS_DIR     = PROJECT_ROOT / "results"
 DEFAULT_MODEL   = "openai/gemma4:e2b"
 MAX_TOOL_ROUNDS = 14
-
-_LANG_RULES = {
-    "en": "Always respond in English, regardless of the language of any retrieved content.",
-    "es": "Responde siempre en español, independientemente del idioma del contenido recuperado.",
-    "fr": "Répondez toujours en français, quelle que soit la langue du contenu récupéré.",
-    "de": "Antworten Sie immer auf Deutsch, unabhängig von der Sprache des abgerufenen Inhalts.",
-}
-
-_RECOVERY_MSGS = {
-    "en": "Based on what you have retrieved above, please give your final answer now.",
-    "es": "Basándote en lo que has recuperado, da tu respuesta final ahora.",
-    "fr": "Sur la base de ce que vous avez récupéré, donnez votre réponse finale maintenant.",
-    "de": "Basierend auf dem, was Sie abgerufen haben, geben Sie jetzt Ihre endgültige Antwort.",
-}
 
 _SYSTEM_PROMPT_TEMPLATE = """\
 You are a tourism assistant for {destination}.  You answer visitor \
@@ -149,9 +143,8 @@ find_poi_by_name() first, then get_poi() on the best match.
 def make_system_prompt(sections_text: str, destination: str,
                        destination_overview: str, lang: str = "en") -> str:
     """Build the system prompt with sections and overview embedded."""
-    lang_rule = _LANG_RULES.get(lang, _LANG_RULES["en"])
     overview = destination_overview.strip() or "(no overview available)"
-    return _SYSTEM_PROMPT_TEMPLATE.replace("{{lang_rule}}", lang_rule).format(
+    return _SYSTEM_PROMPT_TEMPLATE.replace("{{lang_rule}}", lang_rule(lang)).format(
         sections_text=sections_text,
         destination=destination,
         destination_overview=overview,
@@ -567,8 +560,15 @@ def main() -> None:
     parser.add_argument("--structure", default=None,
                         help=argparse.SUPPRESS)  # legacy, hidden
     parser.add_argument("--lang", default="en",
-                        help="Response language code: en, es, fr, de (default: en)")
+                        help=("Response language code (default: en). "
+                              "One of: " + ", ".join(SUPPORTED_LANGS)))
     args = parser.parse_args()
+
+    if not is_supported(args.lang):
+        print(f"[ERROR] Unsupported --lang '{args.lang}'. "
+              f"Supported codes: {', '.join(SUPPORTED_LANGS)}",
+              file=sys.stderr)
+        sys.exit(1)
 
     questions_file = Path(args.questions) if args.questions else QUESTIONS_FILE
     index_path     = _resolve_index_arg(args)
@@ -597,7 +597,7 @@ def main() -> None:
                 index, sid, sort="interest", limit=50)
     print(f"[INFO] Pre-warmed cache: {len(cache)} sections")
 
-    recovery_msg = _RECOVERY_MSGS.get(args.lang, _RECOVERY_MSGS["en"])
+    recovery = recovery_msg(args.lang)
 
     model_tag   = args.model.split("/")[-1].replace(":", "-")
     lang_suffix = f"_{args.lang}" if args.lang != "en" else ""
@@ -624,7 +624,7 @@ def main() -> None:
 
         loop = run_agentic_loop(
             question, system_prompt, index, sections_text,
-            args.model, cache, recovery_msg=recovery_msg,
+            args.model, cache, recovery_msg=recovery,
         )
 
         elapsed = round(time.time() - t0, 2)

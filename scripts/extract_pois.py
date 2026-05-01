@@ -23,11 +23,15 @@ from pathlib import Path
 import requests
 from dotenv import load_dotenv
 
-# ── Constants ──────────────────────────────────────────────────────────────────
+# ── Constants ───────────────────────────────────────────────────────────────────
 PROJECT_ROOT       = Path(__file__).parent.parent
 DEFAULT_DESTINATION = "ubeda"
 DEFAULT_LANGUAGE    = "en"
 TIMEOUT_SECONDS     = 60
+
+# Make `from lang_support import ...` work whether run as a script or module
+sys.path.insert(0, str(Path(__file__).parent))
+from lang_support import SUPPORTED_LANGS, is_supported  # noqa: E402
 
 
 # ── Helpers ────────────────────────────────────────────────────────────────────
@@ -162,9 +166,16 @@ def main() -> None:
     )
     parser.add_argument(
         "--lang", default=DEFAULT_LANGUAGE,
-        help=f"Language code for POI content (default: {DEFAULT_LANGUAGE})",
+        help=(f"Language code for POI content (default: {DEFAULT_LANGUAGE}). "
+              f"One of: {', '.join(SUPPORTED_LANGS)}"),
     )
     args = parser.parse_args()
+
+    if not is_supported(args.lang):
+        print(f"[ERROR] Unsupported --lang '{args.lang}'. "
+              f"Supported codes: {', '.join(SUPPORTED_LANGS)}",
+              file=sys.stderr)
+        sys.exit(1)
 
     output_file = PROJECT_ROOT / "data" / f"{args.destination}_pois_raw_{args.lang}.json"
 

@@ -45,14 +45,18 @@ from run_eval import (   # noqa: E402
     MAX_TOOL_ROUNDS,
     execute_tool,
     make_system_prompt,
-    _LANG_RULES,
-    _RECOVERY_MSGS,
     DEFAULT_INDEX,
 )
 from index_tools import (   # noqa: E402
     load_index,
     format_sections_overview,
     format_section,
+)
+from lang_support import (   # noqa: E402
+    SUPPORTED_LANGS,
+    display_name,
+    is_supported,
+    recovery_msg as _recovery_msg,
 )
 
 # ── Constants ──────────────────────────────────────────────────────────────────
@@ -406,9 +410,7 @@ def run_interactive(system_prompt: str, index: dict, sections_text: str,
     print("─" * 60)
     print(f"  {destination_name} Assistant — Interactive Mode")
     print(f"  Model: {model}")
-    lang_label = {"en": "English", "es": "Español",
-                  "fr": "Français", "de": "Deutsch"}.get(lang, lang.upper())
-    print(f"  Language: {lang_label}")
+    print(f"  Language: {display_name(lang)}")
     print("  Type your question and press Enter. 'exit' to quit.")
     print("─" * 60)
     print()
@@ -499,7 +501,8 @@ def main() -> None:
     parser.add_argument("--interactive",  action="store_true",
                         help="Start an interactive chat session")
     parser.add_argument("--lang",         default="en",
-                        help="Response language: en, es, fr, de (default: en)")
+                        help=("Response language code (default: en). "
+                              "One of: " + ", ".join(SUPPORTED_LANGS)))
     parser.add_argument("--index",        default=None,
                         help=f"POI index JSON (default: {DEFAULT_INDEX})")
     parser.add_argument("--structure",    default=None,
@@ -509,6 +512,12 @@ def main() -> None:
     parser.add_argument("--output",       default=None,
                         help="Output path (default: results/conversations_<model>.json)")
     args = parser.parse_args()
+
+    if not is_supported(args.lang):
+        print(f"[ERROR] Unsupported --lang '{args.lang}'. "
+              f"Supported codes: {', '.join(SUPPORTED_LANGS)}",
+              file=sys.stderr)
+        sys.exit(1)
 
     index_path = _resolve_index_arg(args)
     if not index_path.exists():
@@ -527,7 +536,7 @@ def main() -> None:
         destination_overview=overview_text,
         lang=args.lang,
     )
-    recovery_msg = _RECOVERY_MSGS.get(args.lang, _RECOVERY_MSGS["en"])
+    recovery_msg = _recovery_msg(args.lang)
 
     # Interactive mode
     if args.interactive:

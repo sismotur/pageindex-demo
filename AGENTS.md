@@ -38,6 +38,23 @@ Answer grounded tourism questions for **any tourist destination** in
 **any language** using the Inventrip POI catalogue. The reference dataset
 is Úbeda, Spain (367 POIs in English, 369 in Spanish).
 
+## Supported languages
+
+The pipeline targets the **16 languages** the API exposes under
+`/v100/configuration-languages?is_active_app=true`:
+
+`ca` Catalan, `de` German, `en` English, `es` Spanish, `eu` Basque,
+`fr` French, `gl` Galician, `hi` Hindi, `hr` Croatian, `it` Italian,
+`ja` Japanese, `nl` Dutch, `pt` Portuguese, `ru` Russian,
+`uk` Ukrainian, `zh` Chinese.
+
+`scripts/lang_support.py` is the single source of truth: it carries one
+system-prompt rule and one recovery message per code, plus the native
+display name used by the chat banner. All five entry points
+(`extract_pois.py`, `extract_destination_data.py`, `build_index.py`,
+`run_eval.py`, `chat_demo.py`) validate `--lang` against this list and
+refuse unknown codes.
+
 Decision: keep `gemma4:26b` as the recommended model. All four Gemma 4
 variants (`e2b`, `e4b`, `26b`, `31b`) fit in this machine's 128 GB
 unified memory; escalation is unnecessary for this corpus size.

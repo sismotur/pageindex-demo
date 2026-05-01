@@ -32,6 +32,7 @@ from typing import Any
 # exactly what index_tools.find_poi_by_name() will look up.
 sys.path.insert(0, str(Path(__file__).parent))
 from index_tools import normalize_text  # noqa: E402
+from lang_support import SUPPORTED_LANGS, is_supported  # noqa: E402
 
 # ── Constants ──────────────────────────────────────────────────────────────────
 PROJECT_ROOT        = Path(__file__).parent.parent
@@ -517,10 +518,17 @@ def main() -> None:
     parser.add_argument("--destination", default=DEFAULT_DESTINATION,
                         help=f"Tourist destination slug (default: {DEFAULT_DESTINATION})")
     parser.add_argument("--lang", default=DEFAULT_LANGUAGE,
-                        help=f"Language code (default: {DEFAULT_LANGUAGE})")
+                        help=(f"Language code (default: {DEFAULT_LANGUAGE}). "
+                              f"One of: {', '.join(SUPPORTED_LANGS)}"))
     parser.add_argument("--output", default=None,
                         help="Override output path (default: indexes/{dest}_{lang}.json)")
     args = parser.parse_args()
+
+    if not is_supported(args.lang):
+        print(f"[ERROR] Unsupported --lang '{args.lang}'. "
+              f"Supported codes: {', '.join(SUPPORTED_LANGS)}",
+              file=sys.stderr)
+        sys.exit(1)
 
     pois_file = PROJECT_ROOT / "data" / f"{args.destination}_pois_raw_{args.lang}.json"
     dest_file = PROJECT_ROOT / "data" / f"{args.destination}_destination_{args.lang}.json"

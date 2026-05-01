@@ -342,18 +342,36 @@ titles.
 
 ## Multilingual notes
 
+- **Supported languages (16 total)** — the same set returned by
+  `/v100/configuration-languages?is_active_app=true`. Validated at the
+  CLI of every script via `scripts/lang_support.py`:
+  - `ca` Catalan, `de` German, `en` English, `es` Spanish, `eu` Basque,
+    `fr` French, `gl` Galician, `hi` Hindi, `hr` Croatian, `it` Italian,
+    `ja` Japanese, `nl` Dutch, `pt` Portuguese, `ru` Russian,
+    `uk` Ukrainian, `zh` Chinese.
+  - The 16 codes have a per-language **system-prompt rule** and **recovery
+    message** in `scripts/lang_support.py` (`LANG_RULES`, `RECOVERY_MSGS`).
+    Smoke-tested in 26B for Italian; Spanish and English are part of the
+    full eval baselines.
 - Every artifact name carries a `_{lang}` suffix. Pairs never overwrite.
 - The system prompt template ends with a per-language rule from
-  `_LANG_RULES` (English / Spanish / French / German). The corpus
-  language is independent — a French question over the Spanish corpus
-  works because the model handles cross-lingual synthesis.
+  `LANG_RULES`. The corpus language is independent — a French question
+  over the Spanish corpus works because the model handles cross-lingual
+  synthesis.
 - Tourist-type display names come from
   `data/{dest}_destination_{lang}.json`'s `tourist_types` map, which is
   a per-language code → label dictionary returned by
   `/v120/tourist-types?language={lang}`.
+  `extract_destination_data.py` now picks the requested-language entry
+  from each multilingual list (previously it always preferred English).
 - Interest-level labels (Indispensable / Interesting / Outstanding /
   their localised equivalents) come from the same file's
   `interest_levels` map.
+- To check which languages your API instance currently exposes:
+  `curl "$INVENTRIP_API_BASE_URL/v100/configuration-languages?is_active_app=true&api_key=$INVENTRIP_API_KEY"`.
+  If the API list ever drifts from the 16 codes hard-coded here,
+  update `scripts/lang_support.py` (the import-time self-check will
+  refuse to load with missing translations).
 
 ---
 
