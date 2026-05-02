@@ -14,17 +14,35 @@ because the source data is already a fully-typed UNE 178503 dataset and
 benefits from direct indexing. See the README's "Quick summary" table
 for the before/after metrics.
 
-## Latest results (gemma4:26b)
+## Latest results
+
+### Server (gemma4:26b)
 
 | Run                      | Grounding | Retrieval | Composite | Avg latency |
 |--------------------------|-----------|-----------|-----------|-------------|
 | English (POI-index)      | 90.0%     | 95.0%     | 0.935     | 26.9 s      |
-| Spanish (POI-index)      | 85.0%     | 95.0%     | 0.915     | 19.7 s¹     |
+| Spanish (POI-index)      | 90.0%     | 95.0%     | 0.935     | 19.7 s¹     |
+| Italian (POI-index)      | 87.5%     | 85.0%     | 0.895     | 24.0 s      |
 | English (PageIndex base) | 92.5%     | 80.0%     | 0.910     | 26.5 s      |
 | Spanish (PageIndex base) | 80.0%     | 80.0%     | 0.850     | 47.3 s      |
 
 ¹ Median latency excluding three Spanish questions where the model
 loops; mean including outliers is 132.5 s.
+
+### Offline mobile candidates
+
+| Model         | Disk    | EN comp.  | ES comp.  | IT comp.  | EN lat. | All-lang pass? |
+|---------------|---------|-----------|-----------|-----------|---------|----------------|
+| Gemma 4 E2B (recommended) | 7.2 GB | **0.850** | **0.830** | **0.760** | 13.5 s | ✅ yes |
+| Qwen 2.5 7B (EN-first alt.) | 4.7 GB | 0.835    | 0.710     | 0.720     | 8.6 s  | ❌ ES/IT 5 pp short |
+| Qwen 2.5 3B (unsuitable)  | 1.9 GB | 0.745    | 0.590     | 0.525     | 3.0 s  | ❌ |
+
+The **same** Gemma 4 E2B model that scored 54.1% grounding on the old
+PageIndex pipeline scores 85.0% / 77.5% / 72.5% on EN/ES/IT with the
+new POI-aware index — above the 70% rubric threshold on every measured
+language. Architecture matters more than model size for this task.
+
+Full cross-model report: `results/comparison_table.md`.
 
 The "Sections accessed" rubric input is now derived from the actual
 tools called (`get_section`, `get_poi`, `find_poi_by_name`,

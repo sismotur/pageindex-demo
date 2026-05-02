@@ -16,20 +16,36 @@ All artifacts use the `{destination}_*_{lang}` naming convention so different
 
 ## Quick summary
 
+Four models were evaluated end-to-end on 20 visitor questions per
+language. The full report lives in `results/comparison_table.md`.
+
+### Server-side (recommended: gemma4:26b)
+
 | Run                             | Grounding | Retrieval | Composite | Avg latency |
 |---------------------------------|-----------|-----------|-----------|-------------|
 | 26B — PageIndex (pre-refactor)  | 92.5%     | 80.0%     | 0.910     | 26.5 s      |
 | 26B — PageIndex (Spanish)       | 80.0%     | 80.0%     | 0.850     | 47.3 s      |
-| **26B — POI-index (this repo)** | **90.0%** | **95.0%** | **0.935** | **26.9 s**  |
-| **26B — POI-index (Spanish)**   | **85.0%** | **95.0%** | **0.915** | 19.7 s¹     |
+| **26B — POI-index (English)**   | **90.0%** | **95.0%** | **0.935** | **26.9 s**  |
+| **26B — POI-index (Spanish)**   | **90.0%** | **95.0%** | **0.935** | 19.7 s¹     |
+| **26B — POI-index (Italian)**   | **87.5%** | **85.0%** | **0.895** | **24.0 s**  |
 
 ¹ Median latency excluding three model-side looping outliers (Q09, Q11,
 Q12). Mean including those: 132.5 s.
 
-The POI-aware index lifts retrieval accuracy from 80% to 95% on both
-languages and improves composite scores while keeping per-question latency
-flat. It also retires the LLM-generated section summaries (~8 minutes per
-language pair) in favour of deterministic ones built from the index facets.
+### Offline-mobile candidates (Inventrip Android app)
+
+| Model         | Disk    | EN comp.  | ES comp.  | IT comp.  | EN lat. | All-lang pass? |
+|---------------|---------|-----------|-----------|-----------|---------|----------------|
+| **Gemma 4 E2B** — recommended | 7.2 GB | **0.850** | **0.830** | **0.760** | 13.5 s | ✅ yes |
+| Qwen 2.5 7B — EN-first alt.   | 4.7 GB | 0.835     | 0.710     | 0.720     | 8.6 s  | ❌ ES/IT 5 pp short |
+| Qwen 2.5 3B — unsuitable      | 1.9 GB | 0.745     | 0.590     | 0.525     | 3.0 s  | ❌ |
+
+The POI-aware index lifts retrieval accuracy from 80% to 95% on the
+server model and — critically — also unlocks the smallest Gemma 4
+variant for **fully-offline mobile use**. The same E2B that scored 54%
+grounding on the old PageIndex pipeline scores 85% on this one. See
+`results/comparison_table.md` for the full cross-model report and the
+offline-mobile integration guidance.
 
 **Why an index instead of PageIndex?**
 PageIndex builds a tree from Markdown headings. That works for arbitrary
