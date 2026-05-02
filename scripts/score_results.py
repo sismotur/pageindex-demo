@@ -62,22 +62,44 @@ FACT_CHECKS: dict[str, list[str]] = {
     "Q20": ["2003", "renaissance"],                 # 'andalusia' removed (model omits it but answers correctly)
 }
 
-# For Spanish (lang='es'), these keyword translations are tried when the
-# English check fails. Only English terms that get translated in Spanish
-# responses need entries here; proper nouns and numbers stay the same.
-_ES_KEYWORDS: dict[str, str] = {
-    "renaissance":         "renacentista",    # or 'renacimiento'
-    "museum":              "museo",
-    "restaurant":          "restaurante",
-    "holy week":           "semana santa",
-    "megalithic":          "megalítico",
-    "tourist information": "información turística",
-    "pharmacy":            "farmacia",
-    "parking":             "aparcamiento",
-    "viewpoint":           "mirador",
-    "savior":              "salvador",
-    "olive":               "oliva",           # aceite de oliva
-    "oil":                 "aceite",           # aceite (de oliva)
+# For Spanish (lang='es'), these keyword equivalents are tried when the
+# English check fails. Each value is a tuple of acceptable substrings;
+# the check passes if any of them appears in the answer. Stems and
+# alternative inflections live here so 'renacimiento' and 'renacentista'
+# both score for an English 'renaissance' check.
+# Proper nouns and numbers stay verbatim.
+_ES_KEYWORDS: dict[str, tuple[str, ...]] = {
+    "renaissance":         ("renacentista", "renacimiento"),
+    "museum":              ("museo",),
+    "restaurant":          ("restaurante",),
+    "holy week":           ("semana santa",),
+    "megalithic":          ("megalític",),    # megalítico / megalítica
+    "tourist information": ("información turística",),
+    "pharmacy":            ("farmacia",),
+    "parking":             ("aparcamiento",),
+    "viewpoint":           ("mirador",),
+    "savior":              ("salvador",),
+    "olive":               ("oliva",),         # aceite de oliva
+    "oil":                 ("aceite",),         # aceite (de oliva)
+}
+
+# For Italian (lang='it'), same idea. Italian adjectives inflect for
+# gender/number, so we use stems where it matters (e.g. 'rinasciment'
+# matches both 'rinascimento' and 'rinascimentale'). Proper nouns,
+# numbers, UNE 178503 type codes and POI names stay verbatim.
+_IT_KEYWORDS: dict[str, tuple[str, ...]] = {
+    "renaissance":         ("rinasciment",),       # rinascimento / rinascimentale
+    "museum":              ("museo",),
+    "restaurant":          ("ristorant",),         # ristorante / ristoranti
+    "holy week":           ("settimana santa",),
+    "megalithic":          ("megalitic",),         # megalitico / megalitica / megalitiche
+    "tourist information": ("informazione turistica", "informazioni turistiche"),
+    "pharmacy":            ("farmacia",),
+    "parking":             ("parcheggio",),
+    "viewpoint":           ("belvedere", "punto panoramico", "punti panoramici"),
+    "savior":              ("salvatore",),
+    "olive":               ("oliva",),
+    "oil":                 ("olio",),
 }
 
 
@@ -130,13 +152,17 @@ def score_factual_grounding(qid: str, answer: str,
 
     answer_lower = answer.lower()
     missing = []
+    # Per-language fallback dictionaries.  English check is tried first;
+    # if it fails, each language-specific equivalent is tried in turn.
+    _LANG_KEYWORDS = {"es": _ES_KEYWORDS, "it": _IT_KEYWORDS}
+    fallback = _LANG_KEYWORDS.get(lang)
     for c in checks:
         if _matches(c, answer_lower):
             continue  # English check passed
-        if lang == "es" and c.lower() in _ES_KEYWORDS:
-            es_equiv = _ES_KEYWORDS[c.lower()]
-            if _matches(es_equiv, answer_lower):
-                continue  # Spanish equivalent found
+        if fallback and c.lower() in fallback:
+            if any(_matches(equiv, answer_lower)
+                   for equiv in fallback[c.lower()]):
+                continue  # Localised equivalent found
         missing.append(c)
     score = (len(checks) - len(missing)) / len(checks)
     return round(score, 2), missing
@@ -185,12 +211,20 @@ def score_content_fetched(result: dict, grounding: float = 0.0) -> float:
     return 0.0
 
 
-# Spanish stop-words used for language detection
+# Stop-word sets used for language detection.
 _SPANISH_STOPS = frozenset({
     "de", "la", "el", "en", "es", "se", "por", "los", "las",
     "un", "una", "con", "su", "del", "al", "que", "para",
     "como", "más", "también", "tiene", "están", "hay",
     "del", "entre", "este", "para", "pero", "son",
+})
+_ITALIAN_STOPS = frozenset({
+    "di", "il", "la", "lo", "i", "gli", "le", "e", "ed", "un",
+    "una", "uno", "per", "con", "del", "della", "dello", "dei",
+    "degli", "delle", "al", "alla", "allo", "agli", "alle",
+    "che", "come", "sono", "sia", "questa", "questo", "questi",
+    "queste", "sua", "suo", "non", "anche", "da", "dal", "dalla",
+    "nel", "nella", "sul", "sulla", "tra", "fra",
 })
 
 
@@ -199,11 +233,12 @@ def score_language(result: dict) -> float:
     Language conformance check.
 
     For English runs (lang='en'): returns 0.0 if the answer contains
-    too many Spanish stop-words (> 12% of word count).
+    too many Spanish stop-words (> 12% of word count) — a coarse signal
+    that the model fell through to its default Spanish persona.
 
-    For Spanish runs (lang='es'): returns 1.0 if the answer contains
-    enough Spanish stop-words (> 5% of word count), confirming the
-    model responded in Spanish as instructed.
+    For Spanish (lang='es') and Italian (lang='it') runs: returns 1.0 if
+    the answer contains enough language-specific stop-words (> 5% of
+    word count), confirming the model responded in the requested language.
 
     For other languages: skipped (returns 1.0) — no detection logic yet.
     """
@@ -212,13 +247,15 @@ def score_language(result: dict) -> float:
     if not words:
         return 0.0
 
-    spanish_count = sum(1 for w in words if w in _SPANISH_STOPS)
-    ratio = spanish_count / len(words)
-
     if lang == "en":
-        return 0.0 if ratio > 0.12 else 1.0
+        es_ratio = sum(1 for w in words if w in _SPANISH_STOPS) / len(words)
+        return 0.0 if es_ratio > 0.12 else 1.0
     if lang == "es":
-        return 1.0 if ratio > 0.05 else 0.0  # must have Spanish stop-words
+        es_ratio = sum(1 for w in words if w in _SPANISH_STOPS) / len(words)
+        return 1.0 if es_ratio > 0.05 else 0.0
+    if lang == "it":
+        it_ratio = sum(1 for w in words if w in _ITALIAN_STOPS) / len(words)
+        return 1.0 if it_ratio > 0.05 else 0.0
     return 1.0  # other languages: skip the check
 
 
