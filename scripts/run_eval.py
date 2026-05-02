@@ -135,6 +135,10 @@ about a specific place — it carries the most useful detail.
 filter_pois(indispensable=true) before browsing sections.
 - For "tell me about <name>" / "what is <name>" questions, call \
 find_poi_by_name() first, then get_poi() on the best match.
+- After calling filter_pois, always call get_poi on at least one result \
+before producing the final answer.  The previews returned by filter_pois \
+are not enough on their own — get_poi gives you the description, \
+architect, dates, address, and other facts you need to ground a synthesis.
 - If information is not in the index, say so clearly.
 - {{lang_rule}}
 """
