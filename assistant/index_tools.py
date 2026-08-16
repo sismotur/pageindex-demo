@@ -136,6 +136,11 @@ def get_poi(index: dict, poi_id: str) -> dict | None:
     return None
 
 
+def get_pois(index: dict, poi_ids: Iterable[str]) -> list[dict | None]:
+    """Batch variant of get_poi: one record (or None) per requested id."""
+    return [get_poi(index, pid) for pid in poi_ids]
+
+
 def _poi_section_title(index: dict, poi_id: str) -> str:
     """Return the section title that owns the given POI ID, or ''. """
     by_section = (index.get("facets") or {}).get("by_section") or {}
@@ -173,7 +178,15 @@ def _short_preview(poi: dict, max_chars: int = 120) -> str:
 
 def format_section(index: dict, section_key: str,
                    sort: str = "interest", limit: int = 50) -> str:
-    """Render a section: title, summary, then one line per POI."""
+    """Render a section: title, summary, optional group map, then one
+    line per POI.
+
+    Schema v2: when the section carries `groups` (large sections split
+    by type at build time), a group map is rendered between the summary
+    and the preview list.  Each group line names its top POIs (the
+    key-items pattern), and the drill-down path is the existing
+    filter_pois(type=..., section_id=...) call.
+    """
     sec = find_section(index, section_key)
     if not sec:
         avail = ", ".join(s.get("title", "") for s in index.get("sections", []))
@@ -205,6 +218,22 @@ def format_section(index: dict, section_key: str,
     ]
     if sec.get("summary"):
         lines.append(f"  {sec['summary']}")
+
+    groups = sec.get("groups") or []
+    if groups:
+        lines.append("")
+        lines.append("  Groups in this section "
+                     "(drill down with filter_pois(type=..., "
+                     f"section_id=\"{sec.get('section_id')}\")):")
+        for g in groups:
+            key_items = []
+            for pid in (g.get("poi_ids") or [])[:3]:
+                p = get_poi(index, pid)
+                if p and p.get("name"):
+                    key_items.append(p["name"])
+            notable = f"  Notable: {', '.join(key_items)}" if key_items else ""
+            lines.append(f"    [{g.get('group_id')}] {g.get('title')} — "
+                         f"{len(g.get('poi_ids') or [])} POIs.{notable}")
     lines.append("")
     for p in pois:
         pid = p.get("poi_id", "?")
@@ -232,12 +261,8 @@ def _format_kv(label: str, value: Any) -> str | None:
     return f"- **{label}**: {value}"
 
 
-def format_poi(index: dict, poi_id: str) -> str:
-    """Render the full POI record. No truncation, no line slicing."""
-    p = get_poi(index, poi_id)
-    if not p:
-        return (f"[ERROR] POI '{poi_id}' not found. "
-                f"Use find_poi_by_name() if you only know the name.")
+def _format_single_poi(index: dict, p: dict) -> str:
+    """Render one resolved POI record (helper for format_poi)."""
 
     section_title = _poi_section_title(index, p["poi_id"])
 
@@ -285,6 +310,34 @@ def format_poi(index: dict, poi_id: str) -> str:
         lines.append("")
         lines.append(desc)
     return "\n".join(lines)
+
+
+def format_poi(index: dict, poi_id: str) -> str:
+    """Render full POI record(s). No truncation, no line slicing.
+
+    Accepts a single id ('poi/5155' or '5155') or several comma-separated
+    ids ('poi/5155,poi/65804') — the batch form lets the model fetch
+    several POIs in one tool call, saving LLM round-trips on comparison
+    and synthesis questions.  Multiple records are joined with a
+    '\\n\\n---\\n\\n' separator; unknown ids render an inline [ERROR] block
+    without failing the whole batch.
+    """
+    ids = [part.strip() for part in str(poi_id).split(",") if part.strip()]
+    if len(ids) <= 1:
+        p = get_poi(index, poi_id)
+        if not p:
+            return (f"[ERROR] POI '{poi_id}' not found. "
+                    f"Use find_poi_by_name() if you only know the name.")
+        return _format_single_poi(index, p)
+
+    blocks = []
+    for pid in ids:
+        p = get_poi(index, pid)
+        if p:
+            blocks.append(_format_single_poi(index, p))
+        else:
+            blocks.append(f"[ERROR] POI '{pid}' not found.")
+    return "\n\n---\n\n".join(blocks)
 
 
 # ── Name search ─────────────────────────────────────────────────────────────

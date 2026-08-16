@@ -3,10 +3,10 @@
     "destination": "ubeda",
     "destination_display": "Úbeda",
     "lang": "en",
-    "generated_at": "2026-08-16T05:41:49Z",
+    "generated_at": "2026-08-16T05:53:40Z",
     "poi_count": 367,
     "section_count": 18,
-    "schema_version": 1
+    "schema_version": 2
   },
   "destination_overview": "Important and populous city located on the hills of its namesake, in the geographical center of the province, in a landscape populated by olive trees and cereal fields.\n\nÚbeda is an artistic and monumental city, no matter where you look, and one of the most stately and glorious towns in Andalusia. Castilian and Renaissance on all sides, it contains such a quantity of monuments, churches, palaces, and stately homes that the best thing to do is to stroll through it and virtually transport oneself to the time of its historical splendor: The Chapel of El Salvador, located in the incomparable square of the Town Hall, the Church of S. Pablo, the Church of Santa María de los Reales Alcázares, the Church of La Trinidad, the Oratory of San Juan de la Cruz, Monastery of Santa Clara, Vela de los Cobos Palace, Las Cadenas Palace, Casa de las Torres, Santiago Hospital, Hospital of the Honored Old of El Salvador, Clock Tower, Walls of La Cava, Pottery Museum, and the National Parador of Tourism, are some of the wonders that this surprising city contains.\n\nIn addition to these attractions, a visit to the walls and the splendid view obtained from there is suggested, as well as to its potters, especially to the house-museum of Paco Titos.\n\n- Tourism types: Heritage, Architecture, Short Break, Olive Oil\n- Networks: WORLD HERITAGE CITIES\n- Official website: https://www.turismodeubeda.com/index.php/es/",
   "trips": [
@@ -1452,7 +1452,81 @@
         "poi/30152",
         "poi/30162"
       ],
-      "summary": "44 POIs (14 Indispensable, 13 Interesting, 17 Outstanding). Top interests: Architecture, Historic Memory, Community-Based. Notable: Palace of the Marquis of Mancera, Vela de los Cobos Palace, Clock Tower."
+      "summary": "44 POIs (14 Indispensable, 13 Interesting, 17 Outstanding). Top interests: Architecture, Historic Memory, Community-Based. Notable: Palace of the Marquis of Mancera, Vela de los Cobos Palace, Clock Tower.",
+      "groups": [
+        {
+          "group_id": "civil-and-historical-monuments--civilbuilding",
+          "title": "CivilBuilding",
+          "poi_ids": [
+            "poi/30116",
+            "poi/5156",
+            "poi/5142",
+            "poi/30132",
+            "poi/5145",
+            "poi/5147",
+            "poi/8439",
+            "poi/5149",
+            "poi/30109",
+            "poi/30108",
+            "poi/30123",
+            "poi/30131",
+            "poi/30127",
+            "poi/5151",
+            "poi/30118",
+            "poi/30114",
+            "poi/30120",
+            "poi/65976",
+            "poi/30173",
+            "poi/30130",
+            "poi/30167",
+            "poi/30136",
+            "poi/30160",
+            "poi/30163",
+            "poi/30159",
+            "poi/30166",
+            "poi/30126",
+            "poi/30153",
+            "poi/30137",
+            "poi/30144",
+            "poi/30113",
+            "poi/30152",
+            "poi/30162"
+          ],
+          "summary": "33 POIs (6 Indispensable, 12 Interesting, 15 Outstanding). Top interests: Architecture, Religious, Event & Festival. Notable: Palace of the Marquis of Mancera, Vela de los Cobos Palace, House of the Towers."
+        },
+        {
+          "group_id": "civil-and-historical-monuments--militarybuilding",
+          "title": "MilitaryBuilding",
+          "poi_ids": [
+            "poi/30110",
+            "poi/30139",
+            "poi/30125",
+            "poi/5143",
+            "poi/30154",
+            "poi/30128"
+          ],
+          "summary": "6 POIs (6 Indispensable). Top interests: Architecture, Historic Memory. Notable: Clock Tower, Interpretation Center \"The Walls of Úbeda: Tower of the Portillo del Santo Cristo\", Octagonal Tower."
+        },
+        {
+          "group_id": "civil-and-historical-monuments--touristinformationcenter",
+          "title": "TouristInformationCenter",
+          "poi_ids": [
+            "poi/5154",
+            "poi/30111",
+            "poi/30124"
+          ],
+          "summary": "3 POIs (2 Indispensable, 1 Interesting). Top interests: Architecture, Urban, Food. Notable: Vázquez de Molina Palace, Ancient Butcheries, Olive Oil and Olive Grove Interpretation Center."
+        },
+        {
+          "group_id": "civil-and-historical-monuments--other",
+          "title": "Other",
+          "poi_ids": [
+            "poi/30161",
+            "poi/37106"
+          ],
+          "summary": "2 POIs (2 Outstanding). Top interests: Shopping, Community-Based. Notable: Abastos Market, CIVIL GUARD BARRACKS."
+        }
+      ]
     },
     {
       "section_id": "religious-heritage",
@@ -1591,7 +1665,91 @@
         "poi/36378",
         "poi/36379"
       ],
-      "summary": "40 POIs (6 Interesting, 34 Outstanding). Top interests: Food, Shopping, Beer. Notable: ALMAZARA BALTASAR LARA Y CÍA., ALMAZARA LA UNIÓN, Royal Street Totem."
+      "summary": "40 POIs (6 Interesting, 34 Outstanding). Top interests: Food, Shopping, Beer. Notable: ALMAZARA BALTASAR LARA Y CÍA., ALMAZARA LA UNIÓN, Royal Street Totem.",
+      "groups": [
+        {
+          "group_id": "gastronomy--oilmill",
+          "title": "OilMill",
+          "poi_ids": [
+            "poi/36694",
+            "poi/36692",
+            "poi/36693",
+            "poi/41136",
+            "poi/35910",
+            "poi/35905",
+            "poi/35903"
+          ],
+          "summary": "7 POIs (4 Interesting, 3 Outstanding). Top interests: Food, Olive Oil. Notable: ALMAZARA BALTASAR LARA Y CÍA., ALMAZARA LA UNIÓN, VIRGEN DE GUADALUPE OLIVE OIL MILL."
+        },
+        {
+          "group_id": "gastronomy--barorpub",
+          "title": "BarOrPub",
+          "poi_ids": [
+            "poi/35695",
+            "poi/35702",
+            "poi/35704",
+            "poi/35708"
+          ],
+          "summary": "4 POIs (2 Interesting, 2 Outstanding). Top interests: Food, Shopping, Beer. Notable: Royal Street Totem, Plaza 1º de Mayo tapas area, Taperías area, Lower Street of El Salvador."
+        },
+        {
+          "group_id": "gastronomy--restaurant",
+          "title": "Restaurant",
+          "poi_ids": [
+            "poi/65817",
+            "poi/35398",
+            "poi/35402",
+            "poi/35403",
+            "poi/35397",
+            "poi/35400",
+            "poi/65816",
+            "poi/35407",
+            "poi/35427",
+            "poi/35395",
+            "poi/35424",
+            "poi/35432",
+            "poi/35426",
+            "poi/35409",
+            "poi/35428",
+            "poi/35431",
+            "poi/35430"
+          ],
+          "summary": "17 POIs (17 Outstanding). Top interests: Food, Party. Notable: Munay Restaurant, Restaurant \"Asador de Santiago\", Restaurant \"Cantina La Estación\"."
+        },
+        {
+          "group_id": "gastronomy--cafeorcoffeeshop",
+          "title": "CafeOrCoffeeShop",
+          "poi_ids": [
+            "poi/36167",
+            "poi/36169",
+            "poi/36170",
+            "poi/36953",
+            "poi/36950",
+            "poi/36567",
+            "poi/36196"
+          ],
+          "summary": "7 POIs (7 Outstanding). Top interests: Food, Shopping. Notable: Alejo & Doña Rosita Café, Los Portalillos Pastry and Coffee Shop, Vandelvira Bakery."
+        },
+        {
+          "group_id": "gastronomy--other",
+          "title": "Other",
+          "poi_ids": [
+            "poi/35698",
+            "poi/36194"
+          ],
+          "summary": "2 POIs (2 Outstanding). Top interests: Shopping, Food. Notable: City of Linares Avenue, SWEET AND SAVORY, homemade food to go."
+        },
+        {
+          "group_id": "gastronomy--icecreamshop",
+          "title": "IceCreamShop",
+          "poi_ids": [
+            "poi/36377",
+            "poi/36378",
+            "poi/36379"
+          ],
+          "summary": "3 POIs (3 Outstanding). Notable: VALENCIAN ICE CREAMS, VALENCIAN ICE CREAMS, VALENCIANOS ICE CREAM SHOP."
+        }
+      ]
     },
     {
       "section_id": "guided-tours-and-itineraries",
@@ -1707,7 +1865,89 @@
         "poi/36556",
         "poi/36557"
       ],
-      "summary": "66 POIs (2 Interesting, 64 Outstanding). Top interests: Shopping, Food, Wellness. Notable: Mesones and Obispo Cobos Streets, Juan Tito Pottery, Alameda Ceramics."
+      "summary": "66 POIs (2 Interesting, 64 Outstanding). Top interests: Shopping, Food, Wellness. Notable: Mesones and Obispo Cobos Streets, Juan Tito Pottery, Alameda Ceramics.",
+      "groups": [
+        {
+          "group_id": "shopping--shoppingcenter",
+          "title": "ShoppingCenter",
+          "poi_ids": [
+            "poi/35697",
+            "poi/35498",
+            "poi/35491",
+            "poi/35699",
+            "poi/35701",
+            "poi/35508",
+            "poi/35492",
+            "poi/35496",
+            "poi/35700",
+            "poi/35503",
+            "poi/35504",
+            "poi/35502",
+            "poi/35696",
+            "poi/35506",
+            "poi/35467",
+            "poi/35493",
+            "poi/36510",
+            "poi/35460",
+            "poi/35465",
+            "poi/36048",
+            "poi/36047",
+            "poi/35461",
+            "poi/35495",
+            "poi/35462",
+            "poi/35463",
+            "poi/35464",
+            "poi/35499",
+            "poi/35494",
+            "poi/36508",
+            "poi/35466",
+            "poi/36565",
+            "poi/36566",
+            "poi/35360"
+          ],
+          "summary": "33 POIs (1 Interesting, 32 Outstanding). Top interests: Shopping, Wellness, Community-Based. Notable: Mesones and Obispo Cobos Streets, Alameda Ceramics, Almarza Pottery."
+        },
+        {
+          "group_id": "shopping--store",
+          "title": "Store",
+          "poi_ids": [
+            "poi/30707",
+            "poi/35511",
+            "poi/36168",
+            "poi/35519",
+            "poi/35518",
+            "poi/35516",
+            "poi/35517",
+            "poi/36165",
+            "poi/36534",
+            "poi/36179",
+            "poi/35515",
+            "poi/36163",
+            "poi/36121",
+            "poi/35963",
+            "poi/36726",
+            "poi/36563",
+            "poi/36200",
+            "poi/36201",
+            "poi/36562",
+            "poi/36606",
+            "poi/36696",
+            "poi/36558",
+            "poi/36555",
+            "poi/36605",
+            "poi/36725",
+            "poi/36381",
+            "poi/36604",
+            "poi/36683",
+            "poi/35962",
+            "poi/36193",
+            "poi/36380",
+            "poi/36556",
+            "poi/36557"
+          ],
+          "summary": "33 POIs (1 Interesting, 32 Outstanding). Top interests: Food, Shopping, Wellness. Notable: Juan Tito Pottery, ARTESUR Forge Workshop and Store, Croissant Bakery The Good Bread."
+        }
+      ]
     },
     {
       "section_id": "tourist-information-and-services",
@@ -1779,7 +2019,92 @@
         "poi/39480",
         "poi/36552"
       ],
-      "summary": "48 POIs (48 Outstanding). Top interests: Wellness, Medical. Notable: Health Center, Health Center, San Juan de la Cruz Regional Hospital."
+      "summary": "48 POIs (48 Outstanding). Top interests: Wellness, Medical. Notable: Health Center, Health Center, San Juan de la Cruz Regional Hospital.",
+      "groups": [
+        {
+          "group_id": "health-and-beauty--primarycare",
+          "title": "PrimaryCare",
+          "poi_ids": [
+            "poi/35445",
+            "poi/35446",
+            "poi/36583",
+            "poi/35449"
+          ],
+          "summary": "4 POIs (4 Outstanding). Top interests: Wellness, Medical. Notable: Health Center, Health Center, UBEDA EAST HEALTH CENTER."
+        },
+        {
+          "group_id": "health-and-beauty--other",
+          "title": "Other",
+          "poi_ids": [
+            "poi/35447"
+          ],
+          "summary": "1 POI (1 Outstanding). Top interests: Medical. Notable: San Juan de la Cruz Regional Hospital."
+        },
+        {
+          "group_id": "health-and-beauty--healthandbeautybusiness",
+          "title": "HealthAndBeautyBusiness",
+          "poi_ids": [
+            "poi/36328",
+            "poi/36232",
+            "poi/36202",
+            "poi/36554",
+            "poi/36324",
+            "poi/36559",
+            "poi/36123",
+            "poi/36271",
+            "poi/36122",
+            "poi/36231",
+            "poi/36199",
+            "poi/36560",
+            "poi/36262",
+            "poi/36325",
+            "poi/36198",
+            "poi/36326",
+            "poi/36327",
+            "poi/36261",
+            "poi/36124",
+            "poi/36125",
+            "poi/36547",
+            "poi/36549",
+            "poi/36329",
+            "poi/39480",
+            "poi/36552"
+          ],
+          "summary": "25 POIs (25 Outstanding). Top interests: Wellness. Notable: ALAIN AFFLELOU OPTICIAN, Álvarez Technical Orthopedics, BEAUTY CENTER THERMAL SPA."
+        },
+        {
+          "group_id": "health-and-beauty--pharmacy",
+          "title": "Pharmacy",
+          "poi_ids": [
+            "poi/35393",
+            "poi/35377",
+            "poi/35381",
+            "poi/35383",
+            "poi/35386",
+            "poi/36629",
+            "poi/35390",
+            "poi/35391",
+            "poi/35392",
+            "poi/35396",
+            "poi/35361",
+            "poi/35505",
+            "poi/35399"
+          ],
+          "summary": "13 POIs (13 Outstanding). Top interests: Medical, Wellness. Notable: Alfonsa Mesa Padilla Pharmacy, Almagro Uceda Pharmacy, Baras de La Torre Pharmacy."
+        },
+        {
+          "group_id": "health-and-beauty--medicalclinic",
+          "title": "MedicalClinic",
+          "poi_ids": [
+            "poi/36372",
+            "poi/36375",
+            "poi/36370",
+            "poi/36369",
+            "poi/36373"
+          ],
+          "summary": "5 POIs (5 Outstanding). Notable: BÉTULA VETERINARY CLINIC, GANDHI VETERINARY CLINIC, NORTH PARK VETERINARY CLINIC."
+        }
+      ]
     },
     {
       "section_id": "practical-information",

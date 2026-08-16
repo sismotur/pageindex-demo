@@ -140,6 +140,10 @@ A TypeScript port of the Python pipeline. For a pair `(dest, lang)`:
      URL builders, interest-level mapping)
    - `assignSection()` — the SECTIONS priority table (17 typed sections +
      "Other Points of Interest"), same order, same titles
+   - `buildSectionGroups()` — schema v2: sections with > 30 POIs are split
+     into per-`display_type` groups (min group size 2, remainder folds
+     into "Other"), each group carrying sorted `poi_ids` and a key-item
+     summary; groups ordered best-POI-first
    - `buildSectionSummary()` — deterministic counts + top interests +
      3 notable POIs
    - `buildFacets()` — by_section / by_type / by_tourist_type /
@@ -152,7 +156,9 @@ A TypeScript port of the Python pipeline. For a pair `(dest, lang)`:
 4. `R2.put(key, json)` with `httpMetadata: { contentType: "application/json" }`.
 
 The Python pipeline remains the **reference implementation**. The contract
-test in §4.4 keeps the port honest.
+test in §4.4 keeps the port honest. The index schema version
+(`meta.schema_version`, currently **2**) must match between the two
+implementations — bumping it is a coordinated change.
 
 ### 4.3 manifest.json
 

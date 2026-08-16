@@ -282,6 +282,8 @@ def score_result(result: dict) -> dict:
         "language_ok":      language,
         "composite":        composite,
         "latency":          result.get("latency_seconds", 0),
+        "prompt_tokens":     result.get("prompt_tokens"),
+        "completion_tokens": result.get("completion_tokens"),
         "error":            has_error,
         "missing_facts":    missing,
     }
@@ -340,6 +342,16 @@ def print_summary(scores: list[dict], model: str) -> None:
     print(f"  Content fetched       :  {fetched_avg:.1%}  ({n_fetched}/{n} questions fetched content)")
     print(f"  Composite score       :  {composite_avg:.3f}")
     print(f"  Avg latency           :  {latency_avg:.1f}s / question")
+
+    # Token usage (present in result files produced by current run_eval.py)
+    with_usage = [r for r in scores if r.get("prompt_tokens")]
+    if with_usage:
+        m = len(with_usage)
+        avg_prompt = round(sum(r["prompt_tokens"] for r in with_usage) / m)
+        avg_completion = round(sum(r["completion_tokens"] for r in with_usage) / m)
+        max_prompt = max(r["prompt_tokens"] for r in with_usage)
+        print(f"  Avg tokens/question   :  {avg_prompt} prompt + {avg_completion} completion"
+              f"  (max prompt {max_prompt}, {m}/{n} measured)")
 
     # Thresholds from plan
     passes_grounding  = grounding_avg >= 0.70

@@ -91,6 +91,17 @@ SECTIONS: list[tuple[str, set[str]]] = [
 ]
 OTHER_SECTION_TITLE = "Other Points of Interest"
 
+# Sub-section grouping (schema v2).  Sections larger than GROUP_MIN_POIS
+# are broken into per-type groups so on-device models can navigate
+# section -> group -> POIs instead of scanning one long flat list
+# (66 Shopping POIs in Ubeda already truncate at the default limit=50).
+# Types with fewer than GROUP_MIN_SIZE members fold into an "Other" group.
+# Inspired by PageIndex Flash's key_items: every group summary preserves
+# the names of its top POIs so nothing vanishes from the model's view.
+GROUP_MIN_POIS = 30
+GROUP_MIN_SIZE = 2
+OTHER_GROUP_TITLE = "Other"
+
 # Map-prominence threshold.  POIs with zoom_level <= this are flagged as
 # major landmarks in get_poi() output.
 PROMINENCE_ZOOM_MAX = 16
@@ -314,6 +325,63 @@ def build_section_summary(section_pois: list[dict]) -> str:
     return ". ".join(parts) + "."
 
 
+def _group_id_for(section_id: str, group_title: str) -> str:
+    """Stable group id: '{section_id}--{normalized-title}'."""
+    return f"{section_id}--{re.sub(r'\\s+', '-', normalize_text(group_title))}"
+
+
+def build_section_groups(section_pois: list[dict],
+                         section_id: str) -> list[dict] | None:
+    """Split a large section into per-type groups (schema v2).
+
+    Returns None when the section is small enough to stay flat, or when
+    the type distribution is too homogeneous for groups to help
+    navigation.  Groups are ordered by their best POI using the same
+    (interest_level, zoom_level, name) composite key as sections.
+    """
+    if len(section_pois) <= GROUP_MIN_POIS:
+        return None
+
+    by_type: dict[str, list[dict]] = {}
+    for p in section_pois:
+        key = p.get("display_type") or (p.get("types") or [""])[0] or OTHER_GROUP_TITLE
+        by_type.setdefault(key, []).append(p)
+
+    # Fold tiny types into "Other"
+    groups: dict[str, list[dict]] = {}
+    other: list[dict] = []
+    for key, members in by_type.items():
+        if len(members) >= GROUP_MIN_SIZE:
+            groups[key] = members
+        else:
+            other.extend(members)
+    if other:
+        groups[OTHER_GROUP_TITLE] = other
+
+    # Not worth grouping if everything landed in one bucket
+    if len(groups) < 2:
+        return None
+
+    sort_key = lambda p: (p.get("interest_level") or 99,
+                          p.get("zoom_level") or 99,
+                          p.get("normalized_name") or "")
+    out = []
+    for title, members in groups.items():
+        members = sorted(members, key=sort_key)
+        out.append({
+            "group_id": _group_id_for(section_id, title),
+            "title":    title,
+            "poi_ids":  [p["poi_id"] for p in members],
+            "summary":  build_section_summary(members),
+            # members[0] is the group's best POI after sorting; keep its
+            # key so groups can be ordered best-first below.
+            "_best":    sort_key(members[0]),
+        })
+    # Order groups by their best POI
+    out.sort(key=lambda g: g.pop("_best"))
+    return out
+
+
 def assemble_sections(pois: list[dict]) -> list[dict]:
     """Group POIs into ordered sections with deterministic summaries."""
     buckets: dict[str, list[dict]] = {}
@@ -338,15 +406,19 @@ def assemble_sections(pois: list[dict]) -> list[dict]:
     if OTHER_SECTION_ID in buckets and OTHER_SECTION_ID not in ordered:
         ordered.append(OTHER_SECTION_ID)
 
-    return [
-        {
+    sections = []
+    for sid in ordered:
+        sec = {
             "section_id": sid,
             "title":      titles[sid],
             "poi_ids":    [p["poi_id"] for p in buckets[sid]],
             "summary":    build_section_summary(buckets[sid]),
         }
-        for sid in ordered
-    ]
+        groups = build_section_groups(buckets[sid], sid)
+        if groups:
+            sec["groups"] = groups
+        sections.append(sec)
+    return sections
 
 
 # ── Facets ─────────────────────────────────────────────────────────────────
@@ -500,7 +572,10 @@ def build_index(raw_pois: list[dict], dest_data: dict | None,
             "generated_at":        datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
             "poi_count":           len(normalised),
             "section_count":       len(sections),
-            "schema_version":      1,
+            # v2: large sections may carry a `groups` list (per-type
+            # sub-sections with key-item summaries).  v1 readers can
+            # ignore `groups` — `poi_ids` still lists every POI.
+            "schema_version":      2,
         },
         "destination_overview": build_destination_overview(dest_data, tourist_type_display),
         "trips":                build_trips(dest_data),

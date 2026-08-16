@@ -74,12 +74,13 @@ from common.lang_support import (
     recovery_msg,
     is_supported,
 )
+from common.models import DEFAULT_EVAL_MODEL
 
 # ── Constants ───────────────────────────────────────────────────────────────────────
 QUESTIONS_FILE  = PROJECT_ROOT / "eval" / "questions.json"
 DEFAULT_INDEX   = PROJECT_ROOT / "indexes" / "ubeda_en.json"
 RESULTS_DIR     = PROJECT_ROOT / "results"
-DEFAULT_MODEL   = "openai/gemma-4-E2B-it-MLX-8bit"   # oMLX; mobile target
+DEFAULT_MODEL   = DEFAULT_EVAL_MODEL   # oMLX E2B; the mobile deployment target
 MAX_TOOL_ROUNDS = 14
 
 _SYSTEM_PROMPT_TEMPLATE = """\
@@ -100,7 +101,9 @@ You have FIVE tools.  Pick the one that fits the question:
         Full record of one POI: type, address, phone, coordinates, images, \
 links, AND the full description paragraph.
         Use when you need facts (address, phone, dates, description) about \
-a specific named POI.
+a specific named POI.  Pass several comma-separated ids \
+('poi/123,poi/456') to fetch multiple POIs in one call when comparing \
+or synthesising.
 
   • find_poi_by_name(query, limit?)
         Fuzzy lookup by POI name.  Returns up to `limit` candidates with id + \
@@ -198,14 +201,17 @@ TOOL_DEFS = [
             "description": (
                 "Return the full record of one POI: address, phone, "
                 "coordinates, images, AND the full description paragraph.  "
-                "Pass either the full id ('poi/12345') or the bare number."
+                "Pass the full id ('poi/12345'), the bare number, or "
+                "several comma-separated ids ('poi/123,poi/456') to fetch "
+                "multiple POIs in one call."
             ),
             "parameters": {
                 "type": "object",
                 "properties": {
                     "poi_id": {
                         "type": "string",
-                        "description": "POI id, e.g. 'poi/5155' or '5155'.",
+                        "description": ("POI id(s): 'poi/5155', '5155', or "
+                                        "comma-separated 'poi/123,poi/456'."),
                     },
                 },
                 "required": ["poi_id"],
@@ -382,11 +388,14 @@ def sections_accessed_from_calls(tool_calls: list, index: dict) -> list[str]:
                 add(sec.get("title", ""))
 
         elif tool == "get_poi":
-            poi_id = (args.get("poi_id") or "").strip()
-            poi = ix_get_poi(index, poi_id)
-            if poi:
-                for t in _section_titles_for_poi(index, poi["poi_id"]):
-                    add(t)
+            # poi_id may carry several comma-separated ids (batch fetch)
+            poi_ids = [p.strip() for p in (args.get("poi_id") or "").split(",")
+                       if p.strip()]
+            for poi_id in poi_ids:
+                poi = ix_get_poi(index, poi_id)
+                if poi:
+                    for t in _section_titles_for_poi(index, poi["poi_id"]):
+                        add(t)
 
         elif tool == "find_poi_by_name":
             for poi in ix_find_poi_by_name(index,
@@ -428,6 +437,8 @@ def run_agentic_loop(question: str, system_prompt: str,
     error  = None
     cache_hits = 0
     rounds = 0
+    prompt_tokens = 0
+    completion_tokens = 0
 
     for round_num in range(MAX_TOOL_ROUNDS):
         rounds = round_num + 1
@@ -442,6 +453,13 @@ def run_agentic_loop(question: str, system_prompt: str,
         except Exception as exc:
             error = str(exc)
             break
+
+        # Token accounting (feeds the on-device budgets in
+        # docs/mobile-offline-contract.md)
+        usage = getattr(response, "usage", None)
+        if usage:
+            prompt_tokens     += getattr(usage, "prompt_tokens", 0) or 0
+            completion_tokens += getattr(usage, "completion_tokens", 0) or 0
 
         choice  = response.choices[0]
         message = choice.message
@@ -500,6 +518,10 @@ def run_agentic_loop(question: str, system_prompt: str,
                 messages=messages + [{"role": "user", "content": msg}],
                 temperature=0,
             )
+            usage = getattr(recovery, "usage", None)
+            if usage:
+                prompt_tokens     += getattr(usage, "prompt_tokens", 0) or 0
+                completion_tokens += getattr(usage, "completion_tokens", 0) or 0
             answer = (recovery.choices[0].message.content or "").strip()
         except Exception as exc:
             error = f"recovery failed: {exc}"
@@ -509,6 +531,8 @@ def run_agentic_loop(question: str, system_prompt: str,
         "tool_calls": tool_calls_made,
         "rounds":     rounds,
         "cache_hits": cache_hits,
+        "prompt_tokens":     prompt_tokens,
+        "completion_tokens": completion_tokens,
         "error":      error,
     }
 
@@ -652,6 +676,8 @@ def main() -> None:
             "rounds":           loop["rounds"],
             "cache_hits":       loop["cache_hits"],
             "latency_seconds":  elapsed,
+            "prompt_tokens":     loop["prompt_tokens"],
+            "completion_tokens": loop["completion_tokens"],
             "error":            loop["error"],
         }
         results.append(result)
@@ -659,7 +685,8 @@ def main() -> None:
         status = "ERROR" if loop["error"] else "OK"
         tools = [c["tool"] for c in loop["tool_calls"]]
         print(f"  [{status}] {elapsed}s  rounds={loop['rounds']}  "
-              f"tools={tools}  cache={loop['cache_hits']}")
+              f"tools={tools}  cache={loop['cache_hits']}  "
+              f"tokens={loop['prompt_tokens']}+{loop['completion_tokens']}")
 
     total_elapsed = round(time.time() - total_start, 1)
     print(f"\n[INFO] All questions complete in {total_elapsed}s")

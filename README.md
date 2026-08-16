@@ -133,8 +133,8 @@ The model has five tools, each a pure dict lookup against the index
 | Tool | Purpose |
 |---|---|
 | `list_sections()` | Section catalogue (pre-loaded in the system prompt). |
-| `get_section(id, sort, limit)` | List POIs in one section, sorted by `(interest_level, zoom_level)`. |
-| `get_poi(poi_id)` | Full record of one POI by id. No truncation, no line slicing. |
+| `get_section(id, sort, limit)` | List POIs in one section (incl. the schema-v2 group map for large sections), sorted by `(interest_level, zoom_level)`. |
+| `get_poi(poi_id)` | Full record of one POI — or several at once with comma-separated ids (`'poi/123,poi/456'`). No truncation, no line slicing. |
 | `find_poi_by_name(query, limit)` | Diacritic-insensitive fuzzy lookup by POI name. |
 | `filter_pois(interest_level, type, tourist_type, section_id, indispensable, limit)` | Facet query, all filters AND together. |
 
@@ -182,7 +182,8 @@ pageindex-demo/
 │
 ├── common/                            ← shared by both parts (port byte-for-byte)
 │   ├── lang_support.py                ← 16 languages: rules, recovery, display
-│   └── textnorm.py                    ← normalize_text/tokenize (name search)
+│   ├── textnorm.py                    ← normalize_text/tokenize (name search)
+│   └── models.py                      ← canonical oMLX model IDs + defaults
 │
 ├── pipeline/                          ← PART 1: data preparation (→ Cloudflare)
 │   ├── extract_pois.py                ← Step 1a: fetch POIs (--destination, --lang)
@@ -425,13 +426,13 @@ titles.
   Loosening the rubric semantically would lift both languages above
   95% grounding. (Q20's test encodes the accepted floor; see
   `tests/test_rubric.py`.)
-- **Hierarchical sub-sections** — upstream PageIndex added multi-level
-  trees; our flat 18 sections already hold 66 Shopping POIs in Úbeda, so
-  large destinations will want a second level (e.g. by zone). Deliberately
-  not re-adopting PageIndex itself: the typed 5-tool surface beats its
-  tree search on this dataset (95% vs 80% retrieval on 26B), and its new
-  LLM-free Flash mode independently validates the deterministic-build
-  approach taken here.
+- ~~**Hierarchical sub-sections**~~ — **done (schema v2)**: sections
+  with > 30 POIs now carry per-type `groups` with key-item summaries
+  (the PageIndex Flash `key_items` pattern), so on-device models navigate
+  section → group → POIs. PageIndex itself is deliberately not
+  re-adopted: the typed 5-tool surface beats its tree search on this
+  dataset (95% vs 80% retrieval on 26B), and its LLM-free Flash mode
+  independently validates the deterministic-build approach taken here.
 - **Cloudflare Worker port of `pipeline/`** — spec in
   `docs/cloudflare-worker-spec.md`; the §4.4 contract test keeps the TS
   build byte-equivalent to the Python reference.

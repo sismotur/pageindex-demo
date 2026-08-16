@@ -59,11 +59,12 @@ from common.lang_support import (   # noqa: E402
     is_supported,
     recovery_msg as _recovery_msg,
 )
+from common.models import DEFAULT_CHAT_MODEL   # noqa: E402
 
 # ── Constants ──────────────────────────────────────────────────────────────────
 CONVERSATIONS_FILE = PROJECT_ROOT / "eval" / "conversations.json"
 RESULTS_DIR        = PROJECT_ROOT / "results"
-DEFAULT_MODEL      = "openai/gemma-4-26B-A4B-it-MLX-4bit"   # oMLX; server model
+DEFAULT_MODEL      = DEFAULT_CHAT_MODEL   # oMLX 26B; server/quality model
 
 
 # ── Spinner (background thread) ─────────────────────────────────────────

@@ -3,10 +3,10 @@
     "destination": "ubeda",
     "destination_display": "Úbeda",
     "lang": "it",
-    "generated_at": "2026-08-16T05:41:49Z",
+    "generated_at": "2026-08-16T05:53:40Z",
     "poi_count": 367,
     "section_count": 18,
-    "schema_version": 1
+    "schema_version": 2
   },
   "destination_overview": "Importante e popolosa città situata sui Colli che portano il suo nome, nel centro geografico della provincia, in un paesaggio ricco di ulivi e campi di cereali.\n\nÙbeda è una città artistica e monumentale, ovunque si guardi, ed una delle località più signorili e gloriose dell'Andalusia. Castigliana e rinascimentale da ogni punto di vista, racchiude così tanti monumenti, chiese, palazzi e case signorili che è meglio passeggiare per le sue strade e trasportarsi virtualmente al tempo del suo splendore storico: la Cappella del Salvador, situata nell'incomparabile piazza del Municipio, la Chiesa di S. Paolo, la Chiesa di Santa Maria dei Reali Alcázares, la Chiesa della Trinità, l'Oratorio di San Giovanni della Croce, il Monastero di Santa Clara, il Palazzo Vela de los Cobos, il Palazzo de las Cadenas, la Casa de las Torres, l'Ospedale di Santiago, l'Ospedale dei Vecchi Onorati del Salvador, la Torre dell'Orologio, le Mura della Cava, il Museo della Ceramica e il Parador Nazionale del Turismo, sono alcune delle meraviglie che contiene questa sorprendente città.\n\nOltre a questi attrattivi, si consiglia una visita alle mura e alla splendida vista che si ottiene da lì; e ai suoi ceramisti, specialmente alla casa-museo di Paco Titos.\n\n- Tourism types: Patrimonio, Architettura, Gite, Turismo Dell'Olio\n- Networks: WORLD HERITAGE CITIES\n- Official website: https://www.turismodeubeda.com/index.php/es/",
   "trips": [
@@ -1426,7 +1426,81 @@
         "poi/30152",
         "poi/30144"
       ],
-      "summary": "44 POIs. Top interests: Architettura, Memoria Storica, Comunitario. Notable: Palazzo del Marchese di Mancera, Palazzo Vela de los Cobos, Centro di Interpretazione \"Le Mura di Úbeda: Torrione di Portillo del Santo Cristo\"."
+      "summary": "44 POIs. Top interests: Architettura, Memoria Storica, Comunitario. Notable: Palazzo del Marchese di Mancera, Palazzo Vela de los Cobos, Centro di Interpretazione \"Le Mura di Úbeda: Torrione di Portillo del Santo Cristo\".",
+      "groups": [
+        {
+          "group_id": "civil-and-historical-monuments--civilbuilding",
+          "title": "CivilBuilding",
+          "poi_ids": [
+            "poi/30116",
+            "poi/5156",
+            "poi/5142",
+            "poi/30132",
+            "poi/5147",
+            "poi/5145",
+            "poi/30108",
+            "poi/30109",
+            "poi/8439",
+            "poi/5149",
+            "poi/30123",
+            "poi/30131",
+            "poi/30127",
+            "poi/5151",
+            "poi/30118",
+            "poi/30114",
+            "poi/30120",
+            "poi/65976",
+            "poi/30173",
+            "poi/30136",
+            "poi/30167",
+            "poi/30160",
+            "poi/30159",
+            "poi/30163",
+            "poi/30130",
+            "poi/30166",
+            "poi/30153",
+            "poi/30126",
+            "poi/30137",
+            "poi/30162",
+            "poi/30113",
+            "poi/30152",
+            "poi/30144"
+          ],
+          "summary": "33 POIs. Top interests: Architettura, Religioso, Evento  & Festival. Notable: Palazzo del Marchese di Mancera, Palazzo Vela de los Cobos, Casa delle Torri."
+        },
+        {
+          "group_id": "civil-and-historical-monuments--militarybuilding",
+          "title": "MilitaryBuilding",
+          "poi_ids": [
+            "poi/30139",
+            "poi/30128",
+            "poi/5143",
+            "poi/30154",
+            "poi/30110",
+            "poi/30125"
+          ],
+          "summary": "6 POIs. Top interests: Architettura, Memoria Storica. Notable: Centro di Interpretazione \"Le Mura di Úbeda: Torrione di Portillo del Santo Cristo\", Mura e Porta del Losal, Porta di Granada."
+        },
+        {
+          "group_id": "civil-and-historical-monuments--touristinformationcenter",
+          "title": "TouristInformationCenter",
+          "poi_ids": [
+            "poi/5154",
+            "poi/30111",
+            "poi/30124"
+          ],
+          "summary": "3 POIs. Top interests: Architettura, Urbano, Gastronomico. Notable: Palazzo Vázquez de Molina, Antiche Macellerie, Centro di Interpretazione dell'Oliveto e dell'Olio."
+        },
+        {
+          "group_id": "civil-and-historical-monuments--other",
+          "title": "Other",
+          "poi_ids": [
+            "poi/37106",
+            "poi/30161"
+          ],
+          "summary": "2 POIs. Top interests: Shopping, Comunitario. Notable: CASERMA GUARDIA CIVILE, Mercato di approvvigionamento."
+        }
+      ]
     },
     {
       "section_id": "religious-heritage",
@@ -1565,7 +1639,91 @@
         "poi/35910",
         "poi/35430"
       ],
-      "summary": "40 POIs. Top interests: Gastronomico, Shopping, Birra. Notable: ALMAZARA BALTASAR LARA E CÍA., ALMAZARA LA UNIÓN, ALMAZARA VIRGEN DE GUADALUPE."
+      "summary": "40 POIs. Top interests: Gastronomico, Shopping, Birra. Notable: ALMAZARA BALTASAR LARA E CÍA., ALMAZARA LA UNIÓN, ALMAZARA VIRGEN DE GUADALUPE.",
+      "groups": [
+        {
+          "group_id": "gastronomy--oilmill",
+          "title": "OilMill",
+          "poi_ids": [
+            "poi/36694",
+            "poi/36692",
+            "poi/36693",
+            "poi/41136",
+            "poi/35903",
+            "poi/35905",
+            "poi/35910"
+          ],
+          "summary": "7 POIs. Top interests: Gastronomico, Turismo Dell'Olio. Notable: ALMAZARA BALTASAR LARA E CÍA., ALMAZARA LA UNIÓN, ALMAZARA VIRGEN DE GUADALUPE."
+        },
+        {
+          "group_id": "gastronomy--barorpub",
+          "title": "BarOrPub",
+          "poi_ids": [
+            "poi/35695",
+            "poi/35702",
+            "poi/35708",
+            "poi/35704"
+          ],
+          "summary": "4 POIs. Top interests: Gastronomico, Shopping, Birra. Notable: Totem Calle Real, Zona delle tapas Piazza 1º maggio, Zona dei bar e ristoranti in Avenida Cristo Rey."
+        },
+        {
+          "group_id": "gastronomy--restaurant",
+          "title": "Restaurant",
+          "poi_ids": [
+            "poi/35397",
+            "poi/35398",
+            "poi/35400",
+            "poi/35402",
+            "poi/65816",
+            "poi/35407",
+            "poi/65817",
+            "poi/35403",
+            "poi/35395",
+            "poi/35424",
+            "poi/35432",
+            "poi/35426",
+            "poi/35409",
+            "poi/35427",
+            "poi/35428",
+            "poi/35431",
+            "poi/35430"
+          ],
+          "summary": "17 POIs. Top interests: Gastronomico, Festa. Notable: Ristorante Asador \"Al-Andalus\", Ristorante \"Asador de Santiago\", Ristorante Asador \"El Trujal\"."
+        },
+        {
+          "group_id": "gastronomy--cafeorcoffeeshop",
+          "title": "CafeOrCoffeeShop",
+          "poi_ids": [
+            "poi/36167",
+            "poi/36169",
+            "poi/36170",
+            "poi/36953",
+            "poi/36950",
+            "poi/36567",
+            "poi/36196"
+          ],
+          "summary": "7 POIs. Top interests: Gastronomico, Shopping. Notable: Caffetteria Alejo & Doña Rosita, Pasticceria Caffetteria Los Portalillos, Pasticceria Vandelvira."
+        },
+        {
+          "group_id": "gastronomy--other",
+          "title": "Other",
+          "poi_ids": [
+            "poi/35698",
+            "poi/36194"
+          ],
+          "summary": "2 POIs. Top interests: Shopping, Gastronomico. Notable: Via Ciudad de Linares, DOLCE E SALATO, cibo casereccio da portare via."
+        },
+        {
+          "group_id": "gastronomy--icecreamshop",
+          "title": "IceCreamShop",
+          "poi_ids": [
+            "poi/36379",
+            "poi/36377",
+            "poi/36378"
+          ],
+          "summary": "3 POIs. Notable: GELATERIA I VALENCIANI, GELATI I VALENCIANI, GELATI I VALENCIANI."
+        }
+      ]
     },
     {
       "section_id": "guided-tours-and-itineraries",
@@ -1681,7 +1839,89 @@
         "poi/36683",
         "poi/35360"
       ],
-      "summary": "66 POIs. Top interests: Shopping, Gastronomico, Benessere. Notable: Strade Mesones e Obispo Cobos, Alfarería Juan Tito, Alfarería Almarza."
+      "summary": "66 POIs. Top interests: Shopping, Gastronomico, Benessere. Notable: Strade Mesones e Obispo Cobos, Alfarería Juan Tito, Alfarería Almarza.",
+      "groups": [
+        {
+          "group_id": "shopping--shoppingcenter",
+          "title": "ShoppingCenter",
+          "poi_ids": [
+            "poi/35697",
+            "poi/35491",
+            "poi/35492",
+            "poi/35496",
+            "poi/35700",
+            "poi/35701",
+            "poi/35498",
+            "poi/35503",
+            "poi/35504",
+            "poi/35502",
+            "poi/35508",
+            "poi/35506",
+            "poi/35699",
+            "poi/35696",
+            "poi/35467",
+            "poi/35494",
+            "poi/35493",
+            "poi/35495",
+            "poi/36565",
+            "poi/36566",
+            "poi/36510",
+            "poi/35460",
+            "poi/35465",
+            "poi/35499",
+            "poi/36048",
+            "poi/36047",
+            "poi/35461",
+            "poi/35462",
+            "poi/35463",
+            "poi/36508",
+            "poi/35464",
+            "poi/35466",
+            "poi/35360"
+          ],
+          "summary": "33 POIs. Top interests: Shopping, Benessere, Comunitario. Notable: Strade Mesones e Obispo Cobos, Alfarería Almarza, Alfarería Fco. Expósito Tito."
+        },
+        {
+          "group_id": "shopping--store",
+          "title": "Store",
+          "poi_ids": [
+            "poi/30707",
+            "poi/35517",
+            "poi/35519",
+            "poi/35518",
+            "poi/35516",
+            "poi/35515",
+            "poi/35511",
+            "poi/36179",
+            "poi/36534",
+            "poi/36168",
+            "poi/36163",
+            "poi/36165",
+            "poi/35963",
+            "poi/36726",
+            "poi/36604",
+            "poi/36562",
+            "poi/36606",
+            "poi/36605",
+            "poi/36563",
+            "poi/36558",
+            "poi/36557",
+            "poi/36121",
+            "poi/36200",
+            "poi/36725",
+            "poi/36201",
+            "poi/35962",
+            "poi/36381",
+            "poi/36380",
+            "poi/36555",
+            "poi/36556",
+            "poi/36696",
+            "poi/36193",
+            "poi/36683"
+          ],
+          "summary": "33 POIs. Top interests: Gastronomico, Shopping, Benessere. Notable: Alfarería Juan Tito, Forgia La Loma, Gioielleria Ferrandidz."
+        }
+      ]
     },
     {
       "section_id": "tourist-information-and-services",
@@ -1753,7 +1993,92 @@
         "poi/36198",
         "poi/39480"
       ],
-      "summary": "48 POIs. Top interests: Benessere, Medico. Notable: Centro di salute, Centro di salute, CENTRO SALUTE-UBEDA EST."
+      "summary": "48 POIs. Top interests: Benessere, Medico. Notable: Centro di salute, Centro di salute, CENTRO SALUTE-UBEDA EST.",
+      "groups": [
+        {
+          "group_id": "health-and-beauty--primarycare",
+          "title": "PrimaryCare",
+          "poi_ids": [
+            "poi/35445",
+            "poi/35446",
+            "poi/36583",
+            "poi/35449"
+          ],
+          "summary": "4 POIs. Top interests: Benessere, Medico. Notable: Centro di salute, Centro di salute, CENTRO SALUTE-UBEDA EST."
+        },
+        {
+          "group_id": "health-and-beauty--other",
+          "title": "Other",
+          "poi_ids": [
+            "poi/35447"
+          ],
+          "summary": "1 POI. Top interests: Medico. Notable: Ospedale Comarcale San Juan de la Cruz."
+        },
+        {
+          "group_id": "health-and-beauty--healthandbeautybusiness",
+          "title": "HealthAndBeautyBusiness",
+          "poi_ids": [
+            "poi/36271",
+            "poi/36199",
+            "poi/36202",
+            "poi/36125",
+            "poi/36547",
+            "poi/36549",
+            "poi/36123",
+            "poi/36231",
+            "poi/36124",
+            "poi/36232",
+            "poi/36328",
+            "poi/36324",
+            "poi/36325",
+            "poi/36327",
+            "poi/36261",
+            "poi/36326",
+            "poi/36262",
+            "poi/36329",
+            "poi/36554",
+            "poi/36552",
+            "poi/36122",
+            "poi/36559",
+            "poi/36560",
+            "poi/36198",
+            "poi/39480"
+          ],
+          "summary": "25 POIs. Top interests: Benessere. Notable: Accademia di parrucchieri José Luís, ACCADEMIA DI PARRUCCHIERIA MARICIELO, Centro ESTETICO TERME."
+        },
+        {
+          "group_id": "health-and-beauty--medicalclinic",
+          "title": "MedicalClinic",
+          "poi_ids": [
+            "poi/36369",
+            "poi/36372",
+            "poi/36375",
+            "poi/36370",
+            "poi/36373"
+          ],
+          "summary": "5 POIs. Notable: CLINICA VETERINARIA ARCO IRIS, CLINICA VETERINARIA BETULA, CLINICA VETERINARIA GANDHI."
+        },
+        {
+          "group_id": "health-and-beauty--pharmacy",
+          "title": "Pharmacy",
+          "poi_ids": [
+            "poi/35393",
+            "poi/35377",
+            "poi/35381",
+            "poi/35383",
+            "poi/35386",
+            "poi/36629",
+            "poi/35390",
+            "poi/35391",
+            "poi/35392",
+            "poi/35396",
+            "poi/35361",
+            "poi/35505",
+            "poi/35399"
+          ],
+          "summary": "13 POIs. Top interests: Medico, Benessere. Notable: Farmacia Alfonsa Mesa Padilla, Farmacia Almagro Uceda, Farmacia Baras de La Torre."
+        }
+      ]
     },
     {
       "section_id": "practical-information",

@@ -304,8 +304,8 @@ LLM-in-the-loop, no line slicing.
 | Tool | Purpose |
 |---|---|
 | `list_sections()` | Section catalogue (pre-loaded in the system prompt). |
-| `get_section(section_id, sort, limit)` | List POIs in one section, sorted by `(interest_level, zoom_level)`. |
-| `get_poi(poi_id)` | Full record of one POI by id. |
+| `get_section(section_id, sort, limit)` | List POIs in one section (schema v2: large sections include a per-type group map), sorted by `(interest_level, zoom_level)`. |
+| `get_poi(poi_id)` | Full record of one POI by id; comma-separated ids fetch several records in one call. |
 | `find_poi_by_name(query, limit)` | Diacritic-insensitive fuzzy lookup by name. |
 | `filter_pois(interest_level, type, tourist_type, section_id, indispensable, limit)` | Facet query, all filters AND together. |
 
@@ -335,7 +335,8 @@ pageindex-demo/
 │
 ├── common/                            ← shared constants, port byte-for-byte
 │   ├── lang_support.py
-│   └── textnorm.py
+│   ├── textnorm.py
+│   └── models.py                      ← canonical oMLX model IDs + defaults
 │
 ├── pipeline/                          ← PART 1: data prep (→ Cloudflare cron)
 │   ├── extract_pois.py                ← Step 1a: fetch POIs

@@ -37,17 +37,21 @@ retrieval tools run locally.
 └─────────────────────────────────────────────────────────────┘
 ```
 
-Measured baseline for this exact stack (E2B, oMLX serving, 20 visitor
-questions, English): composite **0.820**, grounding **72.5%**,
-content-fetch **95%**, **3.7 s**/question. The same E2B weights are the
+Measured baseline for this exact stack (E2B, oMLX serving, schema v2
+index, 20 visitor questions, English, 2026-08-16): composite **0.830**,
+grounding **75.0%**, content-fetch **95%**, **3.1 s**/question, 13,950
+prompt + 241 completion tokens/question. The same E2B weights are the
 deployment target; expect ≥ the 70% rubric thresholds on EN/ES/IT.
 
 ---
 
 ## 2. The index file (`indexes/{dest}_{lang}.json`)
 
-One JSON object, `meta.schema_version == 1`. Sizes: ~0.7–0.85 MB per pair
+One JSON object, `meta.schema_version == 2`. Sizes: ~0.7–0.85 MB per pair
 (367 POIs, Úbeda). Parse it fully into memory at session start.
+
+Schema v2 adds the optional `sections[].groups` field (below). v1 readers
+can ignore it — `sections[].poi_ids` still lists every POI in the section.
 
 ```jsonc
 {
@@ -58,7 +62,7 @@ One JSON object, `meta.schema_version == 1`. Sizes: ~0.7–0.85 MB per pair
     "generated_at": "2026-08-16T05:13:09Z",
     "poi_count": 367,
     "section_count": 18,
-    "schema_version": 1
+    "schema_version": 2
   },
   "destination_overview": "…multi-line string, embedded in the system prompt…",
   "trips": [
@@ -66,10 +70,17 @@ One JSON object, `meta.schema_version == 1`. Sizes: ~0.7–0.85 MB per pair
       "steps": [ { "step": "…", "pois": ["POI name", …] } ] }
   ],
   "sections": [
-    { "section_id": "museums-and-culture",   // slug, stable
-      "title": "Museums and Culture",        // display title
-      "summary": "5 POIs (…). Top interests: … Notable: …",
-      "poi_ids": ["poi/123", …] }            // sorted by (interest, zoom, name)
+    { "section_id": "shopping",              // slug, stable
+      "title": "Shopping",                   // display title
+      "summary": "66 POIs (…). Top interests: … Notable: …",
+      "poi_ids": ["poi/123", …],             // ALL section POIs, sorted
+      "groups": [                            // v2 only, optional: present
+                                             // when the section has > 30 POIs
+        { "group_id": "shopping--store",     // "{section_id}--{type-slug}"
+          "title": "Store",                  // display_type of the group
+          "poi_ids": ["poi/123", …],         // sorted by (interest, zoom, name)
+          "summary": "33 POIs. Notable: …" } // key items preserved by name
+      ] }
   ],
   "pois": {
     "poi/123": {
@@ -146,8 +157,12 @@ SECTIONS:
 
 ### 3.2 `get_poi(poi_id)`
 
-Lookup order: exact key → `poi/{arg}` prefix added → prefix stripped.
-Unknown id returns:
+Lookup order per id: exact key → `poi/{arg}` prefix added → prefix
+stripped. **Batch form:** `poi_id` accepts comma-separated ids
+(`"poi/123, poi/456"`, bare numbers also fine); the result is the
+records joined with `\n\n---\n\n`. Unknown ids render an inline
+`[ERROR] POI '…' not found.` block without failing the batch. A single
+unknown id returns:
 
 ```
 [ERROR] POI '123' not found. Use find_poi_by_name() if you only know the name.
@@ -182,13 +197,25 @@ exact title → substring title → normalized title. Unknown key returns
 ascending, nulls last as 99) | `"name"` | `"zoom"`. `limit` default 50;
 when truncated, append `  …N more (raise --limit to see all)`.
 
-```
-Section: Museums and Culture  (id=museums-and-culture, 5 POIs total)
-  5 POIs (…). Top interests: …
+**Schema v2:** when the section has `groups`, a group map is rendered
+between the summary and the preview list. The group map is the navigation
+structure — drill down with `filter_pois(type=<group title>,
+section_id=<section_id>)`:
 
-  [poi/123] Name — Museum — Indispensable — First sentence of description…
+```
+Section: Shopping  (id=shopping, 66 POIs total)
+  66 POIs (…). Top interests: Shopping, … Notable: …
+
+  Groups in this section (drill down with filter_pois(type=..., section_id="shopping")):
+    [shopping--shoppingcenter] ShoppingCenter — 33 POIs.  Notable: Mesones and Obispo Cobos Streets, …
+    [shopping--store] Store — 33 POIs.  Notable: Juan Tito Pottery, …
+
+  [poi/123] Name — Store — First sentence of description…
   …
 ```
+
+Flat sections (≤ 30 POIs) render exactly as before, without the group
+block:
 
 The one-line preview per POI is
 `display_type — interest_level_label (unless "Outstanding") — first
@@ -272,7 +299,7 @@ You have FIVE tools.  Pick the one that fits the question:
 
   • get_poi(poi_id)
         Full record of one POI: type, address, phone, coordinates, images, links, AND the full description paragraph.
-        Use when you need facts (address, phone, dates, description) about a specific named POI.
+        Use when you need facts (address, phone, dates, description) about a specific named POI.  Pass several comma-separated ids ('poi/123,poi/456') to fetch multiple POIs in one call when comparing or synthesising.
 
   • find_poi_by_name(query, limit?)
         Fuzzy lookup by POI name.  Returns up to `limit` candidates with id + section + preview.  Use when the user names a place but you don't know which section it lives in.  Always follow up with get_poi() on the best match before answering specific facts.
@@ -355,17 +382,21 @@ if no answer after the loop:
 
 ---
 
-## 7. Budgets (E2B, measured on Apple Silicon via oMLX)
+## 7. Budgets (E2B, measured 2026-08-16 via oMLX, schema v2 index)
 
-| Metric | Value | Notes |
+All token figures are **measured** (`response.usage` logged by
+`assistant/run_eval.py` and aggregated by `assistant/score_results.py`):
+
+| Metric | Measured | Notes |
 |---|---|---|
-| System prompt | ~2.5K tokens | sections + overview embedded |
-| Tool result (get_section) | 0.5–2K tokens | previews only |
-| Tool result (get_poi) | 0.3–1K tokens | full description |
-| Rounds per question | 1–3 typical, cap 14 | most questions: 1–2 tool calls |
-| Latency per question | ~3.7 s avg (desktop MLX) | mobile will be slower; budget 5–15 s |
-| Answer length | 150–400 tokens | |
-| Context headroom | E2B supports 128K; a 10-turn chat stays < 20K | no truncation strategy needed |
+| System prompt | 8,512 chars (~2.6K tokens) | sections + overview embedded |
+| Cumulative prompt tokens / question | **13,950 avg, 22,646 max** | sum over all rounds (each round re-sends the conversation) |
+| Completion tokens / question | **241 avg** | answers are compact |
+| Rounds per question | 1–3 typical, cap 14 | batch `get_poi` collapsed multi-fetch questions (Q12: 5→3 rounds) |
+| Latency per question | **3.1 s avg** (desktop MLX) | mobile will be slower; budget 5–15 s |
+| Tool result (get_section) | 0.5–2K tokens | previews only; group map adds ~200 chars on grouped sections |
+| Tool result (get_poi) | 0.3–1K tokens per record | batch of 14 records ≈ 6K tokens |
+| Context headroom | E2B supports 128K | largest observed single-question cumulative prompt: 22.6K; plan for ~2× that on long chats |
 
 Quality gates from the eval harness (`assistant/score_results.py`):
 grounding ≥ 70% AND content-fetch ≥ 70%. Any port must reproduce these
