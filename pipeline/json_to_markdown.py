@@ -15,8 +15,8 @@ extract_destination_data.py), two additional top-level sections are prepended:
   ## Curated Trips and Itineraries
 
 Usage:
-    .venv/bin/python scripts/json_to_markdown.py
-    .venv/bin/python scripts/json_to_markdown.py --destination caceres --lang es
+    .venv/bin/python pipeline/json_to_markdown.py
+    .venv/bin/python pipeline/json_to_markdown.py --destination caceres --lang es
 
 Inputs:  data/{destination}_pois_raw_{lang}.json
          data/{destination}_destination_{lang}.json  (optional)

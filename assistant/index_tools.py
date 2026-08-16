@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """
-index_tools.py — Read-side helpers for the POI-aware index.
+assistant/index_tools.py — Read-side helpers for the POI-aware index.
 
-Pure functions over the dict produced by build_index.py.  No I/O at import,
-no LLM calls, no global state.  Imported by run_eval.py and chat_demo.py
-to back the five LLM tools:
+Pure functions over the dict produced by pipeline/build_index.py.  No I/O
+at import, no LLM calls, no global state.  Imported by run_eval.py and
+chat_demo.py to back the five LLM tools:
 
     list_sections()                — embedded into the system prompt
     get_section(section_id, ...)   — list POIs in a section
@@ -15,15 +15,23 @@ to back the five LLM tools:
 All `format_*` functions return strings suitable for tool-call results;
 all `index_*` functions return raw structures used internally by the
 formatters and by tests.
+
+Text normalisation lives in common/textnorm.py — it is shared with
+pipeline/build_index.py and must stay identical across the Cloudflare
+and mobile ports (see docs/mobile-offline-contract.md).
 """
 
 from __future__ import annotations
 
 import json
 import re
-import unicodedata
+import sys
 from pathlib import Path
 from typing import Any, Iterable
+
+# Allow `from common.textnorm import ...` when run as a script
+sys.path.insert(0, str(Path(__file__).parent.parent))
+from common.textnorm import normalize_text, tokenize  # noqa: E402, F401
 
 # ── I/O ─────────────────────────────────────────────────────────────────────
 
@@ -31,30 +39,6 @@ def load_index(path: str | Path) -> dict:
     """Read the index JSON from disk and return it as a dict."""
     with open(path, encoding="utf-8") as f:
         return json.load(f)
-
-
-# ── Tokenisation (used by name search) ─────────────────────────────────────
-
-_NON_WORD_RE = re.compile(r"[^\w\s]+", re.UNICODE)
-
-
-def normalize_text(text: str) -> str:
-    """Lowercase + strip diacritics + collapse whitespace.
-
-    Diacritic stripping makes 'Vázquez' and 'Vazquez' compare equal,
-    which is what users type in search boxes.
-    """
-    if not text:
-        return ""
-    decomposed = unicodedata.normalize("NFKD", text)
-    stripped = "".join(c for c in decomposed if not unicodedata.combining(c))
-    stripped = _NON_WORD_RE.sub(" ", stripped)
-    return " ".join(stripped.lower().split())
-
-
-def tokenize(text: str) -> list[str]:
-    """Split normalised text into tokens (words)."""
-    return normalize_text(text).split()
 
 
 # ── Section listing ─────────────────────────────────────────────────────────

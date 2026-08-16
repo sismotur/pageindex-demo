@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-chat_demo.py — Multi-turn conversation demo over the POI-aware index.
+assistant/chat_demo.py — Multi-turn conversation demo over the POI-aware index.
 
 Two modes:
   • Scripted: runs every conversation thread in eval/conversations.json,
@@ -12,10 +12,10 @@ Two modes:
 Reuses the agentic loop and the five tools defined in run_eval.py.
 
 Usage:
-    .venv/bin/python scripts/chat_demo.py
-    .venv/bin/python scripts/chat_demo.py --model openai/gemma4:e4b
-    .venv/bin/python scripts/chat_demo.py --interactive
-    .venv/bin/python scripts/chat_demo.py --interactive --lang es \
+    .venv/bin/python assistant/chat_demo.py
+    .venv/bin/python assistant/chat_demo.py --model openai/gemma-4-E2B-it-MLX-8bit
+    .venv/bin/python assistant/chat_demo.py --interactive
+    .venv/bin/python assistant/chat_demo.py --interactive --lang es \
         --index indexes/ubeda_es.json
 """
 
@@ -38,8 +38,9 @@ import litellm
 litellm.drop_params = True
 litellm.set_verbose = False
 
-# Shared building blocks from run_eval.py
-sys.path.insert(0, str(PROJECT_ROOT / "scripts"))
+# Shared building blocks from run_eval.py (same package) and common/
+sys.path.insert(0, str(PROJECT_ROOT))
+sys.path.insert(0, str(Path(__file__).parent))
 from run_eval import (   # noqa: E402
     TOOL_DEFS,
     MAX_TOOL_ROUNDS,
@@ -52,7 +53,7 @@ from index_tools import (   # noqa: E402
     format_sections_overview,
     format_section,
 )
-from lang_support import (   # noqa: E402
+from common.lang_support import (   # noqa: E402
     SUPPORTED_LANGS,
     display_name,
     is_supported,
@@ -62,7 +63,7 @@ from lang_support import (   # noqa: E402
 # ── Constants ──────────────────────────────────────────────────────────────────
 CONVERSATIONS_FILE = PROJECT_ROOT / "eval" / "conversations.json"
 RESULTS_DIR        = PROJECT_ROOT / "results"
-DEFAULT_MODEL      = "openai/gemma4:26b"
+DEFAULT_MODEL      = "openai/gemma-4-26B-A4B-it-MLX-4bit"   # oMLX; server model
 
 
 # ── Spinner (background thread) ─────────────────────────────────────────

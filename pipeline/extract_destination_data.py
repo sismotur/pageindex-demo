@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-extract_destination_data.py — Fetch destination-level data for any tourist destination.
+pipeline/extract_destination_data.py — Fetch destination-level data for any tourist destination.
 
-Collects five data sources and saves to data/{destination}_destination.json:
+Collects five data sources and saves to data/{destination}_destination_{lang}.json:
   1. /v120/tourist-destinations  — destination overview, trip IDs, route IDs
   2. /v120/trips                 — curated trips with full itineraries
   3. /v120/paths                 — walking/driving routes (one fetch per ID)
@@ -10,8 +10,8 @@ Collects five data sources and saves to data/{destination}_destination.json:
   5. /v120/tourist-types         — type codes with human-readable names
 
 Usage:
-    .venv/bin/python scripts/extract_destination_data.py
-    .venv/bin/python scripts/extract_destination_data.py --destination fayon --lang es
+    .venv/bin/python pipeline/extract_destination_data.py
+    .venv/bin/python pipeline/extract_destination_data.py --destination fayon --lang es
 
 Environment variables (loaded from .env):
     INVENTRIP_API_BASE_URL  Base URL of the Inventrip API
@@ -34,9 +34,9 @@ TIMEOUT             = 60
 
 load_dotenv(PROJECT_ROOT / ".env")
 
-# Make `from lang_support import ...` work whether run as a script or module
-sys.path.insert(0, str(Path(__file__).parent))
-from lang_support import SUPPORTED_LANGS, is_supported  # noqa: E402
+# Make `from common.lang_support import ...` work whether run as a script or module
+sys.path.insert(0, str(Path(__file__).parent.parent))
+from common.lang_support import SUPPORTED_LANGS, is_supported  # noqa: E402
 
 
 # ── Helpers ────────────────────────────────────────────────────────────────────

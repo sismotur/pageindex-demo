@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-build_index.py — Build a POI-aware index from the Inventrip API JSON.
+pipeline/build_index.py — Build a POI-aware index from the Inventrip API JSON.
 
 Replaces pageindex/run_pageindex.py + add_section_summaries.py.  Reads:
     data/{destination}_pois_raw_{lang}.json     (raw /v120/pois output)
@@ -9,12 +9,14 @@ Replaces pageindex/run_pageindex.py + add_section_summaries.py.  Reads:
 Writes:
     indexes/{destination}_{lang}.json
 
-The index is consumed by run_eval.py and chat_demo.py via index_tools.py.
+The index is consumed by assistant/run_eval.py and assistant/chat_demo.py
+via assistant/index_tools.py, and is the single artifact the mobile apps
+download for fully-offline use (see docs/mobile-offline-contract.md).
 No LLM calls, no Markdown intermediate; deterministic and re-runnable.
 
 Usage:
-    .venv/bin/python scripts/build_index.py
-    .venv/bin/python scripts/build_index.py --destination caceres --lang es
+    .venv/bin/python pipeline/build_index.py
+    .venv/bin/python pipeline/build_index.py --destination caceres --lang es
 """
 
 from __future__ import annotations
@@ -28,11 +30,11 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-# Reuse the read-side helpers' tokeniser so the name_index keys match
-# exactly what index_tools.find_poi_by_name() will look up.
-sys.path.insert(0, str(Path(__file__).parent))
-from index_tools import normalize_text  # noqa: E402
-from lang_support import SUPPORTED_LANGS, is_supported  # noqa: E402
+# Shared normaliser + language list from common/ so the name_index keys
+# match exactly what assistant/index_tools.find_poi_by_name() looks up.
+sys.path.insert(0, str(Path(__file__).parent.parent))
+from common.textnorm import normalize_text  # noqa: E402
+from common.lang_support import SUPPORTED_LANGS, is_supported  # noqa: E402
 
 # ── Constants ──────────────────────────────────────────────────────────────────
 PROJECT_ROOT        = Path(__file__).parent.parent
@@ -535,7 +537,7 @@ def main() -> None:
 
     if not pois_file.exists():
         print(f"[ERROR] POI file not found: {pois_file}", file=sys.stderr)
-        print(f"[ERROR] Run: scripts/extract_pois.py --destination {args.destination} --lang {args.lang}",
+        print(f"[ERROR] Run: pipeline/extract_pois.py --destination {args.destination} --lang {args.lang}",
               file=sys.stderr)
         sys.exit(1)
 

@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-run_eval.py — Q&A evaluation runner over the POI-aware index.
+assistant/run_eval.py — Q&A evaluation runner over the POI-aware index.
 
-Loads indexes/{destination}_{lang}.json (built by build_index.py) and
-runs each question in eval/questions.json through litellm tool calling.
+Loads indexes/{destination}_{lang}.json (built by pipeline/build_index.py)
+and runs each question in eval/questions.json through litellm tool calling.
 
 Five tools are exposed to the model:
 
@@ -28,9 +28,9 @@ Five tools are exposed to the model:
         rarely needs to call it explicitly.
 
 Usage:
-    .venv/bin/python scripts/run_eval.py
-    .venv/bin/python scripts/run_eval.py --model openai/gemma4:e4b
-    .venv/bin/python scripts/run_eval.py --lang es \
+    .venv/bin/python assistant/run_eval.py
+    .venv/bin/python assistant/run_eval.py --model openai/gemma-4-E2B-it-MLX-8bit
+    .venv/bin/python assistant/run_eval.py --lang es \
         --questions eval/questions_es.json --index indexes/ubeda_es.json
 """
 
@@ -51,7 +51,8 @@ import litellm
 litellm.drop_params = True
 litellm.set_verbose = False
 
-# Make `from index_tools import ...` work whether you run as a script or module
+# Make package imports work whether you run as a script or module
+sys.path.insert(0, str(Path(__file__).parent.parent))
 sys.path.insert(0, str(Path(__file__).parent))
 from index_tools import (
     load_index,
@@ -65,7 +66,7 @@ from index_tools import (
     find_section,
     get_poi as ix_get_poi,
 )
-from lang_support import (
+from common.lang_support import (
     SUPPORTED_LANGS,
     LANG_RULES as _LANG_RULES,         # re-exported for chat_demo.py
     RECOVERY_MSGS as _RECOVERY_MSGS,   # re-exported for chat_demo.py
@@ -78,7 +79,7 @@ from lang_support import (
 QUESTIONS_FILE  = PROJECT_ROOT / "eval" / "questions.json"
 DEFAULT_INDEX   = PROJECT_ROOT / "indexes" / "ubeda_en.json"
 RESULTS_DIR     = PROJECT_ROOT / "results"
-DEFAULT_MODEL   = "openai/gemma4:e2b"
+DEFAULT_MODEL   = "openai/gemma-4-E2B-it-MLX-8bit"   # oMLX; mobile target
 MAX_TOOL_ROUNDS = 14
 
 _SYSTEM_PROMPT_TEMPLATE = """\

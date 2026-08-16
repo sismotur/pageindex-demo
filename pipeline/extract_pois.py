@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """
-extract_pois.py — Fetch POIs for any tourist destination from the Inventrip API.
+pipeline/extract_pois.py — Fetch POIs for any tourist destination from the Inventrip API.
 
 Calls GET /v120/pois with the specified tourist_destination and saves the raw
 response array to data/{destination}_pois_raw_{lang}.json.
 
 Usage:
-    .venv/bin/python scripts/extract_pois.py
-    .venv/bin/python scripts/extract_pois.py --destination fayon --lang es
+    .venv/bin/python pipeline/extract_pois.py
+    .venv/bin/python pipeline/extract_pois.py --destination fayon --lang es
 
 Environment variables (loaded from .env):
     INVENTRIP_API_BASE_URL  Base URL of the Inventrip API
@@ -29,9 +29,9 @@ DEFAULT_DESTINATION = "ubeda"
 DEFAULT_LANGUAGE    = "en"
 TIMEOUT_SECONDS     = 60
 
-# Make `from lang_support import ...` work whether run as a script or module
-sys.path.insert(0, str(Path(__file__).parent))
-from lang_support import SUPPORTED_LANGS, is_supported  # noqa: E402
+# Make `from common.lang_support import ...` work whether run as a script or module
+sys.path.insert(0, str(Path(__file__).parent.parent))
+from common.lang_support import SUPPORTED_LANGS, is_supported  # noqa: E402
 
 
 # ── Helpers ────────────────────────────────────────────────────────────────────

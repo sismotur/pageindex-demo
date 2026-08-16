@@ -1,18 +1,35 @@
-# Inventrip POI-Index RAG: Multi-Destination Tourism Assistant
+# Inventrip Offline Tourism Assistant: Multi-Destination, Multi-Language
 
 ## ✅ Project status
 
-Production pipeline using a **custom POI-aware index** built directly
-from the Inventrip API, with retrieval driven by `litellm` tool calls
-to a local `gemma4:26b` model (Ollama / MLX).
+The repository is split into the two halves of the production
+architecture:
+
+1. **`pipeline/` — data preparation.** LLM-free, deterministic scripts
+   that fetch the Inventrip API and build `indexes/{dest}_{lang}.json`.
+   Target deployment: a **Cloudflare cron Worker** publishing index
+   files to R2 — see `docs/cloudflare-worker-spec.md`.
+2. **`assistant/` — offline chatbot.** Reference implementation of the
+   on-device runtime (five pure-lookup tools + agentic loop), driven by
+   `litellm` tool calls against a local OpenAI-compatible server
+   (**oMLX**, `http://127.0.0.1:8000/v1`). Will be reimplemented in
+   Android/iOS running **Gemma 4 E2B fully offline** — the phone only
+   downloads index files; see `docs/mobile-offline-contract.md`.
+
+`common/` (`lang_support.py`, `textnorm.py`) is shared by both parts;
+the Cloudflare and mobile ports must reproduce it byte-for-byte.
 
 Repository: <https://github.com/sismotur/pageindex-demo>
 
 The project previously used [PageIndex](https://github.com/VectifyAI/PageIndex)
 to index a generated Markdown document. That stack has been retired
 because the source data is already a fully-typed UNE 178503 dataset and
-benefits from direct indexing. See the README's "Quick summary" table
-for the before/after metrics.
+benefits from direct indexing. A 2026-08 review of upstream PageIndex
+(Flash mode, file-system meta-index) confirmed the decision — no
+re-adoption planned; the one borrowable idea (hierarchical
+sub-sections for very large destinations) is listed under the README's
+"Open improvements". See the README's "Quick summary" table for the
+before/after metrics.
 
 ## Latest results
 
@@ -36,6 +53,11 @@ loops; mean including outliers is 132.5 s.
 | Gemma 4 E2B (recommended) | 7.2 GB | **0.850** | **0.830** | **0.760** | 13.5 s | ✅ yes |
 | Qwen 2.5 7B (EN-first alt.) | 4.7 GB | 0.835    | 0.710     | 0.720     | 8.6 s  | ❌ ES/IT 5 pp short |
 | Qwen 2.5 3B (unsuitable)  | 1.9 GB | 0.745    | 0.590     | 0.525     | 3.0 s  | ❌ |
+
+E2B on the current **oMLX** stack (`gemma-4-E2B-it-MLX-8bit`,
+2026-08-16): composite **0.820**, grounding **72.5%**, content-fetch
+**95%**, **3.7 s**/question EN — pass at ~4× lower latency than the
+Ollama baseline.
 
 The **same** Gemma 4 E2B model that scored 54.1% grounding on the old
 PageIndex pipeline scores 85.0% / 77.5% / 72.5% on EN/ES/IT with the
@@ -165,8 +187,8 @@ land in Accommodation.
 ### Section summaries
 
 Deterministic, computed by `build_section_summary()` in
-`scripts/build_index.py`. The previous LLM-summary step
-(`scripts/add_section_summaries.py`) is **gone** — it cost ~8 minutes
+`pipeline/build_index.py`. The previous LLM-summary step
+(`add_section_summaries.py`) is **gone** — it cost ~8 minutes
 per `(destination, language)` pair and had to be re-run after every
 Markdown rebuild. Each summary now reports POI count, breakdown by
 interest level, top tourist types, and the three notable POIs:
@@ -175,22 +197,27 @@ interest level, top tourist types, and the three notable POIs:
 > interests: Architecture, Cultural, Heritage. Notable: Hotel Spa Rosaleda
 > de Don Pedro, Hostería Los Cerros, Apartamentos Don Sancho."
 
-### Model backend: Ollama OpenAI-compatible endpoint
+### Model backend: oMLX OpenAI-compatible endpoint
 
-`litellm` routes `openai/*` strings to the local Ollama endpoint:
+`litellm` routes `openai/*` strings to the local oMLX server
+(`~/.omlx/settings.json`, port 8000, API-key auth):
 
-- Base URL: `http://localhost:11434/v1`
-- API key: `ollama` (any non-empty string)
-- Model string: `openai/gemma4:26b` (recommended) or `openai/gemma4:e4b`
+- Base URL: `http://127.0.0.1:8000/v1`
+- API key: read from `~/.omlx/settings.json` → `auth.api_key`
+- Model strings: `openai/gemma-4-26B-A4B-it-MLX-4bit` (server),
+  `openai/gemma-4-E4B-it-MLX-4bit`, `openai/gemma-4-E2B-it-MLX-8bit`
+  (the mobile deployment target)
 
-All Gemma 4 variants fit in this machine's 128 GB unified memory:
+Ollama (`http://localhost:11434/v1`, model strings like
+`openai/gemma4:26b`) remains a supported alternative — point
+`OPENAI_API_BASE` at it. All Gemma 4 variants fit in this machine's
+128 GB unified memory:
 
-| Model           | Tag           | Size   | Context |
-|-----------------|---------------|--------|---------|
-| Gemma 4 E2B     | `gemma4:e2b`  | 7.2 GB | 128K    |
-| Gemma 4 E4B     | `gemma4:e4b`  | 9.6 GB | 128K    |
-| Gemma 4 26B MoE | `gemma4:26b`  | 18 GB  | 256K    |
-| Gemma 4 31B     | `gemma4:31b`  | 20 GB  | 256K    |
+| Model           | oMLX id                        | Size   | Context |
+|-----------------|--------------------------------|--------|---------|
+| Gemma 4 E2B     | `gemma-4-E2B-it-MLX-8bit`      | 7.2 GB | 128K    |
+| Gemma 4 E4B     | `gemma-4-E4B-it-MLX-4bit`      | 9.6 GB | 128K    |
+| Gemma 4 26B MoE | `gemma-4-26B-A4B-it-MLX-4bit`  | 18 GB  | 256K    |
 
 ---
 
@@ -201,8 +228,8 @@ All Gemma 4 variants fit in this machine's 128 GB unified memory:
 Two scripts, both accept `--destination` and `--lang`:
 
 ```bash
-.venv/bin/python scripts/extract_pois.py             --destination ubeda --lang en
-.venv/bin/python scripts/extract_destination_data.py --destination ubeda --lang en
+.venv/bin/python pipeline/extract_pois.py             --destination ubeda --lang en
+.venv/bin/python pipeline/extract_destination_data.py --destination ubeda --lang en
 ```
 
 Outputs:
@@ -220,32 +247,33 @@ The relevant query parameters (from `params-builder.js`):
 ### Step 2 — Build the POI-aware index
 
 ```bash
-.venv/bin/python scripts/build_index.py --destination ubeda --lang en
+.venv/bin/python pipeline/build_index.py --destination ubeda --lang en
 # → indexes/ubeda_en.json   (~720 KB; sub-second; deterministic)
 ```
 
-`build_index.py` consumes only the two JSON artifacts from Step 1. No
-LLM calls. No Markdown intermediate. Re-runnable any time without side
-effects.
+`pipeline/build_index.py` consumes only the two JSON artifacts from
+Step 1. No LLM calls. No Markdown intermediate. Re-runnable any time
+without side effects.
 
 ### Step 3 — Run the agentic Q&A evaluation
 
 ```bash
 # English (default)
-.venv/bin/python scripts/run_eval.py \
-  --model openai/gemma4:26b \
+.venv/bin/python assistant/run_eval.py \
+  --model openai/gemma-4-26B-A4B-it-MLX-4bit \
   --index indexes/ubeda_en.json
 
 # Spanish
-.venv/bin/python scripts/run_eval.py \
-  --model openai/gemma4:26b \
+.venv/bin/python assistant/run_eval.py \
+  --model openai/gemma-4-26B-A4B-it-MLX-4bit \
   --questions eval/questions_es.json \
   --index indexes/ubeda_es.json \
   --lang es
 
 # Interactive chat
-.venv/bin/python scripts/chat_demo.py --interactive --model openai/gemma4:26b
-.venv/bin/python scripts/chat_demo.py --interactive --lang es \
+.venv/bin/python assistant/chat_demo.py --interactive \
+  --model openai/gemma-4-26B-A4B-it-MLX-4bit
+.venv/bin/python assistant/chat_demo.py --interactive --lang es \
   --index indexes/ubeda_es.json
 ```
 
@@ -256,11 +284,11 @@ given an old `results/{name}_structure.json` path, it remaps to
 ### Step 4 — Score and report
 
 ```bash
-.venv/bin/python scripts/score_results.py --file results/eval_gemma4-26b.json
-.venv/bin/python scripts/score_results.py --file results/eval_gemma4-26b_es.json
+.venv/bin/python assistant/score_results.py --file results/eval_gemma4-26b.json
+.venv/bin/python assistant/score_results.py --file results/eval_gemma4-26b_es.json
 ```
 
-Rubric details in `scripts/score_results.py`. The `_CONTENT_FETCH_TOOLS`
+Rubric details in `assistant/score_results.py`. The `_CONTENT_FETCH_TOOLS`
 set lists every tool that counts as "the model retrieved real content"
 (`get_poi`, `get_section`, `find_poi_by_name`, `filter_pois`); legacy
 tool names from older result files are also accepted so historical
@@ -302,38 +330,42 @@ pageindex-demo/
 ├── AGENTS.md                          ← this file
 ├── README.md
 ├── docs/
-│   └── cloudflare-worker-spec.md
+│   ├── cloudflare-worker-spec.md      ← data-prep + distribution (v3.0)
+│   └── mobile-offline-contract.md     ← Android/iOS port contract
+│
+├── common/                            ← shared constants, port byte-for-byte
+│   ├── lang_support.py
+│   └── textnorm.py
+│
+├── pipeline/                          ← PART 1: data prep (→ Cloudflare cron)
+│   ├── extract_pois.py                ← Step 1a: fetch POIs
+│   ├── extract_destination_data.py    ← Step 1b: fetch trips & taxonomies
+│   ├── build_index.py                 ← Step 2: build POI-aware index
+│   └── json_to_markdown.py            ← optional human-readable export
+│
+├── assistant/                         ← PART 2: offline chatbot reference
+│   ├── index_tools.py                 ← read-side helpers (the five tools)
+│   ├── run_eval.py                    ← Step 3: agentic eval
+│   ├── chat_demo.py                   ← interactive / scripted chat demo
+│   └── score_results.py               ← Step 4: score grounding + retrieval
 │
 ├── data/                              ← raw API output, tracked in git
-│   ├── ubeda_pois_raw_en.json
-│   ├── ubeda_pois_raw_es.json
-│   ├── ubeda_destination_en.json
-│   └── ubeda_destination_es.json
+│   ├── ubeda_pois_raw_{en,es,it}.json
+│   └── ubeda_destination_{en,es,it}.json
 │
 ├── indexes/                           ← build_index.py output, tracked
-│   ├── ubeda_en.json
-│   └── ubeda_es.json
+│   └── ubeda_{en,es,it}.json
 │
 ├── eval/
 │   ├── questions.json                 ← 20 visitor questions (English)
 │   ├── questions_es.json              ← Spanish translations
+│   ├── questions_it.json              ← Italian translations
 │   └── conversations.json             ← multi-turn threads for chat_demo
 │
-├── results/                           ← gitignored
-│   ├── eval_gemma4-26b.json
-│   ├── eval_gemma4-26b_es.json
-│   ├── scored_gemma4-26b.json
-│   └── scored_gemma4-26b_es.json
+├── tests/
+│   └── test_rubric.py                 ← rubric + index regression tests
 │
-└── scripts/
-    ├── extract_pois.py                ← Step 1a: fetch POIs
-    ├── extract_destination_data.py    ← Step 1b: fetch trips & taxonomies
-    ├── build_index.py                 ← Step 2: build POI-aware index
-    ├── index_tools.py                 ← read-side helpers
-    ├── run_eval.py                    ← Step 3: agentic eval
-    ├── chat_demo.py                   ← interactive / scripted chat demo
-    ├── score_results.py               ← Step 4: score grounding + retrieval
-    └── json_to_markdown.py            ← optional human-readable export
+└── results/                           ← gitignored
 ```
 
 ### Naming convention
@@ -350,17 +382,18 @@ results/eval_{model}_{lang}.json     (results/ is gitignored)
 ## Environment variables
 
 ```bash
-# Inventrip API (extract_pois.py, extract_destination_data.py)
+# Inventrip API (pipeline/extract_pois.py, extract_destination_data.py)
 INVENTRIP_API_BASE_URL=https://api.inventrip.com
 INVENTRIP_API_KEY=your_api_key_here
 
-# LLM inference via Ollama (run_eval.py, chat_demo.py)
-OPENAI_API_KEY=ollama
-OPENAI_API_BASE=http://localhost:11434/v1
+# LLM inference via oMLX (assistant/run_eval.py, chat_demo.py)
+# API key: ~/.omlx/settings.json → auth.api_key
+OPENAI_API_KEY=<omlx-api-key>
+OPENAI_API_BASE=http://127.0.0.1:8000/v1
 
-# Apple Silicon MLX engine — all latency figures use this
-OLLAMA_NEW_ENGINE=true
-OLLAMA_KV_CACHE_TYPE=q8_0
+# Ollama alternative:
+# OPENAI_API_KEY=ollama
+# OPENAI_API_BASE=http://localhost:11434/v1
 ```
 
 ---
@@ -372,4 +405,5 @@ OLLAMA_KV_CACHE_TYPE=q8_0
   - POI route: `src/modules/v120/pois/routes.js`
   - Params builder: `src/modules/v120/pois/params-builder.js`
   - POI v3 schema: `src/schemas/poi_v3.js`
-- Cloudflare Worker spec: `docs/cloudflare-worker-spec.md`
+- Cloudflare data-prep spec: `docs/cloudflare-worker-spec.md`
+- Mobile offline contract: `docs/mobile-offline-contract.md`

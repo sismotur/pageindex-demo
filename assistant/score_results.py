@@ -10,8 +10,8 @@ Loads results/eval_*.json and applies a rubric:
   5. Latency             — wall-clock seconds per question.
 
 Usage:
-    .venv/bin/python scripts/score_results.py
-    .venv/bin/python scripts/score_results.py --file results/eval_gemma4-e4b.json
+    .venv/bin/python assistant/score_results.py
+    .venv/bin/python assistant/score_results.py --file results/eval_gemma4-e4b.json
 """
 
 import argparse
