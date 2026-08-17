@@ -177,8 +177,9 @@ pageindex-demo/
 ├── README.md                          ← this file
 ├── .env                               ← credentials (gitignored)
 ├── docs/
-│   ├── cloudflare-worker-spec.md      ← Cloudflare data-prep + distribution spec
-│   └── mobile-offline-contract.md     ← Android/iOS port contract (offline E2B)
+│   ├── README-mobile.md               ← mobile team: API integration + index schema
+│   ├── mobile-offline-contract.md     ← Android/iOS port contract (offline E2B)
+│   └── cloudflare-worker-spec.md      ← Cloudflare data-prep + distribution spec
 │
 ├── common/                            ← shared by both parts (port byte-for-byte)
 │   ├── lang_support.py                ← 16 languages: rules, recovery, display

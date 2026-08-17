@@ -330,8 +330,9 @@ pageindex-demo/
 ├── AGENTS.md                          ← this file
 ├── README.md
 ├── docs/
-│   ├── cloudflare-worker-spec.md      ← data-prep + distribution (v3.0)
-│   └── mobile-offline-contract.md     ← Android/iOS port contract
+│   ├── README-mobile.md               ← mobile team: API integration + index schema
+│   ├── mobile-offline-contract.md     ← Android/iOS port contract
+│   └── cloudflare-worker-spec.md      ← data-prep + distribution (v3.0)
 │
 ├── common/                            ← shared constants, port byte-for-byte
 │   ├── lang_support.py
