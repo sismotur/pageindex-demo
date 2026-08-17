@@ -187,6 +187,11 @@ comma-joined), then a blank line and the full description:
 Full description paragraph(s) here, never truncated.
 ```
 
+Media URLs (`image_urls`, `audio_urls`, `subject_of_urls`) are **not**
+rendered in the tool output — the model cannot act on them and they cost
+~13% of the record's tokens. They remain in the index record for the
+app's UI; render them from the parsed POI object, not from the tool text.
+
 ### 3.3 `get_section(section_id, sort?, limit?)`
 
 Section resolution is tolerant: exact `section_id` → case-insensitive
@@ -194,8 +199,10 @@ exact title → substring title → normalized title. Unknown key returns
 `[ERROR] Section '…' not found. Available: <comma-joined titles>`.
 
 `sort`: `"interest"` (default: `(interest_level, zoom_level, name)`
-ascending, nulls last as 99) | `"name"` | `"zoom"`. `limit` default 50;
-when truncated, append `  …N more (raise --limit to see all)`.
+ascending, nulls last as 99) | `"name"` | `"zoom"`. **Adaptive default
+limit**: 20 when the section carries a v2 `groups` map, 50 otherwise;
+an explicit `limit` always wins. When truncated, append
+`  …N more (raise --limit to see all)`.
 
 **Schema v2:** when the section has `groups`, a group map is rendered
 between the summary and the preview list. The group map is the navigation
@@ -222,7 +229,7 @@ The one-line preview per POI is
 sentence of description (≤ 90 chars, word-boundary truncated with …)`,
 joined with `" — "`, hard-capped at 120 chars.
 
-### 3.4 `find_poi_by_name(query, limit?)`
+### 3.4 `find_poi_by_name(query, limit?, detail?)`
 
 Three tiers, in order; ties broken by token overlap, then interest level:
 
@@ -235,6 +242,12 @@ Three tiers, in order; ties broken by token overlap, then interest level:
 `[INFO] No POI matches '…'. Try filter_pois() or browse a section with get_section().`
 Otherwise one line per match:
 `  [poi/123] Name  [Section Title]  — <preview>`.
+
+`detail` is `"brief"` (default) or `"full"`. With `"full"`, the best
+match's complete POI record (the §3.2 rendering) is appended after the
+candidate list, introduced by the line `Best match, full record:` — this
+fuses the classic find→get two-call pattern into one LLM round. With
+`"brief"` the model is expected to follow up with `get_poi()`.
 
 ### 3.5 `filter_pois(interest_level?, type?, tourist_type?, section_id?, indispensable?, limit?)`
 
@@ -298,11 +311,11 @@ You have FIVE tools.  Pick the one that fits the question:
         Use when the user asks "what X exist?", "list all Y in <category>".
 
   • get_poi(poi_id)
-        Full record of one POI: type, address, phone, coordinates, images, links, AND the full description paragraph.
+        Full record of one POI: type, address, phone, coordinates, links, AND the full description paragraph.
         Use when you need facts (address, phone, dates, description) about a specific named POI.  Pass several comma-separated ids ('poi/123,poi/456') to fetch multiple POIs in one call when comparing or synthesising.
 
-  • find_poi_by_name(query, limit?)
-        Fuzzy lookup by POI name.  Returns up to `limit` candidates with id + section + preview.  Use when the user names a place but you don't know which section it lives in.  Always follow up with get_poi() on the best match before answering specific facts.
+  • find_poi_by_name(query, limit?, detail?)
+        Fuzzy lookup by POI name.  Returns up to `limit` candidates with id + section + preview.  Use when the user names a place but you don't know which section it lives in.  Pass detail="full" to also get the best match's complete record in the same call; with the default detail="brief", always follow up with get_poi() on the best match before answering specific facts.
 
   • filter_pois(interest_level?, type?, tourist_type?, section_id?, indispensable?, limit?)
         Facet query.  All filters AND together.  Examples:
@@ -326,7 +339,7 @@ RULES:
 - Always include the description paragraph from get_poi() when answering about a specific place — it carries the most useful detail.
 - Quote exact names, addresses, phones, coordinates, and dates when present.
 - For "what should I not miss?" / "best of" questions, use filter_pois(indispensable=true) before browsing sections.
-- For "tell me about <name>" / "what is <name>" questions, call find_poi_by_name() first, then get_poi() on the best match.
+- For "tell me about <name>" / "what is <name>" questions, call find_poi_by_name() with detail="full" first — it returns the best match's full record in one call.
 - After filter_pois: if the question needs a description, dates, address, phone, architect, or any per-POI detail beyond the name, call get_poi on the most relevant result before answering. For pure listing questions (e.g. "what hotels are there?", "list all museums"), the filter_pois previews already include name + type + interest level, so an extra get_poi call is unnecessary.
 - If information is not in the index, say so clearly.
 - {lang_rule}
@@ -335,7 +348,8 @@ RULES:
 `{lang_rule}` comes from `common/lang_support.py::LANG_RULES` (16
 languages); the equivalent constant table ships in the app bundle. The
 per-language **recovery message** (`RECOVERY_MSGS`) is used in §6.
-Úbeda EN reference size: system prompt ≈ 8,400 chars (~2.5K tokens).
+Úbeda EN reference size: system prompt = 7,953 chars ≈ 2,041 tokens
+(measured with cl100k_base as a Gemma approximation).
 
 ---
 
@@ -382,21 +396,44 @@ if no answer after the loop:
 
 ---
 
-## 7. Budgets (E2B, measured 2026-08-16 via oMLX, schema v2 index)
+## 7. Budgets (E2B, measured 2026-08-16/17 via oMLX, schema v2 index)
 
 All token figures are **measured** (`response.usage` logged by
-`assistant/run_eval.py` and aggregated by `assistant/score_results.py`):
+`assistant/run_eval.py` and aggregated by `assistant/score_results.py`;
+tokenizer counts below use cl100k_base as a Gemma approximation).
 
-| Metric | Measured | Notes |
+### Per-round fixed base (re-sent every round)
+
+| Component | Tokens | Notes |
 |---|---|---|
-| System prompt | 8,512 chars (~2.6K tokens) | sections + overview embedded |
-| Cumulative prompt tokens / question | **13,950 avg, 22,646 max** | sum over all rounds (each round re-sends the conversation) |
-| Completion tokens / question | **241 avg** | answers are compact |
-| Rounds per question | 1–3 typical, cap 14 | batch `get_poi` collapsed multi-fetch questions (Q12: 5→3 rounds) |
-| Latency per question | **3.1 s avg** (desktop MLX) | mobile will be slower; budget 5–15 s |
-| Tool result (get_section) | 0.5–2K tokens | previews only; group map adds ~200 chars on grouped sections |
-| Tool result (get_poi) | 0.3–1K tokens per record | batch of 14 records ≈ 6K tokens |
-| Context headroom | E2B supports 128K | largest observed single-question cumulative prompt: 22.6K; plan for ~2× that on long chats |
+| System prompt | **2,041** | sections overview (counts + notable names only) + destination overview + rules |
+| Tool definitions | 748 | five tool schemas |
+| **Base total** | **~2.9K per round** | the dominant cost driver is rounds × this base |
+
+### Per-call tool results (context-reduced)
+
+| Call | Tokens | Reduction applied |
+|---|---|---|
+| `get_section` (grouped section, default) | 745 | −50% vs limit=50 (adaptive default 20 when a group map exists) |
+| `get_section` (flat section) | 300–700 | unchanged, full listing |
+| `get_poi` per record | ~164 | −13% (media URLs stripped; they stay in the file for the UI) |
+| `find_poi_by_name(detail="full")` | preview list + ~164 | fuses the classic find→get pair into one call |
+
+### Whole-question totals (two stochastic 20-question runs)
+
+| Metric | Run 1 | Run 2 | Notes |
+|---|---|---|---|
+| Rounds / question | 2.6 avg | 2.7 avg | batch `get_poi` + `detail="full"` adopted by the model unprompted |
+| Cumulative prompt tokens | 13,950 avg / 22,646 max | 14,477 avg / 28,992 max | run-to-run spread comes from round-count variance, not per-call size |
+| Completion tokens / question | 241 avg | 245 avg | answers are compact |
+| Quality gates | 0.830 composite, 75% grounding, 95% fetch | identical | unchanged by the reductions |
+
+**Design rule for ports:** rounds are the multiplier — every avoided
+tool round saves ~2.9K tokens of re-sent base plus the previous results.
+Per-call trimming (grouped section caps, media stripping, fused lookups)
+is real but secondary. Plan context headroom for ~2× the observed peak
+(~60K) on long multi-turn chats; expire or compact old tool results
+beyond that.
 
 Quality gates from the eval harness (`assistant/score_results.py`):
 grounding ≥ 70% AND content-fetch ≥ 70%. Any port must reproduce these

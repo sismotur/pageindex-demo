@@ -98,18 +98,19 @@ You have FIVE tools.  Pick the one that fits the question:
         Use when the user asks "what X exist?", "list all Y in <category>".
 
   • get_poi(poi_id)
-        Full record of one POI: type, address, phone, coordinates, images, \
-links, AND the full description paragraph.
+        Full record of one POI: type, address, phone, coordinates, links, \
+AND the full description paragraph.
         Use when you need facts (address, phone, dates, description) about \
 a specific named POI.  Pass several comma-separated ids \
 ('poi/123,poi/456') to fetch multiple POIs in one call when comparing \
 or synthesising.
 
-  • find_poi_by_name(query, limit?)
+  • find_poi_by_name(query, limit?, detail?)
         Fuzzy lookup by POI name.  Returns up to `limit` candidates with id + \
 section + preview.  Use when the user names a place but you don't know \
-which section it lives in.  Always follow up with get_poi() on the best \
-match before answering specific facts.
+which section it lives in.  Pass detail="full" to also get the best match's \
+complete record in the same call; with the default detail="brief", always \
+follow up with get_poi() on the best match before answering specific facts.
 
   • filter_pois(interest_level?, type?, tourist_type?, section_id?, \
 indispensable?, limit?)
@@ -138,7 +139,8 @@ about a specific place — it carries the most useful detail.
 - For "what should I not miss?" / "best of" questions, use \
 filter_pois(indispensable=true) before browsing sections.
 - For "tell me about <name>" / "what is <name>" questions, call \
-find_poi_by_name() first, then get_poi() on the best match.
+find_poi_by_name() with detail="full" first — it returns the best match's \
+full record in one call.
 - After filter_pois: if the question needs a description, dates, \
 address, phone, architect, or any per-POI detail beyond the name, \
 call get_poi on the most relevant result before answering. \
@@ -187,7 +189,8 @@ TOOL_DEFS = [
                     },
                     "limit": {
                         "type": "integer",
-                        "description": "Max POIs to return (default 50).",
+                        "description": ("Max POIs to return (default 50; "
+                                        "20 for large sections that show a group map)."),
                     },
                 },
                 "required": ["section_id"],
@@ -200,7 +203,7 @@ TOOL_DEFS = [
             "name": "get_poi",
             "description": (
                 "Return the full record of one POI: address, phone, "
-                "coordinates, images, AND the full description paragraph.  "
+                "coordinates, links, AND the full description paragraph.  "
                 "Pass the full id ('poi/12345'), the bare number, or "
                 "several comma-separated ids ('poi/123,poi/456') to fetch "
                 "multiple POIs in one call."
@@ -225,7 +228,10 @@ TOOL_DEFS = [
             "description": (
                 "Fuzzy POI name lookup.  Diacritic-insensitive.  Returns "
                 "id + name + section + preview for up to `limit` matches.  "
-                "Always follow up with get_poi() on the best match."
+                "With detail=\"full\" the best match's complete record is "
+                "included in the same response — no follow-up get_poi() "
+                "needed.  With the default \"brief\", follow up with "
+                "get_poi() on the best match."
             ),
             "parameters": {
                 "type": "object",
@@ -237,6 +243,12 @@ TOOL_DEFS = [
                     "limit": {
                         "type": "integer",
                         "description": "Max results (default 5).",
+                    },
+                    "detail": {
+                        "type": "string",
+                        "enum": ["brief", "full"],
+                        "description": ("'full' also returns the best match's "
+                                        "complete POI record (default 'brief')."),
                     },
                 },
                 "required": ["query"],
@@ -312,7 +324,11 @@ def execute_tool(name: str, args: dict, index: dict,
     if name == "get_section":
         section_id = (args.get("section_id") or "").strip()
         sort = (args.get("sort") or "interest").lower()
-        limit = int(args.get("limit") or 50)
+        # limit=None (not supplied) -> format_section applies the adaptive
+        # default (20 for grouped sections, 50 for flat ones).  The cache
+        # key preserves None so the prewarmed entry matches.
+        raw_limit = args.get("limit")
+        limit = int(raw_limit) if raw_limit not in (None, "") else None
         key = ("get_section", section_id.lower(), sort, limit)
         if key in cache:
             return cache[key], True
@@ -332,10 +348,12 @@ def execute_tool(name: str, args: dict, index: dict,
     if name == "find_poi_by_name":
         query = (args.get("query") or "").strip()
         limit = int(args.get("limit") or 5)
-        key = ("find_poi_by_name", query.lower(), limit)
+        detail = (args.get("detail") or "brief").lower()
+        key = ("find_poi_by_name", query.lower(), limit, detail)
         if key in cache:
             return cache[key], True
-        result = format_find_poi_by_name(index, query, limit=limit)
+        result = format_find_poi_by_name(index, query, limit=limit,
+                                         detail=detail)
         cache[key] = result
         return result, False
 
@@ -618,14 +636,14 @@ def main() -> None:
         lang=args.lang,
     )
 
-    # Pre-warm: cache get_section for every section (pure dict traversal,
-    # so this is essentially free).  Subsequent get_section calls hit cache.
+    # Pre-warm: cache get_section for every section with the adaptive
+    # default limit (None), matching what the model's calls produce.
     cache: dict = {}
     for sec in index.get("sections", []):
         sid = sec.get("section_id", "")
         if sid:
-            cache[("get_section", sid.lower(), "interest", 50)] = format_section(
-                index, sid, sort="interest", limit=50)
+            cache[("get_section", sid.lower(), "interest", None)] = format_section(
+                index, sid, sort="interest", limit=None)
     print(f"[INFO] Pre-warmed cache: {len(cache)} sections")
 
     recovery = recovery_msg(args.lang)

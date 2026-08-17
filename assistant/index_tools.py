@@ -64,6 +64,13 @@ def format_sections_overview(index: dict) -> str:
         title = sec.get("title", "?")
         n = len(sec.get("poi_ids") or [])
         summary = sec.get("summary", "").strip()
+        # Context reduction: the "Top interests:" sentence is facet data the
+        # model can discover via filter_pois; counts + notable names are what
+        # drive navigation.  The index file keeps the full summary.
+        if summary:
+            parts = [p for p in summary.split(". ")
+                     if not p.startswith("Top interests:")]
+            summary = ". ".join(parts)
         lines.append(f"  [{sid}] {title}  ({n} POIs)")
         if summary:
             lines.append(f"      {summary}")
@@ -154,6 +161,13 @@ def _poi_section_title(index: dict, poi_id: str) -> str:
 
 # ── Formatting (tool-result text) ───────────────────────────────────────────
 
+# Adaptive default limit for get_section: sections with a v2 group map only
+# need a short top list (the groups + filter_pois carry the drill-down);
+# flat sections keep the full listing for browse-style questions.
+SECTION_LIMIT_FLAT = 50
+SECTION_LIMIT_GROUPED = 20
+
+
 def _short_preview(poi: dict, max_chars: int = 120) -> str:
     """One-line preview: type + interest label + first sentence of description."""
     parts = []
@@ -177,7 +191,7 @@ def _short_preview(poi: dict, max_chars: int = 120) -> str:
 
 
 def format_section(index: dict, section_key: str,
-                   sort: str = "interest", limit: int = 50) -> str:
+                   sort: str = "interest", limit: int | None = None) -> str:
     """Render a section: title, summary, optional group map, then one
     line per POI.
 
@@ -186,11 +200,18 @@ def format_section(index: dict, section_key: str,
     and the preview list.  Each group line names its top POIs (the
     key-items pattern), and the drill-down path is the existing
     filter_pois(type=..., section_id=...) call.
+
+    `limit=None` applies the adaptive default: SECTION_LIMIT_GROUPED (20)
+    for grouped sections, SECTION_LIMIT_FLAT (50) otherwise.  An explicit
+    limit always wins.
     """
     sec = find_section(index, section_key)
     if not sec:
         avail = ", ".join(s.get("title", "") for s in index.get("sections", []))
         return f"[ERROR] Section '{section_key}' not found. Available: {avail}"
+
+    if limit is None:
+        limit = SECTION_LIMIT_GROUPED if sec.get("groups") else SECTION_LIMIT_FLAT
 
     poi_ids = list(sec.get("poi_ids") or [])
     pois = [get_poi(index, pid) for pid in poi_ids]
@@ -297,9 +318,9 @@ def _format_single_poi(index: dict, p: dict) -> str:
         bullets.append(f"- **Map prominence**: Major landmark (zoom {p['zoom_level']})")
     bullets.append(_format_kv("Start date", p.get("start_date")))
     bullets.append(_format_kv("End date", p.get("end_date")))
-    bullets.append(_format_kv("Images", p.get("image_urls")))
-    bullets.append(_format_kv("Audio guides", p.get("audio_urls")))
-    bullets.append(_format_kv("Documents", p.get("subject_of_urls")))
+    # NOTE: image/audio/document URLs are deliberately NOT rendered here —
+    # the model cannot act on media URLs, and they cost ~13% of get_poi
+    # tokens.  They stay in the index record for the app UI.
 
     for b in bullets:
         if b:
@@ -396,8 +417,14 @@ def find_poi_by_name(index: dict, query: str, limit: int = 5) -> list[dict]:
     return out[: max(1, limit)]
 
 
-def format_find_poi_by_name(index: dict, query: str, limit: int = 5) -> str:
-    """Render name-search results."""
+def format_find_poi_by_name(index: dict, query: str, limit: int = 5,
+                            detail: str = "brief") -> str:
+    """Render name-search results.
+
+    detail="full" appends the best match's complete POI record after the
+    candidate list, fusing the classic find_poi_by_name -> get_poi pair
+    into one tool call (one fewer LLM round on lookup questions).
+    """
     matches = find_poi_by_name(index, query, limit=limit)
     if not matches:
         return (f"[INFO] No POI matches '{query}'. "
@@ -412,6 +439,10 @@ def format_find_poi_by_name(index: dict, query: str, limit: int = 5) -> str:
             lines.append(f"{head}  — {preview}")
         else:
             lines.append(head)
+    if detail == "full":
+        lines.append("")
+        lines.append("Best match, full record:")
+        lines.append(_format_single_poi(index, matches[0]))
     return "\n".join(lines)
 
 

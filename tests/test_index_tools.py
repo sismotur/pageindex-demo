@@ -23,8 +23,10 @@ sys.path.insert(0, str(PROJECT_ROOT / "assistant"))       # index_tools
 
 from index_tools import (
     load_index,
+    format_find_poi_by_name,
     format_poi,
     format_section,
+    format_sections_overview,
     get_poi,
     get_pois,
 )
@@ -169,3 +171,59 @@ class TestBatchGetPoi:
 
     def test_get_poi_none_safe(self, index):
         assert get_poi(index, None) is None
+
+
+# ── Context reduction (LLM-side token budget) ────────────────────────────────
+
+class TestContextReduction:
+    """The LLM never sees the raw index — only these renderings."""
+
+    def test_poi_output_has_no_media_lines(self, index):
+        """Media URLs are for the app UI, not the model (~13% of tokens)."""
+        out = format_poi(index, "poi/30117")
+        assert "**Images**" not in out
+        assert "**Audio guides**" not in out
+        assert "**Documents**" not in out
+        # …but the content the model needs is still there
+        assert "+34953750345" in out
+        assert "description" not in out.lower() or len(out) > 200
+
+    def test_find_full_detail_appends_full_record(self, index):
+        brief = format_find_poi_by_name(index, "ariza bridge", detail="brief")
+        full = format_find_poi_by_name(index, "ariza bridge", detail="full")
+        assert "Best match, full record:" not in brief
+        assert "Best match, full record:" in full
+        # the appended record carries real per-POI facts (Ariza Bridge: 1562)
+        assert "1562" in full
+
+    def test_find_full_detail_no_matches(self, index):
+        out = format_find_poi_by_name(index, "zzznopezzz", detail="full")
+        assert "[INFO] No POI matches" in out
+        assert "Best match" not in out
+
+    def test_grouped_section_default_limit_is_20(self, index):
+        out = format_section(index, "shopping")          # no limit passed
+        preview_lines = [l for l in out.splitlines()
+                         if l.startswith("  [poi/")]
+        assert len(preview_lines) == 20
+        assert "more (raise --limit" in out               # truncation note
+
+    def test_flat_section_default_limit_keeps_all(self, index):
+        # museums-and-culture has 5 POIs, no groups → flat default 50
+        out = format_section(index, "museums-and-culture")
+        preview_lines = [l for l in out.splitlines()
+                         if l.startswith("  [poi/")]
+        assert len(preview_lines) == 5
+        assert "more (raise --limit" not in out
+
+    def test_explicit_limit_overrides_default(self, index):
+        out = format_section(index, "shopping", limit=5)
+        preview_lines = [l for l in out.splitlines()
+                         if l.startswith("  [poi/")]
+        assert len(preview_lines) == 5
+
+    def test_sections_overview_drops_top_interests(self, index):
+        out = format_sections_overview(index)
+        assert "Top interests" not in out
+        assert "Notable:" in out          # key items stay
+        assert "POIs" in out               # counts stay

@@ -320,13 +320,17 @@ def run_turn(question: str, messages: list[dict],
 # ── Cache pre-warm ─────────────────────────────────────────────────────────
 
 def prewarm_cache(index: dict) -> dict:
-    """Populate the per-session cache with one get_section per section."""
+    """Populate the per-session cache with one get_section per section.
+
+    limit=None matches execute_tool's no-limit calls (format_section then
+    applies the adaptive default: 20 grouped / 50 flat).
+    """
     cache: dict = {}
     for sec in index.get("sections", []):
         sid = sec.get("section_id", "")
         if sid:
-            cache[("get_section", sid.lower(), "interest", 50)] = format_section(
-                index, sid, sort="interest", limit=50)
+            cache[("get_section", sid.lower(), "interest", None)] = format_section(
+                index, sid, sort="interest", limit=None)
     return cache
 
 
