@@ -23,12 +23,15 @@ sys.path.insert(0, str(PROJECT_ROOT / "assistant"))       # index_tools
 
 from index_tools import (
     load_index,
+    extract_poi_tags,
     format_find_poi_by_name,
     format_poi,
     format_section,
     format_sections_overview,
     get_poi,
     get_pois,
+    poi_uri,
+    strip_poi_tags,
 )
 from common.textnorm import normalize_text, tokenize
 
@@ -227,3 +230,70 @@ class TestContextReduction:
         assert "Top interests" not in out
         assert "Notable:" in out          # key items stay
         assert "POIs" in out               # counts stay
+
+
+# ── POI tags in answers (app deep links) ─────────────────────────────────────
+# The model wraps POI mentions as <poi id=5155>Church of San Nicolás</poi>;
+# the app parser catches the tag, shows the inner text, and opens the POI
+# by bare numeric id (PointOfInterestActivity "poiId" extra).
+
+class TestPoiTags:
+    def test_poi_uri_format(self):
+        assert poi_uri("ubeda", "poi/5155") == \
+            "https://inventrip.com/ubeda/object/5155"
+        assert poi_uri("ubeda", "5155") == \
+            "https://inventrip.com/ubeda/object/5155"   # bare id tolerated
+
+    def test_parse_single_tag(self, index):
+        ans = "Visit <poi id=5155>Úbeda - Heritage City</poi> first."
+        refs = extract_poi_tags(ans, index)
+        assert len(refs) == 1
+        r = refs[0]
+        assert r["poi_id"] == "poi/5155"
+        assert r["text"] == "Úbeda - Heritage City"
+        assert r["known"] is True
+        assert r["name"] == "Úbeda - Heritage City"
+        assert r["uri"] == "https://inventrip.com/ubeda/object/5155"
+
+    def test_parse_multiple_in_order_and_dedupe(self, index):
+        ans = ("<poi id=30117>Dean Ortega Palace</poi>, then "
+               "<poi id=5155>Heritage City</poi>, and again "
+               "<poi id=30117>the Parador</poi>.")
+        refs = extract_poi_tags(ans, index)
+        assert [r["poi_id"] for r in refs] == ["poi/30117", "poi/5155"]
+
+    def test_parser_lenient_on_prefix_and_quotes(self, index):
+        ans = ('<poi id="poi/5155">a</poi> <poi id="5155">b</poi> '
+               '<poi id=poi/5155>c</poi>')
+        refs = extract_poi_tags(ans, index)
+        # all three forms resolve to the same POI → deduped to one ref
+        assert len(refs) == 1
+        assert refs[0]["poi_id"] == "poi/5155"
+        assert refs[0]["known"] is True
+
+    def test_unknown_id_marked_not_known(self, index):
+        refs = extract_poi_tags("<poi id=99999999>Ghost</poi>", index)
+        assert len(refs) == 1
+        assert refs[0]["known"] is False
+        assert refs[0]["text"] == "Ghost"      # inner text survives
+        assert "uri" not in refs[0]            # no link for unknown ids
+
+    def test_no_tags_returns_empty(self, index):
+        assert extract_poi_tags("no tags here", index) == []
+        assert extract_poi_tags("", index) == []
+
+    def test_strip_tags_to_visible_text(self):
+        ans = ("Start at <poi id=5155>Úbeda - Heritage City</poi>, "
+               "then <poi id=30117>the Parador</poi>.")
+        assert strip_poi_tags(ans) == \
+            "Start at Úbeda - Heritage City, then the Parador."
+
+    def test_strip_leaves_malformed_tags_readable(self):
+        ans = "see <poi id=5155 the church"   # unclosed → no match
+        assert strip_poi_tags(ans) == ans
+
+    def test_inner_text_with_markup_and_accent(self, index):
+        ans = "<poi id=5155>**Úbeda** – *Heritage* City</poi>!"
+        refs = extract_poi_tags(ans, index)
+        assert refs[0]["text"] == "**Úbeda** – *Heritage* City"
+        assert strip_poi_tags(ans) == "**Úbeda** – *Heritage* City!"

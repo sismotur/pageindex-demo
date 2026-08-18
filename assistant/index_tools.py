@@ -148,6 +148,104 @@ def get_pois(index: dict, poi_ids: Iterable[str]) -> list[dict | None]:
     return [get_poi(index, pid) for pid in poi_ids]
 
 
+# ── POI tags in answers ─────────────────────────────────────────────────────
+#
+# The system prompt instructs the model to wrap every POI mention in an
+# inline tag carrying the POI id it saw in the tool results:
+#
+#     <poi id=5155>Church of San Nicolás</poi>
+#
+# The app's text parser catches the tag, displays the inner text as a
+# tappable link, and opens the POI by id — no name matching involved.
+# Android: PointOfInterestActivity takes the bare numeric id as the
+# "poiId" intent extra (PlacesFragment: putExtra("poiId", id.drop(4))).
+#
+# The parser is deliberately lenient (accepts optional quotes and the
+# 'poi/' prefix the model sees in tool output), but the contract is:
+# bare numeric id, no quotes, tag wraps the display text.
+
+POI_TAG_RE = re.compile(
+    r"<poi\s+id\s*=\s*\"?(?:poi/)?(\d+)\"?\s*>(.*?)</poi>",
+    re.IGNORECASE | re.DOTALL,
+)
+
+# Lenient fallback: empty/self-closing tags (<poi id=5149/> or a bare
+# <poi id=5149> with no closing tag) carry no display text.  Small models
+# sometimes emit these; the parser resolves the display name from the
+# index by id.  Matched only where POI_TAG_RE did not already match.
+POI_TAG_EMPTY_RE = re.compile(
+    r"<poi\s+id\s*=\s*\"?(?:poi/)?(\d+)\"?\s*/?>",
+    re.IGNORECASE,
+)
+
+
+def poi_uri(destination_slug: str, poi_id: str) -> str:
+    """Canonical app/web URI for a POI: what the tag resolves to.
+
+    'poi/5155' + 'ubeda' -> 'https://inventrip.com/ubeda/object/5155'
+    Matches the app's existing app-link intent filter (https://inventrip.com/*).
+    """
+    bare = str(poi_id).split("/", 1)[-1]
+    return f"https://inventrip.com/{destination_slug}/object/{bare}"
+
+
+def extract_poi_tags(answer: str, index: dict) -> list[dict]:
+    """Parse <poi id=…>…</poi> tags from an answer, in order of appearance.
+
+    Returns one entry per unique id:
+    {poi_id, text, known, name?, uri?} — `known=False` when the id is not
+    in the index (the app should still show the inner text, unlinked).
+
+    Empty/self-closing tags (<poi id=5149/>) are accepted: their `text`
+    falls back to the POI's name from the index ('' when unknown).
+    """
+    dest = (index.get("meta") or {}).get("destination", "")
+    answer = answer or ""
+
+    # (start, end, bare_id, inner_text | None)
+    matches: list[tuple[int, int, str, str | None]] = [
+        (m.start(), m.end(), m.group(1), m.group(2))
+        for m in POI_TAG_RE.finditer(answer)
+    ]
+    covered = [(ms, me) for ms, me, _, _ in matches]
+    for m in POI_TAG_EMPTY_RE.finditer(answer):
+        ms, me = m.start(), m.end()
+        if any(ms >= cs and me <= ce for (cs, ce) in covered):
+            continue  # part of a full tag already captured
+        matches.append((ms, me, m.group(1), None))
+    matches.sort(key=lambda m: m[0])
+
+    refs: list[dict] = []
+    seen: set[str] = set()
+    for _, _, bare, inner in matches:
+        pid = f"poi/{bare}"
+        if pid in seen:
+            continue
+        seen.add(pid)
+        p = get_poi(index, pid)
+        text = (inner or "").strip() or (p.get("name", "") if p else "")
+        ref: dict = {"poi_id": pid, "text": text, "known": p is not None}
+        if inner is None:
+            ref["self_closing"] = True
+        if p is not None:
+            ref["name"] = p.get("name", "")
+            if dest:
+                ref["uri"] = poi_uri(dest, pid)
+        refs.append(ref)
+    return refs
+
+
+def strip_poi_tags(answer: str) -> str:
+    """Replace every poi tag with its inner display text (what the user sees).
+
+    Full tags become their inner text; empty/self-closing tags are removed
+    (the visible name is expected next to them).  Malformed fragments that
+    match neither pattern pass through unchanged.
+    """
+    stripped = POI_TAG_RE.sub(lambda m: m.group(2), answer or "")
+    return POI_TAG_EMPTY_RE.sub("", stripped)
+
+
 def _poi_section_title(index: dict, poi_id: str) -> str:
     """Return the section title that owns the given POI ID, or ''. """
     by_section = (index.get("facets") or {}).get("by_section") or {}

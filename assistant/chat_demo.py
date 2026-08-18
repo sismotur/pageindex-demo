@@ -52,6 +52,7 @@ from index_tools import (   # noqa: E402
     load_index,
     format_sections_overview,
     format_section,
+    extract_poi_tags,
 )
 from common.lang_support import (   # noqa: E402
     SUPPORTED_LANGS,
@@ -374,6 +375,7 @@ def run_conversation(thread: dict, system_prompt: str,
             "question":   question,
             "answer":     result["answer"],
             "tool_calls": result["tool_calls"],
+            "poi_refs":   extract_poi_tags(result["answer"], index),
             "latency":    elapsed,
             "cache_hits": result["cache_hits"],
             "error":      result["error"],
@@ -473,6 +475,15 @@ def run_interactive(system_prompt: str, index: dict, sections_text: str,
             meta += f" | cache {hits}/{total}"
         meta += f" | turn {turn}]"
         print(f"\033[2m{meta}\033[0m")
+
+        # What the app parser extracts from the answer (see
+        # docs/mobile-offline-contract.md §3.6 — POI tags)
+        refs = extract_poi_tags(result["answer"], index)
+        if refs:
+            links = ";  ".join(
+                f"{r['text']} → {r.get('uri', '(unknown id)')}" for r in refs
+            )
+            print(f"\033[2m  links: {links}\033[0m")
         print()
 
 

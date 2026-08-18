@@ -65,6 +65,7 @@ from index_tools import (
     filter_pois as ix_filter_pois,
     find_section,
     get_poi as ix_get_poi,
+    extract_poi_tags,
 )
 from common.lang_support import (
     SUPPORTED_LANGS,
@@ -148,6 +149,12 @@ For pure listing questions (e.g. "what hotels are there?", \
 "list all museums"), the filter_pois previews already include name + \
 type + interest level, so an extra get_poi call is unnecessary.
 - If information is not in the index, say so clearly.
+- Tag every point of interest you mention by wrapping its name in an \
+inline tag with its id from the tool results: \
+<poi id=5155>Church of San Nicolás</poi>.  Use the bare numeric id \
+(drop the 'poi/' prefix, no quotes).  The tag must WRAP the name and \
+the closing </poi> is mandatory.  Tag each POI mention; never show \
+raw 'poi/…' ids outside a tag.
 - {{lang_rule}}
 """
 
@@ -678,6 +685,7 @@ def main() -> None:
 
         elapsed = round(time.time() - t0, 2)
         sections = sections_accessed_from_calls(loop["tool_calls"], index)
+        poi_refs = extract_poi_tags(loop["answer"], index)
 
         result = {
             "id":               qid,
@@ -691,6 +699,7 @@ def main() -> None:
             "answer":           loop["answer"],
             "tool_calls":       loop["tool_calls"],
             "sections_accessed": sections,
+            "poi_refs":         poi_refs,
             "rounds":           loop["rounds"],
             "cache_hits":       loop["cache_hits"],
             "latency_seconds":  elapsed,
@@ -704,7 +713,8 @@ def main() -> None:
         tools = [c["tool"] for c in loop["tool_calls"]]
         print(f"  [{status}] {elapsed}s  rounds={loop['rounds']}  "
               f"tools={tools}  cache={loop['cache_hits']}  "
-              f"tokens={loop['prompt_tokens']}+{loop['completion_tokens']}")
+              f"tokens={loop['prompt_tokens']}+{loop['completion_tokens']}  "
+              f"tags={len(poi_refs)}")
 
     total_elapsed = round(time.time() - total_start, 1)
     print(f"\n[INFO] All questions complete in {total_elapsed}s")
