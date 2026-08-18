@@ -161,12 +161,14 @@ section previews to pick a valid one.
 - Never expose internal details in your answers: no type codes, no \
 tool names, no filter parameter names.  Say \"I couldn't find any \
 olive-oil places\" not \"no POIs matched type=OilMill\".
-- Tag every point of interest you mention by wrapping its name in an \
-inline tag with its id from the tool results: \
-<poi id=5155>Church of San Nicolás</poi>.  Use the bare numeric id \
-(drop the 'poi/' prefix, no quotes).  The tag must WRAP the name and \
-the closing </poi> is mandatory.  Tag each POI mention; never show \
-raw 'poi/…' ids outside a tag.
+- Tag every point of interest you mention.  The tag WRAPS the name \
+(the name goes BETWEEN opening and closing tag): \
+  CORRECT: <poi id=5155 type=PlaceOfWorship>Church of San Nicolás</poi> \
+  WRONG:   Church of San Nicolás (<poi id=5155 type=PlaceOfWorship>) \
+  WRONG:   <poi id=5155 type=PlaceOfWorship> Church of San Nicolás \
+Bare numeric id, no quotes.  Do NOT write the type or interest level \
+in the answer prose — they belong only in the tag attribute.  Never \
+show raw 'poi/…' ids outside a tag.
 - {{lang_rule}}
 """
 

@@ -244,7 +244,7 @@ class TestPoiTags:
         assert poi_uri("ubeda", "5155") == \
             "https://inventrip.com/ubeda/object/5155"   # bare id tolerated
 
-    def test_parse_single_tag(self, index):
+    def test_parse_single_tag_no_type(self, index):
         ans = "Visit <poi id=5155>Úbeda - Heritage City</poi> first."
         refs = extract_poi_tags(ans, index)
         assert len(refs) == 1
@@ -254,6 +254,19 @@ class TestPoiTags:
         assert r["known"] is True
         assert r["name"] == "Úbeda - Heritage City"
         assert r["uri"] == "https://inventrip.com/ubeda/object/5155"
+        # type_code falls back from the index when not in the tag
+        assert r["type_code"] is not None
+
+    def test_parse_tag_with_type_attribute(self, index):
+        ans = "<poi id=5155 type=WorldHeritageSite>Úbeda</poi>"
+        refs = extract_poi_tags(ans, index)
+        assert refs[0]["type_code"] == "WorldHeritageSite"
+
+    def test_parse_tag_type_before_id(self, index):
+        ans = "<poi type=OilMill id=36694>Almazara</poi>"
+        refs = extract_poi_tags(ans, index)
+        assert refs[0]["poi_id"] == "poi/36694"
+        assert refs[0]["type_code"] == "OilMill"
 
     def test_parse_multiple_in_order_and_dedupe(self, index):
         ans = ("<poi id=30117>Dean Ortega Palace</poi>, then "

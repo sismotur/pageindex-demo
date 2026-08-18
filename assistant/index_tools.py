@@ -164,8 +164,15 @@ def get_pois(index: dict, poi_ids: Iterable[str]) -> list[dict | None]:
 # 'poi/' prefix the model sees in tool output), but the contract is:
 # bare numeric id, no quotes, tag wraps the display text.
 
+# POI tag format (v2): <poi id=5155 type=Restaurant>name</poi>
+# The `type` attribute is optional for backward compat; the parser accepts
+# any attribute order and optional quotes.  The regex captures:
+#   group 1 — bare numeric id
+#   group 2 — UNE type code (optional, may be absent in old answers)
+#   group 3 — inner display text
 POI_TAG_RE = re.compile(
-    r"<poi\s+id\s*=\s*\"?(?:poi/)?(\d+)\"?\s*>(.*?)</poi>",
+    r"<poi\b(?=[^>]*\bid\s*=\s*\"?(?:poi/)?(\d+)\"?)"
+    r"(?=[^>]*)(?:[^>]*\btype\s*=\s*\"?(\w+)\"?)?[^>]*>(.*?)</poi>",
     re.IGNORECASE | re.DOTALL,
 )
 
@@ -174,7 +181,7 @@ POI_TAG_RE = re.compile(
 # sometimes emit these; the parser resolves the display name from the
 # index by id.  Matched only where POI_TAG_RE did not already match.
 POI_TAG_EMPTY_RE = re.compile(
-    r"<poi\s+id\s*=\s*\"?(?:poi/)?(\d+)\"?\s*/?>",
+    r"<poi\s+(?:[^>]*?\s)?id\s*=\s*\"?(?:poi/)?(\d+)\"?[^>]*/?>",
     re.IGNORECASE,
 )
 
@@ -202,22 +209,22 @@ def extract_poi_tags(answer: str, index: dict) -> list[dict]:
     dest = (index.get("meta") or {}).get("destination", "")
     answer = answer or ""
 
-    # (start, end, bare_id, inner_text | None)
-    matches: list[tuple[int, int, str, str | None]] = [
-        (m.start(), m.end(), m.group(1), m.group(2))
+    # (start, end, bare_id, type_code|None, inner_text|None)
+    matches: list[tuple[int, int, str, str | None, str | None]] = [
+        (m.start(), m.end(), m.group(1), m.group(2), m.group(3))
         for m in POI_TAG_RE.finditer(answer)
     ]
-    covered = [(ms, me) for ms, me, _, _ in matches]
+    covered = [(ms, me) for ms, me, _, _, _ in matches]
     for m in POI_TAG_EMPTY_RE.finditer(answer):
         ms, me = m.start(), m.end()
         if any(ms >= cs and me <= ce for (cs, ce) in covered):
             continue  # part of a full tag already captured
-        matches.append((ms, me, m.group(1), None))
+        matches.append((ms, me, m.group(1), None, None))
     matches.sort(key=lambda m: m[0])
 
     refs: list[dict] = []
     seen: set[str] = set()
-    for _, _, bare, inner in matches:
+    for _, _, bare, type_code, inner in matches:
         pid = f"poi/{bare}"
         if pid in seen:
             continue
@@ -225,6 +232,10 @@ def extract_poi_tags(answer: str, index: dict) -> list[dict]:
         p = get_poi(index, pid)
         text = (inner or "").strip() or (p.get("name", "") if p else "")
         ref: dict = {"poi_id": pid, "text": text, "known": p is not None}
+        if type_code:
+            ref["type_code"] = type_code
+        elif p is not None and p.get("display_type"):
+            ref["type_code"] = p["display_type"]   # fallback: from index
         if inner is None:
             ref["self_closing"] = True
         if p is not None:
@@ -238,11 +249,11 @@ def extract_poi_tags(answer: str, index: dict) -> list[dict]:
 def strip_poi_tags(answer: str) -> str:
     """Replace every poi tag with its inner display text (what the user sees).
 
-    Full tags become their inner text; empty/self-closing tags are removed
-    (the visible name is expected next to them).  Malformed fragments that
-    match neither pattern pass through unchanged.
+    Full tags become their inner text (group 3 = text after id + optional type);
+    empty/self-closing tags are removed.  Malformed fragments that match neither
+    pattern pass through unchanged.
     """
-    stripped = POI_TAG_RE.sub(lambda m: m.group(2), answer or "")
+    stripped = POI_TAG_RE.sub(lambda m: m.group(3), answer or "")
     return POI_TAG_EMPTY_RE.sub("", stripped)
 
 
@@ -267,16 +278,22 @@ SECTION_LIMIT_GROUPED = 20
 
 
 def _short_preview(poi: dict, max_chars: int = 120) -> str:
-    """One-line preview: type + interest label + first sentence of description."""
+    """One-line preview: type (for tag attribute) + Indispensable label + description.
+
+    Only "Indispensable" (interest level 1) is shown — "Interesting" and
+    "Outstanding" add noise without helping the user choose.  The display_type
+    is kept so the model can populate the `type=` tag attribute; it should not
+    appear as prose text in the answer.
+    """
     parts = []
     if poi.get("display_type"):
         parts.append(poi["display_type"])
-    label = poi.get("interest_level_label")
-    if label and label != "Outstanding":
-        parts.append(label)
+    # Only surface the highest editorial badge — the other levels are not
+    # meaningful enough to clutter a list answer.
+    if poi.get("interest_level") == 1:
+        parts.append("Indispensable")
     desc = (poi.get("description") or "").strip()
     if desc:
-        # First sentence or first 90 chars, whichever shorter
         sent_end = re.search(r"[.!?]\s", desc)
         snippet = desc[: sent_end.end()] if sent_end else desc[:90]
         if len(snippet) > 90:
