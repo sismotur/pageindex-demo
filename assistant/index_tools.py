@@ -176,12 +176,12 @@ POI_TAG_RE = re.compile(
     re.IGNORECASE | re.DOTALL,
 )
 
-# Lenient fallback: empty/self-closing tags (<poi id=5149/> or a bare
-# <poi id=5149> with no closing tag) carry no display text.  Small models
-# sometimes emit these; the parser resolves the display name from the
-# index by id.  Matched only where POI_TAG_RE did not already match.
+# Lenient fallback: true self-closing tags (<poi id=5149/>) carry no
+# display text. Small models sometimes emit these; the parser resolves the
+# display name from the index by id. Requiring '/>' avoids matching the
+# opening half of a valid full tag.
 POI_TAG_EMPTY_RE = re.compile(
-    r"<poi\s+(?:[^>]*?\s)?id\s*=\s*\"?(?:poi/)?(\d+)\"?[^>]*/?>",
+    r"<poi\s+(?:[^>]*?\s)?id\s*=\s*\"?(?:poi/)?(\d+)\"?[^>]*/>",
     re.IGNORECASE,
 )
 
@@ -256,6 +256,66 @@ def strip_poi_tags(answer: str) -> str:
     stripped = POI_TAG_RE.sub(lambda m: m.group(3), answer or "")
     return POI_TAG_EMPTY_RE.sub("", stripped)
 
+def _poi_tag(poi: dict) -> str:
+    """Return the canonical tag-ready POI mention for LLM tool results.
+
+    The tag carries stable app-navigation data; the visible inner text
+    remains the tourist-facing POI name. Catalog labels never need to
+    appear in answer prose.
+    """
+    poi_id = str(poi.get("poi_id") or "")
+    bare_id = poi_id.split("/", 1)[-1]
+    raw_type = str(poi.get("display_type") or "Place")
+    type_code = re.sub(r"[^\w]", "", raw_type) or "Place"
+    name = poi.get("name") or "(unnamed)"
+    return f"<poi id={bare_id} type={type_code}>{name}</poi>"
+def _poi_tag_with_text(poi: dict, text: str) -> str:
+    """Render canonical id/type while keeping a valid visible label."""
+    poi_id = str(poi.get("poi_id") or "")
+    bare_id = poi_id.split("/", 1)[-1]
+    raw_type = str(poi.get("display_type") or "Place")
+    type_code = re.sub(r"[^\w]", "", raw_type) or "Place"
+    return f"<poi id={bare_id} type={type_code}>{text}</poi>"
+
+
+def sanitize_poi_tags(answer: str, index: dict) -> str:
+    """Keep only tags whose id exists in the downloaded index.
+
+    This validates an ID the model supplied; it never searches names or
+    guesses a replacement. Unknown tags become ordinary inner text.
+    """
+    def full_tag(match: re.Match) -> str:
+        poi = get_poi(index, f"poi/{match.group(1)}")
+        if poi is None:
+            return match.group(3)
+        return _poi_tag_with_text(poi, match.group(3))
+
+    def empty_tag(match: re.Match) -> str:
+        poi = get_poi(index, f"poi/{match.group(1)}")
+        return _poi_tag(poi) if poi is not None else ""
+
+    sanitized = POI_TAG_RE.sub(full_tag, answer or "")
+    return POI_TAG_EMPTY_RE.sub(empty_tag, sanitized)
+
+def sanitize_tourist_answer(answer: str, index: dict) -> str:
+    """Apply deterministic presentation rules to a final visitor answer.
+
+    This is deliberately narrow: validate tag ids, then replace only
+    catalog-language nouns that should never reach a tourist. It does not
+    infer facts, change names, or alter the meaning of retrieved evidence.
+    """
+    sanitized = sanitize_poi_tags(answer, index)
+    replacements = (
+        (r"\bPOIs\b", "places"),
+        (r"\bPOI\b", "place"),
+        (r"\bpoints of interest\b", "places"),
+        (r"\bpoint of interest\b", "place"),
+    )
+    for pattern, replacement in replacements:
+        sanitized = re.sub(pattern, replacement, sanitized, flags=re.IGNORECASE)
+    return sanitized
+
+
 
 def _poi_section_title(index: dict, poi_id: str) -> str:
     """Return the section title that owns the given POI ID, or ''. """
@@ -278,31 +338,15 @@ SECTION_LIMIT_GROUPED = 20
 
 
 def _short_preview(poi: dict, max_chars: int = 120) -> str:
-    """One-line preview: type (for tag attribute) + Indispensable label + description.
-
-    Only "Indispensable" (interest level 1) is shown — "Interesting" and
-    "Outstanding" add noise without helping the user choose.  The display_type
-    is kept so the model can populate the `type=` tag attribute; it should not
-    appear as prose text in the answer.
-    """
-    parts = []
-    if poi.get("display_type"):
-        parts.append(poi["display_type"])
-    # Only surface the highest editorial badge — the other levels are not
-    # meaningful enough to clutter a list answer.
-    if poi.get("interest_level") == 1:
-        parts.append("Indispensable")
+    """One-line tourist-facing description preview (no catalog metadata)."""
     desc = (poi.get("description") or "").strip()
-    if desc:
-        sent_end = re.search(r"[.!?]\s", desc)
-        snippet = desc[: sent_end.end()] if sent_end else desc[:90]
-        if len(snippet) > 90:
-            snippet = snippet[:90].rsplit(" ", 1)[0] + "…"
-        parts.append(snippet.strip())
-    out = " — ".join(p for p in parts if p)
-    if len(out) > max_chars:
-        out = out[: max_chars - 1] + "…"
-    return out
+    if not desc:
+        return ""
+    sent_end = re.search(r"[.!?]\s", desc)
+    snippet = desc[: sent_end.end()] if sent_end else desc[:90]
+    if len(snippet) > 90:
+        snippet = snippet[:90].rsplit(" ", 1)[0] + "…"
+    return snippet.strip()
 
 
 def format_section(index: dict, section_key: str,
@@ -348,19 +392,14 @@ def format_section(index: dict, section_key: str,
         pois = pois[:limit]
         truncated = True
 
-    lines = [
-        f"Section: {sec.get('title')}  (id={sec.get('section_id')}, "
-        f"{len(sec.get('poi_ids') or [])} POIs total)",
-    ]
+    lines = [f"{sec.get('title')} — {len(sec.get('poi_ids') or [])} places"]
     if sec.get("summary"):
         lines.append(f"  {sec['summary']}")
 
     groups = sec.get("groups") or []
     if groups:
         lines.append("")
-        lines.append("  Groups in this section "
-                     "(drill down with filter_pois(type=..., "
-                     f"section_id=\"{sec.get('section_id')}\")):")
+        lines.append("  Browse groups:")
         for g in groups:
             key_items = []
             for pid in (g.get("poi_ids") or [])[:3]:
@@ -368,17 +407,15 @@ def format_section(index: dict, section_key: str,
                 if p and p.get("name"):
                     key_items.append(p["name"])
             notable = f"  Notable: {', '.join(key_items)}" if key_items else ""
-            lines.append(f"    [{g.get('group_id')}] {g.get('title')} — "
-                         f"{len(g.get('poi_ids') or [])} POIs.{notable}")
+            lines.append(f"    {g.get('title')} — "
+                         f"{len(g.get('poi_ids') or [])} places.{notable}")
     lines.append("")
     for p in pois:
-        pid = p.get("poi_id", "?")
-        name = p.get("name", "?")
         preview = _short_preview(p)
         if preview:
-            lines.append(f"  [{pid}] {name} — {preview}")
+            lines.append(f"  {_poi_tag(p)} — {preview}")
         else:
-            lines.append(f"  [{pid}] {name}")
+            lines.append(f"  {_poi_tag(p)}")
     if truncated:
         lines.append(f"  …{len(sec.get('poi_ids') or []) - limit} more (raise --limit to see all)")
     return "\n".join(lines)
@@ -402,19 +439,13 @@ def _format_single_poi(index: dict, p: dict) -> str:
 
     section_title = _poi_section_title(index, p["poi_id"])
 
-    lines = [f"# {p.get('name', '(unnamed)')}  ({p.get('poi_id')})"]
+    lines = [f"# {_poi_tag(p)}"]
     if section_title:
         lines.append(f"*Section: {section_title}*")
     lines.append("")
 
     # Bullet metadata
     bullets: list[str] = []
-    if p.get("interest_level_label"):
-        bullets.append(_format_kv("Interest level", p["interest_level_label"]))
-    if p.get("display_type"):
-        bullets.append(_format_kv("Type", p["display_type"]))
-    if p.get("display_tourist_types"):
-        bullets.append(_format_kv("Tourism interest", p["display_tourist_types"]))
     location_parts = [s for s in [p.get("street_address"),
                                   p.get("address_locality"),
                                   p.get("address_province")] if s]
@@ -546,14 +577,11 @@ def format_find_poi_by_name(index: dict, query: str, limit: int = 5,
                 f"Try filter_pois() or browse a section with get_section().")
     lines = [f"Matches for '{query}' ({len(matches)} of up to {limit}):"]
     for p in matches:
-        sec_title = _poi_section_title(index, p["poi_id"])
-        sec_label = f"  [{sec_title}]" if sec_title else ""
         preview = _short_preview(p)
-        head = f"  [{p['poi_id']}] {p.get('name','?')}{sec_label}"
         if preview:
-            lines.append(f"{head}  — {preview}")
+            lines.append(f"  {_poi_tag(p)} — {preview}")
         else:
-            lines.append(head)
+            lines.append(f"  {_poi_tag(p)}")
     if detail == "full":
         lines.append("")
         lines.append("Best match, full record:")
@@ -632,31 +660,148 @@ def filter_pois(index: dict, **filters: Any) -> list[dict]:
                             normalize_text(p.get("name") or "")))
     return out
 
+# ── Full-text evidence search ───────────────────────────────────────────────
+
+def _searchable_text(poi: dict) -> str:
+    """Return normalized visitor-facing text indexed for one POI."""
+    return normalize_text(" ".join([
+        poi.get("name") or "",
+        poi.get("description") or "",
+        poi.get("display_type") or "",
+        " ".join(poi.get("display_tourist_types") or []),
+        poi.get("address_locality") or "",
+    ]))
+
+
+def _search_postings(index: dict, term: str) -> set[str]:
+    """Resolve a normalized query term to its inverted-index postings.
+
+    Prefix compatibility handles harmless morphology
+    (restaurant/restaurants) without a language-specific stemmer. A v2
+    index falls back to a small local scan during a staged corpus upgrade.
+    """
+    search_terms = ((index.get("facets") or {}).get("search_terms") or {})
+    if not search_terms:
+        return {
+            pid for pid, poi in (index.get("pois") or {}).items()
+            if term in set(tokenize(_searchable_text(poi)))
+        }
+
+    # Union exact and prefix-compatible forms.  A direct plural word can
+    # exist in prose ("restaurants") while the category label is singular
+    # ("Restaurant"); using only the direct posting would hide the actual
+    # restaurant records.
+    matched: set[str] = set(search_terms.get(term) or [])
+    for indexed_term, ids in search_terms.items():
+        if indexed_term.startswith(term) or term.startswith(indexed_term):
+            matched.update(ids)
+    return matched
+
+
+def _evidence_snippet(poi: dict, terms: list[str],
+                      max_chars: int = 180) -> str:
+    """Return a concise visitor-facing sentence supporting a search hit."""
+    description = (poi.get("description") or "").strip()
+    if not description:
+        return ""
+    sentences = re.split(r"(?<=[.!?])\s+", description)
+    best = max(
+        sentences,
+        key=lambda sentence: sum(
+            term in set(tokenize(sentence)) for term in terms
+        ),
+    )
+    if len(best) > max_chars:
+        best = best[:max_chars].rsplit(" ", 1)[0] + "…"
+    return best
+
+
+def search_pois(index: dict, query: str, section_id: str | None = None,
+                limit: int = 10) -> list[dict]:
+    """Find POIs whose same record explicitly matches every query term.
+
+    This is deterministic lexical evidence search, not embeddings and not
+    a category alias. An empty result means the catalogue does not support
+    the requested combination on one POI; callers can search individual
+    concepts separately for complementary options.
+    """
+    terms = [term for term in tokenize(query) if len(term) >= 3]
+    if not terms:
+        return []
+
+    postings = [_search_postings(index, term) for term in terms]
+    if any(not ids for ids in postings):
+        return []
+    candidate_ids = set.intersection(*postings)
+
+    if section_id:
+        section = find_section(index, section_id)
+        if not section:
+            return []
+        candidate_ids &= set(section.get("poi_ids") or [])
+
+    pois = index.get("pois") or {}
+    matches = [pois[pid] for pid in candidate_ids if pid in pois]
+    matches.sort(key=lambda poi: (
+        poi.get("interest_level") or 99,
+        poi.get("zoom_level") or 99,
+        normalize_text(poi.get("name") or ""),
+    ))
+    return [
+        {
+            "poi": poi,
+            "matched_terms": terms,
+            "evidence": _evidence_snippet(poi, terms),
+        }
+        for poi in matches[:max(1, limit)]
+    ]
+
+
+def format_search_pois(index: dict, query: str, section_id: str | None = None,
+                       limit: int = 10) -> str:
+    """Render evidence-backed search results without catalog internals."""
+    matches = search_pois(index, query, section_id=section_id, limit=limit)
+    terms = [term for term in tokenize(query) if len(term) >= 3]
+    if not matches:
+        rendered = ", ".join(f'"{term}"' for term in terms)
+        return (
+            f"No place record explicitly mentions all of: {rendered}. "
+            "Search the concepts separately for related visitor options; "
+            "do not claim they are the same place."
+        )
+
+    lines = [f'Evidence-backed matches for "{query}" ({len(matches)}):']
+    for item in matches:
+        poi = item["poi"]
+        evidence = item["evidence"]
+        if evidence:
+            lines.append(f"  {_poi_tag(poi)} — {evidence}")
+        else:
+            lines.append(f"  {_poi_tag(poi)}")
+    return "\n".join(lines)
+
 
 def format_filter_pois(index: dict, limit: int = 20, **filters: Any) -> str:
-    """Render facet-filter results."""
-    # Drop None/empty filters from the echo line
+    """Render facet-filter results without exposing filter internals."""
+    # Drop None/empty filters to decide whether this is a valid request.
     active = {k: v for k, v in filters.items() if v not in (None, "", [], {})}
     if not active:
         return ("[INFO] filter_pois requires at least one filter "
                 "(interest_level, type, tourist_type, section_id, indispensable).")
     matches = filter_pois(index, **active)
     if not matches:
-        return f"[INFO] No POIs match {active}."
+        return "No places matched this request."
     truncated = False
     if limit and len(matches) > limit:
         matches = matches[:limit]
         truncated = True
-    lines = [f"Filter {active}: {len(matches)}{'+' if truncated else ''} matches"]
+    lines = [f"Found {len(matches)}{'+' if truncated else ''} places:"]
     for p in matches:
-        sec_title = _poi_section_title(index, p["poi_id"])
-        sec_label = f"  [{sec_title}]" if sec_title else ""
         preview = _short_preview(p)
-        head = f"  [{p['poi_id']}] {p.get('name','?')}{sec_label}"
         if preview:
-            lines.append(f"{head}  — {preview}")
+            lines.append(f"  {_poi_tag(p)} — {preview}")
         else:
-            lines.append(head)
+            lines.append(f"  {_poi_tag(p)}")
     if truncated:
         lines.append(f"  …more matches available (raise limit)")
     return "\n".join(lines)

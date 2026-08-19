@@ -9,7 +9,7 @@
 
 This document is the **complete contract** for the on-device assistant.
 A phone downloads one index file per `(destination, language)` and then
-works **with no internet connection**: the LLM (Gemma 4 E2B) and all five
+works **with no internet connection**: the LLM (Gemma 4 E2B) and all six
 retrieval tools run locally.
 
 ---
@@ -25,7 +25,7 @@ retrieval tools run locally.
 │                                                             │
 │  Tool layer  ← port of assistant/index_tools.py             │
 │    list_sections / get_section / get_poi /                  │
-│    find_poi_by_name / filter_pois                           │
+│    find_poi_by_name / filter_pois / search_pois             │
 │    (pure lookups over the parsed JSON — no DB, no network)  │
 │                                                             │
 │  Agentic loop  ← port of assistant/run_eval.py              │
@@ -37,7 +37,7 @@ retrieval tools run locally.
 └─────────────────────────────────────────────────────────────┘
 ```
 
-Measured baseline for this exact stack (E2B, oMLX serving, schema v2
+Measured baseline for this exact stack (E2B, oMLX serving, schema v3
 index, 20 visitor questions, English, 2026-08-16): composite **0.830**,
 grounding **75.0%**, content-fetch **95%**, **3.1 s**/question, 13,950
 prompt + 241 completion tokens/question. The same E2B weights are the
@@ -47,11 +47,13 @@ deployment target; expect ≥ the 70% rubric thresholds on EN/ES/IT.
 
 ## 2. The index file (`indexes/{dest}_{lang}.json`)
 
-One JSON object, `meta.schema_version == 2`. Sizes: ~0.7–0.85 MB per pair
+One JSON object, `meta.schema_version == 3`. Sizes: ~0.7–0.9 MB per pair
 (367 POIs, Úbeda). Parse it fully into memory at session start.
 
-Schema v2 adds the optional `sections[].groups` field (below). v1 readers
-can ignore it — `sections[].poi_ids` still lists every POI in the section.
+Schema v2 adds the optional `sections[].groups` field. Schema v3 adds
+`facets.search_terms`, the deterministic full-text evidence index used by
+`search_pois`. Older readers can ignore either addition —
+`sections[].poi_ids` and POI records remain complete.
 
 ```jsonc
 {
@@ -62,7 +64,7 @@ can ignore it — `sections[].poi_ids` still lists every POI in the section.
     "generated_at": "2026-08-16T05:13:09Z",
     "poi_count": 367,
     "section_count": 18,
-    "schema_version": 2
+    "schema_version": 3
   },
   "destination_overview": "…multi-line string, embedded in the system prompt…",
   "trips": [
@@ -114,7 +116,8 @@ can ignore it — `sections[].poi_ids` still lists every POI in the section.
     "by_tourist_type":   { "CULTURAL TOURISM": ["poi/123", …] },
     "by_interest_level": { "1": ["poi/…"], "2": […], "3": […] },
     "by_zoom_bucket":    { "<=14": […], "15-16": […], "17-19": […] },
-    "indispensable":     ["poi/…", …]          // interest_level == 1
+    "indispensable":     ["poi/…", …],         // interest_level == 1
+    "search_terms":      { "olive": ["poi/30124", "poi/36694", …] }
   },
   "name_index": { "sacra capilla del salvador": "poi/5155", … },
   "tourist_type_display": { "CULTURAL TOURISM": "Cultural Tourism", … },
@@ -134,9 +137,9 @@ Notes for ports:
 
 ---
 
-## 3. The five tools (exact semantics)
+## 3. The six tools (exact semantics)
 
-All five are pure functions over the parsed index. **Outputs are text
+All six are pure functions over the parsed index. **Outputs are text
 blobs returned to the LLM verbatim** — match the Python formatting
 exactly, because the system prompt and the model's learned behaviour
 depend on it. Reference: `assistant/index_tools.py`.
@@ -271,6 +274,53 @@ Results sorted by `(interest_level, zoom_level, name)`, default
 `limit=20`, rendered like `find_poi_by_name` with a header line
 `Filter {active_filters}: N matches` and a trailing
 `  …more matches available (raise limit)` when truncated.
+### 3.6 Schema v3 override: evidence search and tourist-safe output
+
+This section is authoritative for schema v3 and supersedes older v2
+examples above that show raw ids, category labels, interest levels, or
+filter echoes.
+
+**`search_pois(query, section_id?, limit?)`** is the sixth tool. It
+intersects `facets.search_terms`, so every result contains all meaningful
+query terms in that same POI's name, description, category label,
+tourism-interest label, or locality. It is used before the model claims
+that one place combines two visitor concepts.
+
+For example, `search_pois("olive oil restaurant", "gastronomy")` has no
+current Úbeda English result: the catalogue includes restaurants and
+olive-oil places but does not establish both characteristics for a single
+restaurant. The agent then retrieves `"olive oil"` and `"restaurant"`
+separately in the same turn, states this evidence gap naturally, and
+presents complementary options without claiming either group satisfies
+the full combination.
+
+All current LLM-facing POI output uses:
+
+```text
+<poi id=36694 type=OilMill>ALMAZARA BALTASAR LARA Y CÍA.</poi>
+```
+
+- `id`: bare numeric suffix of `poi_id`; Android passes it to
+  `PointOfInterestActivity` as `poiId`.
+- `type`: `display_type`, for app routing/presentation only.
+- Inner text: the complete tourist-visible name.
+
+The app must keep `type` and IDs out of visible chat prose. Tool results
+are intentionally rendered as `Found N places:` plus tags and description
+previews; they do not show filter parameters, raw `[poi/…]` ids,
+`Type:`, or interest levels. Full POI records use a tag-ready heading and
+visitor-facing details only.
+
+Before making a tag tappable, the mobile parser MUST verify that
+`poi/{id}` exists in the currently downloaded index. An unknown or
+malformed tag renders as ordinary inner text with no navigation. The LLM
+is instructed to copy IDs only from tool results, but deterministic
+validation is mandatory.
+
+For compound requests (`X with Y`, `X near Y`, `X that offers Y`), the
+agent first runs one combined `search_pois` evidence check. If it has no
+direct match, the runtime forces separate complementary retrieval in the
+same turn; it must not ask the visitor to choose a next search.
 
 ---
 
@@ -396,7 +446,7 @@ if no answer after the loop:
 
 ---
 
-## 7. Budgets (E2B, measured 2026-08-16/17 via oMLX, schema v2 index)
+## 7. Budgets (E2B, measured 2026-08-16/19 via oMLX, schema v3 index)
 
 All token figures are **measured** (`response.usage` logged by
 `assistant/run_eval.py` and aggregated by `assistant/score_results.py`;
@@ -406,9 +456,9 @@ tokenizer counts below use cl100k_base as a Gemma approximation).
 
 | Component | Tokens | Notes |
 |---|---|---|
-| System prompt | **2,041** | sections overview (counts + notable names only) + destination overview + rules |
-| Tool definitions | 748 | five tool schemas |
-| **Base total** | **~2.9K per round** | the dominant cost driver is rounds × this base |
+| System prompt | **2,667** | schema-v3 evidence policy + sections overview + destination overview |
+| Tool definitions | 832 | six tool schemas, including evidence search |
+| **Base total** | **~3.5K per round** | the dominant cost driver is rounds × this base |
 
 ### Per-call tool results (context-reduced)
 
@@ -429,7 +479,7 @@ tokenizer counts below use cl100k_base as a Gemma approximation).
 | Quality gates | 0.830 composite, 75% grounding, 95% fetch | identical | unchanged by the reductions |
 
 **Design rule for ports:** rounds are the multiplier — every avoided
-tool round saves ~2.9K tokens of re-sent base plus the previous results.
+tool round saves ~3.5K tokens of re-sent base plus the previous results.
 Per-call trimming (grouped section caps, media stripping, fused lookups)
 is real but secondary. Plan context headroom for ~2× the observed peak
 (~60K) on long multi-turn chats; expire or compact old tool results

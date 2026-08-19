@@ -10,7 +10,7 @@ architecture:
    Target deployment: a **Cloudflare cron Worker** publishing index
    files to R2 — see `docs/cloudflare-worker-spec.md`.
 2. **`assistant/` — offline chatbot.** Reference implementation of the
-   on-device runtime (five pure-lookup tools + agentic loop), driven by
+   on-device runtime (six pure-lookup tools + agentic loop), driven by
    `litellm` tool calls against a local OpenAI-compatible server
    (**oMLX**, `http://127.0.0.1:8000/v1`). Will be reimplemented in
    Android/iOS running **Gemma 4 E2B fully offline** — the phone only
@@ -248,7 +248,7 @@ The relevant query parameters (from `params-builder.js`):
 
 ```bash
 .venv/bin/python pipeline/build_index.py --destination ubeda --lang en
-# → indexes/ubeda_en.json   (~720 KB; sub-second; deterministic)
+# → indexes/ubeda_en.json   (~1.0 MB / ~130 KB gzip; sub-second; deterministic)
 ```
 
 `pipeline/build_index.py` consumes only the two JSON artifacts from
@@ -290,7 +290,8 @@ given an old `results/{name}_structure.json` path, it remaps to
 
 Rubric details in `assistant/score_results.py`. The `_CONTENT_FETCH_TOOLS`
 set lists every tool that counts as "the model retrieved real content"
-(`get_poi`, `get_section`, `find_poi_by_name`, `filter_pois`); legacy
+(`get_poi`, `get_section`, `find_poi_by_name`, `filter_pois`,
+`search_pois`); legacy
 tool names from older result files are also accepted so historical
 files still score.
 
@@ -298,7 +299,7 @@ files still score.
 
 ## LLM tool surface
 
-Five tools, all pure dict lookups against the index. No I/O, no
+Six tools, all pure dict lookups against the index. No I/O, no
 LLM-in-the-loop, no line slicing.
 
 | Tool | Purpose |
@@ -308,6 +309,7 @@ LLM-in-the-loop, no line slicing.
 | `get_poi(poi_id)` | Full record of one POI by id; comma-separated ids fetch several records in one call. |
 | `find_poi_by_name(query, limit)` | Diacritic-insensitive fuzzy lookup by name. |
 | `filter_pois(interest_level, type, tourist_type, section_id, indispensable, limit)` | Facet query, all filters AND together. |
+| `search_pois(query, section_id, limit)` | Same-record full-text evidence search for compound visitor requests. |
 
 Typical flows handled by the model:
 
@@ -346,7 +348,7 @@ pageindex-demo/
 │   └── json_to_markdown.py            ← optional human-readable export
 │
 ├── assistant/                         ← PART 2: offline chatbot reference
-│   ├── index_tools.py                 ← read-side helpers (the five tools)
+│   ├── index_tools.py                 ← read-side helpers (six tools + evidence search)
 │   ├── run_eval.py                    ← Step 3: agentic eval
 │   ├── chat_demo.py                   ← interactive / scripted chat demo
 │   └── score_results.py               ← Step 4: score grounding + retrieval

@@ -25,12 +25,17 @@ from index_tools import (
     load_index,
     extract_poi_tags,
     format_find_poi_by_name,
+    format_filter_pois,
     format_poi,
+    format_search_pois,
     format_section,
     format_sections_overview,
     get_poi,
     get_pois,
     poi_uri,
+    search_pois,
+    sanitize_poi_tags,
+    sanitize_tourist_answer,
     strip_poi_tags,
 )
 from common.textnorm import normalize_text, tokenize
@@ -68,13 +73,13 @@ class TestTextNorm:
         assert tokenize("Casa de las Torres") == ["casa", "de", "las", "torres"]
 
 
-# ── Schema v2: section groups ────────────────────────────────────────────────
+# ── Schema v3: section groups + evidence search ─────────────────────────────
 
 class TestSectionGroups:
     """Sections with > 30 POIs must carry a consistent per-type group map."""
 
-    def test_schema_version_is_2(self, index):
-        assert index["meta"]["schema_version"] == 2
+    def test_schema_version_is_3(self, index):
+        assert index["meta"]["schema_version"] == 3
 
     def test_large_sections_have_groups(self, index):
         grouped = {s["section_id"] for s in index["sections"] if s.get("groups")}
@@ -131,9 +136,9 @@ class TestSectionGroups:
 
     def test_format_section_renders_group_map(self, index):
         out = format_section(index, "shopping", sort="interest", limit=50)
-        assert "Groups in this section" in out
-        assert "shopping--store" in out or "shopping--shoppingcenter" in out
-        assert "filter_pois(type=" in out  # drill-down instruction
+        assert "Browse groups:" in out
+        assert "shopping--store" not in out  # no raw group ids
+        assert "filter_pois(type=" not in out  # no tool internals
 
     def test_flat_section_has_no_group_block(self, index):
         out = format_section(index, "museums-and-culture")
@@ -207,7 +212,7 @@ class TestContextReduction:
     def test_grouped_section_default_limit_is_20(self, index):
         out = format_section(index, "shopping")          # no limit passed
         preview_lines = [l for l in out.splitlines()
-                         if l.startswith("  [poi/")]
+                         if l.startswith("  <poi ")]
         assert len(preview_lines) == 20
         assert "more (raise --limit" in out               # truncation note
 
@@ -215,14 +220,14 @@ class TestContextReduction:
         # museums-and-culture has 5 POIs, no groups → flat default 50
         out = format_section(index, "museums-and-culture")
         preview_lines = [l for l in out.splitlines()
-                         if l.startswith("  [poi/")]
+                         if l.startswith("  <poi ")]
         assert len(preview_lines) == 5
         assert "more (raise --limit" not in out
 
     def test_explicit_limit_overrides_default(self, index):
         out = format_section(index, "shopping", limit=5)
         preview_lines = [l for l in out.splitlines()
-                         if l.startswith("  [poi/")]
+                         if l.startswith("  <poi ")]
         assert len(preview_lines) == 5
 
     def test_sections_overview_drops_top_interests(self, index):
@@ -230,6 +235,61 @@ class TestContextReduction:
         assert "Top interests" not in out
         assert "Notable:" in out          # key items stay
         assert "POIs" in out               # counts stay
+
+    def test_list_tool_output_is_tag_ready_and_hides_raw_metadata(self, index):
+        out = format_filter_pois(
+            index, type="Restaurant", section_id="gastronomy", limit=2,
+        )
+        assert "<poi id=" in out and " type=" in out
+        assert "[poi/" not in out
+        assert "Filter {" not in out
+        assert "Interest Level:" not in out
+        assert "Type:" not in out
+
+
+class TestEvidenceSearch:
+    """Compound requests require same-record evidence, not category aliases."""
+
+    def test_search_terms_present_and_sorted(self, index):
+        terms = index["facets"]["search_terms"]
+        assert "olive" in terms
+        assert list(terms) == sorted(terms)
+        assert terms["olive"] == sorted(terms["olive"])
+
+    def test_compound_query_has_no_false_direct_match(self, index):
+        # The catalog has oil-related places and restaurants, but does not
+        # establish that one restaurant serves olive-oil cuisine.
+        matches = search_pois(
+            index, "olive oil restaurant", section_id="gastronomy",
+        )
+        assert matches == []
+
+    def test_individual_evidence_search_returns_oil_places(self, index):
+        matches = search_pois(index, "olive oil", section_id="gastronomy")
+        assert matches
+        assert all("olive" in item["matched_terms"] for item in matches)
+        assert any("olive" in item["evidence"].lower() for item in matches)
+
+    def test_plural_search_matches_restaurant_category(self, index):
+        singular = search_pois(index, "restaurant", section_id="gastronomy")
+        plural = search_pois(index, "restaurants", section_id="gastronomy")
+        assert singular
+        assert {item["poi"]["poi_id"] for item in singular} == {
+            item["poi"]["poi_id"] for item in plural
+        }
+
+    def test_evidence_formatter_no_internal_filter_leak(self, index):
+        out = format_search_pois(
+            index, "olive oil restaurant", section_id="gastronomy",
+        )
+        assert "No place record explicitly mentions all of:" in out
+        assert "filter_pois" not in out
+        assert "type=" not in out
+
+    def test_evidence_formatter_tag_ready_results(self, index):
+        out = format_search_pois(index, "olive oil", section_id="gastronomy")
+        assert "<poi id=" in out
+        assert " type=OilMill>" in out
 
 
 # ── POI tags in answers (app deep links) ─────────────────────────────────────
@@ -290,6 +350,28 @@ class TestPoiTags:
         assert refs[0]["known"] is False
         assert refs[0]["text"] == "Ghost"      # inner text survives
         assert "uri" not in refs[0]            # no link for unknown ids
+
+    def test_sanitize_unknown_tag_to_plain_text(self, index):
+        answer = "Visit <poi id=99999999 type=Restaurant>Ghost Place</poi>."
+        assert sanitize_poi_tags(answer, index) == "Visit Ghost Place."
+
+    def test_sanitize_known_tag_canonicalizes_type(self, index):
+        answer = "<poi id=36694 type=Restaurant>Short label</poi>"
+        assert sanitize_poi_tags(answer, index) == \
+            "<poi id=36694 type=OilMill>Short label</poi>"
+
+    def test_sanitize_known_empty_tag_expands_name(self, index):
+        sanitized = sanitize_poi_tags("Visit <poi id=36694/>.", index)
+        assert "<poi id=36694 type=OilMill>" in sanitized
+        assert "ALMAZARA BALTASAR LARA Y CÍA." in sanitized
+
+    def test_tourist_answer_sanitizer_removes_catalog_language(self, index):
+        answer = (
+            "I found 2 POIs and one point of interest: "
+            "<poi id=99999999>Ghost</poi>."
+        )
+        sanitized = sanitize_tourist_answer(answer, index)
+        assert sanitized == "I found 2 places and one place: Ghost."
 
     def test_no_tags_returns_empty(self, index):
         assert extract_poi_tags("no tags here", index) == []

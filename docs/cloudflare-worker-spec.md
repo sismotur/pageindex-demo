@@ -147,7 +147,9 @@ A TypeScript port of the Python pipeline. For a pair `(dest, lang)`:
    - `buildSectionSummary()` — deterministic counts + top interests +
      3 notable POIs
    - `buildFacets()` — by_section / by_type / by_tourist_type /
-     by_interest_level / by_zoom_bucket / indispensable
+     by_interest_level / by_zoom_bucket / indispensable, plus schema-v3
+     `search_terms`: normalized word → sorted POI ids over visitor-facing
+     name/description/category/tourism/locality fields
    - `name_index` — **critical:** keyed by `normalizeText(name)` where
      `normalizeText` is the exact port of `common/textnorm.py`
      (NFKD → strip combining marks → non-word runs to single space →
@@ -157,7 +159,7 @@ A TypeScript port of the Python pipeline. For a pair `(dest, lang)`:
 
 The Python pipeline remains the **reference implementation**. The contract
 test in §4.4 keeps the port honest. The index schema version
-(`meta.schema_version`, currently **2**) must match between the two
+(`meta.schema_version`, currently **3**) must match between the two
 implementations — bumping it is a coordinated change.
 
 ### 4.3 manifest.json

@@ -33,7 +33,7 @@ from typing import Any
 # Shared normaliser + language list from common/ so the name_index keys
 # match exactly what assistant/index_tools.find_poi_by_name() looks up.
 sys.path.insert(0, str(Path(__file__).parent.parent))
-from common.textnorm import normalize_text  # noqa: E402
+from common.textnorm import normalize_text, tokenize  # noqa: E402
 from common.lang_support import SUPPORTED_LANGS, is_supported  # noqa: E402
 
 # ── Constants ──────────────────────────────────────────────────────────────────
@@ -424,13 +424,21 @@ def assemble_sections(pois: list[dict]) -> list[dict]:
 # ── Facets ─────────────────────────────────────────────────────────────────
 
 def build_facets(pois: list[dict], sections: list[dict]) -> dict:
-    """Precompute facet → poi_id lookups."""
+    """Precompute facet → poi_id lookups plus full-text evidence terms.
+
+    `search_terms` is a deterministic inverted index over visitor-facing
+    POI content: name, description, category label, tourism-interest
+    labels, and locality.  It lets the offline assistant test whether
+    several visitor concepts actually coexist on the same POI before it
+    claims a relationship (e.g. restaurant + olive oil).
+    """
     by_section: dict[str, list[str]] = {s["section_id"]: list(s["poi_ids"]) for s in sections}
     by_type: dict[str, list[str]] = {}
     by_tourist_type: dict[str, list[str]] = {}
     by_interest_level: dict[str, list[str]] = {}
     by_zoom_bucket: dict[str, list[str]] = {"<=14": [], "15-16": [], "17-19": []}
     indispensable: list[str] = []
+    search_terms: dict[str, list[str]] = {}
 
     for p in pois:
         for t in p.get("types") or []:
@@ -450,6 +458,22 @@ def build_facets(pois: list[dict], sections: list[dict]) -> dict:
             else:
                 by_zoom_bucket["17-19"].append(p["poi_id"])
 
+        # Index only user-facing content.  The tool output later extracts
+        # a description/name evidence snippet so the model can distinguish
+        # an explicit match from a merely related suggestion.
+        searchable = " ".join([
+            p.get("name") or "",
+            p.get("description") or "",
+            p.get("display_type") or "",
+            " ".join(p.get("display_tourist_types") or []),
+            p.get("address_locality") or "",
+        ])
+        for term in set(tokenize(searchable)):
+            # Single/two-character tokens add memory cost but no useful
+            # tourism retrieval signal (articles, initials, map labels).
+            if len(term) >= 3:
+                search_terms.setdefault(term, []).append(p["poi_id"])
+
     return {
         "by_section":        by_section,
         "by_type":           by_type,
@@ -457,6 +481,10 @@ def build_facets(pois: list[dict], sections: list[dict]) -> dict:
         "by_interest_level": by_interest_level,
         "by_zoom_bucket":    by_zoom_bucket,
         "indispensable":     indispensable,
+        # Sort postings so JSON output is reproducible and Android/iOS
+        # implementations can perform stable intersections.
+        "search_terms":      {term: sorted(ids)
+                              for term, ids in sorted(search_terms.items())},
     }
 
 
@@ -572,10 +600,11 @@ def build_index(raw_pois: list[dict], dest_data: dict | None,
             "generated_at":        datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
             "poi_count":           len(normalised),
             "section_count":       len(sections),
-            # v2: large sections may carry a `groups` list (per-type
-            # sub-sections with key-item summaries).  v1 readers can
-            # ignore `groups` — `poi_ids` still lists every POI.
-            "schema_version":      2,
+            # v3: v2 section groups plus facets.search_terms, a
+            # deterministic full-text inverted index used by search_pois().
+            # Older readers can ignore both additions and still use POIs
+            # and the existing facet maps.
+            "schema_version":      3,
         },
         "destination_overview": build_destination_overview(dest_data, tourist_type_display),
         "trips":                build_trips(dest_data),

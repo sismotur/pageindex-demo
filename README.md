@@ -12,7 +12,7 @@ The repository is split into the two parts of the production architecture:
    ported to a **Cloudflare cron Worker** that publishes the same files to
    R2 (see `docs/cloudflare-worker-spec.md`).
 2. **`assistant/` — offline chatbot.** The reference implementation of the
-   on-device runtime: five pure-lookup tools over the index plus the
+   on-device runtime: six pure-lookup tools over the index plus the
    agentic loop. Runs against any OpenAI-compatible endpoint (oMLX,
    Ollama) and will be **reimplemented in Android/iOS with Gemma 4 E2B
    fully offline** — the phone only downloads index files
@@ -101,7 +101,7 @@ POI-aware index uses the structure that already exists in the source.
               │  meta · destination_overview     │   (phone downloads this
               │  trips · sections (deterministic │   once, then works with
               │     summaries) · pois · facets · │   no internet connection)
-              │  name_index                      │
+              │  name_index · search_terms       │
               └──────────────┬───────────────────┘
                              │
         PART 2 — ASSISTANT (assistant/, → Android/iOS, Gemma 4 E2B on-device)
@@ -110,10 +110,10 @@ POI-aware index uses the structure that already exists in the source.
               │  assistant/run_eval.py           │       litellm tool calls
               │  assistant/chat_demo.py          │       to oMLX / Ollama
               │                                  │       (reference impl of
-              │  Five tools (pure dict lookups): │       the on-device loop)
+              │  Six tools (pure dict lookups):  │       the on-device loop)
               │   list_sections, get_section,    │
               │   get_poi, find_poi_by_name,     │
-              │   filter_pois                    │
+              │   filter_pois, search_pois       │
               └──────────────────────────────────┘
 ```
 
@@ -127,7 +127,7 @@ in a text editor — but no script consumes it.
 
 ### Tools exposed to the LLM
 
-The model has five tools, each a pure dict lookup against the index
+The model has six tools, each a pure dict lookup against the index
 (no I/O, no LLM-in-the-loop):
 
 | Tool | Purpose |
@@ -137,6 +137,7 @@ The model has five tools, each a pure dict lookup against the index
 | `get_poi(poi_id)` | Full record of one POI — or several at once with comma-separated ids (`'poi/123,poi/456'`). No truncation, no line slicing. |
 | `find_poi_by_name(query, limit)` | Diacritic-insensitive fuzzy lookup by POI name. |
 | `filter_pois(interest_level, type, tourist_type, section_id, indispensable, limit)` | Facet query, all filters AND together. |
+| `search_pois(query, section_id, limit)` | Same-record full-text evidence search for compound visitor needs; prevents unsupported claims that one place combines separate concepts. |
 
 A typical answer flow:
 
@@ -144,6 +145,9 @@ A typical answer flow:
 - **"What museums exist?"** → `get_section("museums-and-culture")`
 - **"What should I not miss?"** → `filter_pois(indispensable=true)`
 - **"Indispensable food spots"** → `filter_pois(indispensable=true, tourist_type="FOOD TOURISM")`
+- **"Restaurants with olive oil"** → `search_pois("olive oil restaurant")`;
+  when no direct record exists, retrieve each concept separately and
+  present complementary options without inventing the combination.
 
 ---
 
@@ -193,7 +197,7 @@ pageindex-demo/
 │   └── json_to_markdown.py            ← optional human-readable export
 │
 ├── assistant/                         ← PART 2: offline chatbot reference (→ mobile)
-│   ├── index_tools.py                 ← five tools, pure dict lookups
+│   ├── index_tools.py                 ← six tools, pure dict lookups + evidence search
 │   ├── run_eval.py                    ← Step 3: agentic Q&A evaluation
 │   ├── chat_demo.py                   ← interactive / scripted chat demo
 │   └── score_results.py               ← Step 4: score grounding + retrieval
@@ -203,7 +207,7 @@ pageindex-demo/
 │   └── ubeda_destination_{en,es,it}.json
 │
 ├── indexes/                           ← build_index.py output, tracked
-│   └── ubeda_{en,es,it}.json          ← POI-aware index (~720–820 KB)
+│   └── ubeda_{en,es,it}.json          ← POI-aware index (~1.0 MB; ~130 KB gzip)
 │
 ├── eval/
 │   ├── questions.json                 ← 20 curated visitor questions (English)
@@ -434,6 +438,11 @@ titles.
   re-adopted: the typed 5-tool surface beats its tree search on this
   dataset (95% vs 80% retrieval on 26B), and its LLM-free Flash mode
   independently validates the deterministic-build approach taken here.
+- ~~**Compound-request evidence**~~ — **done (schema v3)**:
+  `facets.search_terms` and `search_pois` prove all requested concepts
+  against the same POI before the assistant claims a relationship; when
+  direct evidence is absent, the loop retrieves complementary options
+  without inventing one.
 - **Cloudflare Worker port of `pipeline/`** — spec in
   `docs/cloudflare-worker-spec.md`; the §4.4 contract test keeps the TS
   build byte-equivalent to the Python reference.

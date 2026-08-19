@@ -5,7 +5,7 @@ assistant/run_eval.py — Q&A evaluation runner over the POI-aware index.
 Loads indexes/{destination}_{lang}.json (built by pipeline/build_index.py)
 and runs each question in eval/questions.json through litellm tool calling.
 
-Five tools are exposed to the model:
+Six tools are exposed to the model:
 
     get_section(section_id, sort, limit)
         List the POIs inside one section, sorted by (interest_level,
@@ -61,11 +61,14 @@ from index_tools import (
     format_poi,
     format_find_poi_by_name,
     format_filter_pois,
+    format_search_pois,
     find_poi_by_name as ix_find_poi_by_name,
     filter_pois as ix_filter_pois,
+    search_pois as ix_search_pois,
     find_section,
     get_poi as ix_get_poi,
     extract_poi_tags,
+    sanitize_tourist_answer,
 )
 from common.lang_support import (
     SUPPORTED_LANGS,
@@ -83,6 +86,15 @@ DEFAULT_INDEX   = PROJECT_ROOT / "indexes" / "ubeda_en.json"
 RESULTS_DIR     = PROJECT_ROOT / "results"
 DEFAULT_MODEL   = DEFAULT_EVAL_MODEL   # oMLX E2B; the mobile deployment target
 MAX_TOOL_ROUNDS = 14
+NO_DIRECT_EVIDENCE_PREFIX = "No place record explicitly mentions all of:"
+COMPLEMENTARY_SEARCH_INSTRUCTION = (
+    "The direct evidence search did not find one place that combines all "
+    "requested concepts. Do not ask the visitor a follow-up question. In "
+    "this same turn, retrieve each concept separately with search_pois, "
+    "filter_pois, or get_section, then give clearly labelled complementary "
+    "options. State that the available visitor information does not confirm "
+    "the combination; do not imply that separate places satisfy it."
+)
 
 _SYSTEM_PROMPT_TEMPLATE = """\
 You are a tourism assistant for {destination}.  You answer visitor \
@@ -123,6 +135,12 @@ indispensable?, limit?)
           - filter_pois(interest_level=1, section_id="religious-heritage")
         Use the UNE type codes you see in tool results (e.g. Restaurant, \
 OilMill, Museum); do not guess codes from the user's words.
+  • search_pois(query, section_id?, limit?)
+        Evidence search across POI names and visitor descriptions. Use it to \
+check whether several visitor concepts appear on the SAME place, for example \
+"olive oil restaurant", "family museum", or "accessible parking". Results \
+include the supporting text. Use a short concept phrase, not the entire \
+visitor question.
 
   • list_sections()
         Returns the catalogue below.  Rarely needed — sections are \
@@ -158,9 +176,18 @@ get_section("gastronomy") or another relevant section, or try a \
 different UNE type code (e.g. for olive oil: OilMill, Restaurant), \
 before concluding nothing was found.  Look at the type codes shown in \
 section previews to pick a valid one.
+- For any compound visitor request ("X with Y", "X near Y", "X that \
+offers Y"), use search_pois() with the combined concepts first. Only say \
+a place has BOTH properties when that same record explicitly supports \
+both. If there is no direct match, still be helpful: retrieve each \
+concept separately and present clearly-labelled complementary options. \
+Say the available visitor information does not confirm the combination; \
+never imply that separate options satisfy it. Do this in the SAME turn: \
+do not stop, do not ask the visitor which search they prefer, and do not \
+make them repeat their request.
 - Never expose internal details in your answers: no type codes, no \
-tool names, no filter parameter names.  Say \"I couldn't find any \
-olive-oil places\" not \"no POIs matched type=OilMill\".
+tool names, no filter parameter names, no catalog terminology, and no \
+raw IDs. Speak like a local tourism host, not a database interface.
 - Tag every point of interest you mention.  The tag WRAPS the name \
 (the name goes BETWEEN opening and closing tag): \
   CORRECT: <poi id=5155 type=PlaceOfWorship>Church of San Nicolás</poi> \
@@ -169,6 +196,13 @@ olive-oil places\" not \"no POIs matched type=OilMill\".
 Bare numeric id, no quotes.  Do NOT write the type or interest level \
 in the answer prose — they belong only in the tag attribute.  Never \
 show raw 'poi/…' ids outside a tag.
+- OUTPUT VALIDITY REQUIREMENT: when a tool gives you a POI tag, copy that \
+exact tag around every mention of that POI in the final answer. A plain \
+POI name without its <poi ...> tag is invalid output because the mobile \
+app cannot open it. Do not replace a tagged name with an untagged \
+paraphrase. Only use an id that appeared in a tool result; NEVER invent \
+or guess an id. If no tool has provided an id for a name, leave that \
+name untagged rather than creating a tag.
 - {{lang_rule}}
 """
 
@@ -319,6 +353,39 @@ TOOL_DEFS = [
     {
         "type": "function",
         "function": {
+            "name": "search_pois",
+            "description": (
+                "Search POI names and visitor descriptions for explicit "
+                "evidence that every word in a concise query applies to "
+                "the same place. Use before claiming that a place combines "
+                "multiple visitor needs. Results include supporting text."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "query": {
+                        "type": "string",
+                        "description": (
+                            "Short evidence phrase, e.g. 'olive oil "
+                            "restaurant' or 'accessible parking'."
+                        ),
+                    },
+                    "section_id": {
+                        "type": "string",
+                        "description": "Optional section to search within.",
+                    },
+                    "limit": {
+                        "type": "integer",
+                        "description": "Maximum results (default 10).",
+                    },
+                },
+                "required": ["query"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
             "name": "list_sections",
             "description": (
                 "Return the section catalogue.  Already embedded in your "
@@ -386,6 +453,17 @@ def execute_tool(name: str, args: dict, index: dict,
         if key in cache:
             return cache[key], True
         result = format_filter_pois(index, limit=limit, **active)
+        cache[key] = result
+        return result, False
+    if name == "search_pois":
+        query = (args.get("query") or "").strip()
+        section_id = (args.get("section_id") or "").strip() or None
+        limit = int(args.get("limit") or 10)
+        key = ("search_pois", query.lower(), section_id, limit)
+        if key in cache:
+            return cache[key], True
+        result = format_search_pois(index, query, section_id=section_id,
+                                    limit=limit)
         cache[key] = result
         return result, False
 
@@ -456,6 +534,19 @@ def sections_accessed_from_calls(tool_calls: list, index: dict) -> list[str]:
                 for t in _section_titles_for_poi(index, poi["poi_id"]):
                     add(t)
 
+        elif tool == "search_pois":
+            section_id = (args.get("section_id") or "").strip() or None
+            limit = int(args.get("limit") or 10)
+            for item in ix_search_pois(
+                index,
+                args.get("query") or "",
+                section_id=section_id,
+                limit=limit,
+            ):
+                poi = item["poi"]
+                for t in _section_titles_for_poi(index, poi["poi_id"]):
+                    add(t)
+
         # list_sections doesn't access content
     return seen
 
@@ -478,6 +569,8 @@ def run_agentic_loop(question: str, system_prompt: str,
     rounds = 0
     prompt_tokens = 0
     completion_tokens = 0
+    direct_evidence_missing = False
+    complementary_retrieval_started = False
 
     for round_num in range(MAX_TOOL_ROUNDS):
         rounds = round_num + 1
@@ -517,7 +610,17 @@ def run_agentic_loop(question: str, system_prompt: str,
         messages.append(assistant_msg)
 
         if not message.tool_calls:
-            answer = (message.content or "").strip()
+            # A small model can correctly discover that no single record
+            # supports a compound request, then wrongly stop and ask the
+            # visitor to choose a next search. Force one generic recovery
+            # turn: retrieve complementary options in the same answer.
+            if direct_evidence_missing and not complementary_retrieval_started:
+                messages.append({
+                    "role": "user",
+                    "content": COMPLEMENTARY_SEARCH_INSTRUCTION,
+                })
+                continue
+            answer = sanitize_tourist_answer((message.content or "").strip(), index)
             break
 
         for tc in message.tool_calls:
@@ -529,6 +632,15 @@ def run_agentic_loop(question: str, system_prompt: str,
                 pass
 
             result, hit = execute_tool(fn_name, fn_args, index, sections_text, cache)
+            if fn_name == "search_pois":
+                if result.startswith(NO_DIRECT_EVIDENCE_PREFIX):
+                    direct_evidence_missing = True
+                elif direct_evidence_missing:
+                    complementary_retrieval_started = True
+            elif direct_evidence_missing and fn_name in {
+                "filter_pois", "get_section", "find_poi_by_name",
+            }:
+                complementary_retrieval_started = True
             if hit:
                 cache_hits += 1
             tool_calls_made.append({
@@ -546,7 +658,7 @@ def run_agentic_loop(question: str, system_prompt: str,
     if not answer:
         for msg in reversed(messages):
             if msg["role"] == "assistant" and msg.get("content"):
-                answer = msg["content"].strip()
+                answer = sanitize_tourist_answer(msg["content"].strip(), index)
                 break
 
     if not answer and not error:
@@ -561,7 +673,9 @@ def run_agentic_loop(question: str, system_prompt: str,
             if usage:
                 prompt_tokens     += getattr(usage, "prompt_tokens", 0) or 0
                 completion_tokens += getattr(usage, "completion_tokens", 0) or 0
-            answer = (recovery.choices[0].message.content or "").strip()
+            answer = sanitize_tourist_answer(
+                (recovery.choices[0].message.content or "").strip(), index
+            )
         except Exception as exc:
             error = f"recovery failed: {exc}"
 

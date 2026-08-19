@@ -9,7 +9,7 @@ Two modes:
     and the answer streams back; the conversation context carries
     across turns until you exit.
 
-Reuses the agentic loop and the five tools defined in run_eval.py.
+Reuses the agentic loop and the six tools defined in run_eval.py.
 
 Usage:
     .venv/bin/python assistant/chat_demo.py
@@ -47,12 +47,15 @@ from run_eval import (   # noqa: E402
     execute_tool,
     make_system_prompt,
     DEFAULT_INDEX,
+    NO_DIRECT_EVIDENCE_PREFIX,
+    COMPLEMENTARY_SEARCH_INSTRUCTION,
 )
 from index_tools import (   # noqa: E402
     load_index,
     format_sections_overview,
     format_section,
     extract_poi_tags,
+    sanitize_tourist_answer,
 )
 from common.lang_support import (   # noqa: E402
     SUPPORTED_LANGS,
@@ -112,16 +115,17 @@ class Spinner:
 def _status_for_call(name: str, args: dict) -> str:
     """Produce a short status line shown by the spinner during tool calls."""
     if name == "get_section":
-        return f"Loading section {args.get('section_id', '')}"
+        return "Looking through visitor information"
     if name == "get_poi":
-        return f"Loading POI {args.get('poi_id', '')}"
+        return "Checking place details"
     if name == "find_poi_by_name":
-        return f"Searching '{args.get('query', '')}'"
+        return "Finding the place"
     if name == "filter_pois":
-        echo = ", ".join(f"{k}={v}" for k, v in args.items() if v not in (None, "", [], {}))
-        return f"Filtering POIs ({echo})"
+        return "Finding suitable places"
+    if name == "search_pois":
+        return "Checking visitor information"
     if name == "list_sections":
-        return "Listing sections"
+        return "Checking available information"
     return f"Calling {name}"
 
 
@@ -146,6 +150,8 @@ def run_turn(question: str, messages: list[dict],
     error      = None
     cache_hits = 0
     rounds     = 0
+    direct_evidence_missing = False
+    complementary_retrieval_started = False
 
     for round_num in range(MAX_TOOL_ROUNDS):
         rounds = round_num + 1
@@ -155,6 +161,12 @@ def run_turn(question: str, messages: list[dict],
             acc_content    = ""
             acc_tool_calls: list[dict] = []
             streaming_live = False
+            # Hold an attempted final answer until we know it is not the
+            # "no direct match; what should I search next?" failure mode.
+            hold_stream_content = (
+                direct_evidence_missing
+                and not complementary_retrieval_started
+            )
 
             try:
                 response_stream = litellm.completion(
@@ -173,7 +185,7 @@ def run_turn(question: str, messages: list[dict],
                 delta = chunk.choices[0].delta
 
                 if delta.content:
-                    if not streaming_live:
+                    if not streaming_live and not hold_stream_content:
                         if on_stream_start:
                             on_stream_start()
                         else:
@@ -181,8 +193,9 @@ def run_turn(question: str, messages: list[dict],
                             sys.stdout.flush()
                         streaming_live = True
                     acc_content += delta.content
-                    sys.stdout.write(delta.content)
-                    sys.stdout.flush()
+                    if not hold_stream_content:
+                        sys.stdout.write(delta.content)
+                        sys.stdout.flush()
 
                 if delta.tool_calls:
                     for tc_delta in delta.tool_calls:
@@ -214,7 +227,13 @@ def run_turn(question: str, messages: list[dict],
             messages.append(assistant_msg)
 
             if not acc_tool_calls:
-                answer = acc_content.strip()
+                if direct_evidence_missing and not complementary_retrieval_started:
+                    messages.append({
+                        "role": "user",
+                        "content": COMPLEMENTARY_SEARCH_INSTRUCTION,
+                    })
+                    continue
+                answer = sanitize_tourist_answer(acc_content.strip(), index)
                 break
 
             # Convert accumulated deltas to tool-call dispatch format
@@ -258,7 +277,13 @@ def run_turn(question: str, messages: list[dict],
             messages.append(assistant_msg)
 
             if not message.tool_calls:
-                answer = (message.content or "").strip()
+                if direct_evidence_missing and not complementary_retrieval_started:
+                    messages.append({
+                        "role": "user",
+                        "content": COMPLEMENTARY_SEARCH_INSTRUCTION,
+                    })
+                    continue
+                answer = sanitize_tourist_answer((message.content or "").strip(), index)
                 break
 
             raw_tool_calls = message.tool_calls
@@ -276,6 +301,15 @@ def run_turn(question: str, messages: list[dict],
                 on_status(_status_for_call(fn_name, fn_args))
 
             result, hit = execute_tool(fn_name, fn_args, index, sections_text, cache)
+            if fn_name == "search_pois":
+                if result.startswith(NO_DIRECT_EVIDENCE_PREFIX):
+                    direct_evidence_missing = True
+                elif direct_evidence_missing:
+                    complementary_retrieval_started = True
+            elif direct_evidence_missing and fn_name in {
+                "filter_pois", "get_section", "find_poi_by_name",
+            }:
+                complementary_retrieval_started = True
             if hit:
                 cache_hits += 1
             tool_calls_made.append({
@@ -294,7 +328,7 @@ def run_turn(question: str, messages: list[dict],
     if not answer:
         for msg in reversed(messages):
             if msg["role"] == "assistant" and msg.get("content"):
-                answer = msg["content"].strip()
+                answer = sanitize_tourist_answer(msg["content"].strip(), index)
                 break
 
     if not answer and not error:
@@ -305,7 +339,9 @@ def run_turn(question: str, messages: list[dict],
                 messages=messages + [{"role": "user", "content": msg}],
                 temperature=0,
             )
-            answer = (recovery.choices[0].message.content or "").strip()
+            answer = sanitize_tourist_answer(
+                (recovery.choices[0].message.content or "").strip(), index
+            )
         except Exception as exc:
             error = f"recovery failed: {exc}"
 

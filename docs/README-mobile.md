@@ -29,12 +29,17 @@ Cloudflare R2:  destinations/{slug}/{slug}_{lang}.json  +  meta/manifest.json
       │  HTTPS download when online (ETag / 304 refresh)
       ▼
 Phone: parse index JSON once → fully offline
-       Gemma 4 E2B + five local lookup tools over the parsed JSON
+       Gemma 4 E2B + six local lookup tools over the parsed JSON
 ```
 
 The index file is the **only** artifact your app consumes. Everything in
 it is precomputed server-side; the phone never calls the Inventrip API
 for chat content.
+
+The app receives final answers with tag-ready POI mentions:
+`<poi id=36694 type=OilMill>ALMAZARA BALTASAR LARA Y CÍA.</poi>`. Render
+the inner text; only make it tappable after verifying `poi/36694` exists
+in the downloaded `pois` map. Unknown tags remain plain text.
 
 ---
 
@@ -137,7 +142,7 @@ destinations by proximity.
 
 ---
 
-## 4. The index file (schema v2)
+## 4. The index file (schema v3)
 
 One JSON object per file. Reference size: ~0.75 MB (Úbeda, 367 POIs).
 Parse it fully into memory at session start — everything is then
@@ -162,12 +167,13 @@ dict/map lookups.
 ```json
 { "destination": "ubeda", "destination_display": "Úbeda", "lang": "en",
   "generated_at": "2026-08-16T05:13:09Z", "poi_count": 367,
-  "section_count": 18, "schema_version": 2 }
+  "section_count": 18, "schema_version": 3 }
 ```
 
 **Versioning rule:** additive changes bump `schema_version`; readers
-must ignore unknown keys. v2 added `sections[].groups` — a v1 reader
-still works because `sections[].poi_ids` remains complete.
+must ignore unknown keys. v2 added `sections[].groups`; v3 adds
+`facets.search_terms` for deterministic evidence search. Older readers
+still work because `sections[].poi_ids` and POI records remain complete.
 
 ### 4.3 `trips[]`
 
@@ -280,12 +286,28 @@ All values are lists of `poi_id`, unsorted:
 | `by_interest_level` | `"1"`/`"2"`/`"3"` | `"1"` → indispensable ids |
 | `by_zoom_bucket` | `"<=14"`, `"15-16"`, `"17-19"` | map-prominence bands |
 | `indispensable` | — (list) | all `interest_level == 1` ids |
+| `search_terms` | normalized word | sorted POI ids whose visitor-facing record contains the word |
 
 Filtering with AND semantics (e.g. "indispensable food spots") is set
 intersection: `by_tourist_type["FOOD TOURISM"] ∩ indispensable`. Sort
 results by `(interest_level, zoom_level, normalized_name)`, nulls last.
 
-### 4.7 `name_index` and name search
+### 4.7 Same-record evidence search
+
+`facets.search_terms` is a deterministic inverted full-text index over
+each POI's name, description, category label, tourism-interest labels,
+and locality. The offline `search_pois` tool intersects postings for every
+query term to verify that a compound request is supported by the **same**
+POI.
+
+Example: `olive oil restaurant` has no direct result in the current
+Úbeda English catalogue. The data supports olive-oil places and
+restaurants separately, but does not assert that any restaurant serves
+olive-oil cuisine. The assistant must explain that evidence gap in normal
+tourist language, then offer separately labelled complementary options;
+it must never invent the relationship.
+
+### 4.8 `name_index` and name search
 
 `name_index` maps **normalized** POI names to `poi_id`. It is lossy on
 collisions (first writer wins; < 2% of POIs in practice) — treat it as
@@ -300,7 +322,7 @@ The reference fuzzy search (port of `assistant/index_tools.py`) ranks:
 
 ties broken by interest level. Return the top 5.
 
-### 4.8 Text normalization — must match exactly
+### 4.9 Text normalization — must match exactly
 
 Indexed names and user queries only meet if both sides normalize
 identically (port of `common/textnorm.py`):
@@ -353,7 +375,7 @@ The LLM layer on top of this (tools, prompt, loop) is specified in
 
 | Metric | Value |
 |---|---|
-| Index file size | 731 KB (schema v2, English) |
+| Index file size | 993 KB / 127 KB gzip (schema v3, English) |
 | POIs / sections | 367 / 18 (4 sections carry `groups`) |
 | Parse time on desktop | < 10 ms |
 | Assistant quality gate (E2B) | grounding 75.0% / content-fetch 95% — both pass |

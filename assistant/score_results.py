@@ -188,6 +188,7 @@ def score_retrieval(result: dict) -> float:
 _CONTENT_FETCH_TOOLS = frozenset({
     # POI-index tools
     "get_poi", "get_section", "find_poi_by_name", "filter_pois",
+    "search_pois",
     # Legacy PageIndex tools
     "get_page_content", "get_poi_list",
 })
