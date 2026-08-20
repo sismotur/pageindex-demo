@@ -66,7 +66,7 @@
 ┌──────────────────────────────────────────────────────────────┐
 │              Mobile app (Android / iOS)                      │
 │  downloads indexes/{dest}_{lang}.json once, then offline:    │
-│  Gemma 4 E2B + 5 local tools over the index                  │
+│  Gemma 4 E2B + 10 local tools over the index                 │
 │  (contract: docs/mobile-offline-contract.md)                 │
 └──────────────────────────────────────────────────────────────┘
 ```
@@ -97,8 +97,8 @@ inventrip-rag/
 Object keys mirror the local pipeline output exactly:
 `destinations/{slug}/{slug}_{lang}.json`.
 
-**Storage (all languages):** 200 destinations × 16 languages × ~0.75 MB
-≈ **2.4 GB**. R2 at $0.015/GB-month ≈ $0.04/month. Negligible; the API
+**Storage (all languages):** 200 destinations × 16 languages × ~1.1 MB
+≈ **3.5 GB**. R2 at $0.015/GB-month ≈ $0.06/month. Negligible; the API
 fetch volume is the real cost driver.
 
 Objects are **immutable between pipeline runs** — they change only when the

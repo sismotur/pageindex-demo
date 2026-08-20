@@ -203,7 +203,7 @@ pageindex-demo/
 │   └── json_to_markdown.py            ← optional human-readable export
 │
 ├── assistant/                         ← PART 2: offline chatbot reference (→ mobile)
-│   ├── index_tools.py                 ← six tools, pure dict lookups + evidence search
+│   ├── index_tools.py                 ← ten tools, evidence + trip/path retrieval
 │   ├── run_eval.py                    ← Step 3: agentic Q&A evaluation
 │   ├── chat_demo.py                   ← interactive / scripted chat demo
 │   └── score_results.py               ← Step 4: score grounding + retrieval
@@ -213,7 +213,7 @@ pageindex-demo/
 │   └── ubeda_destination_{en,es,it}.json
 │
 ├── indexes/                           ← build_index.py output, tracked
-│   └── ubeda_{en,es,it}.json          ← POI-aware index (~1.0 MB; ~130 KB gzip)
+│   └── ubeda_{en,es,it}.json          ← POI-aware index (~1.0–1.1 MB; ~135 KB gzip)
 │
 ├── eval/
 │   ├── questions.json                 ← 20 curated visitor questions (English)
