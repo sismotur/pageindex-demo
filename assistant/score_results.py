@@ -189,6 +189,7 @@ _CONTENT_FETCH_TOOLS = frozenset({
     # POI-index tools
     "get_poi", "get_section", "find_poi_by_name", "filter_pois",
     "search_pois",
+    "search_trips", "get_trip", "search_paths", "get_path",
     # Legacy PageIndex tools
     "get_page_content", "get_poi_list",
 })

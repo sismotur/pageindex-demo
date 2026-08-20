@@ -62,9 +62,17 @@ from index_tools import (
     format_find_poi_by_name,
     format_filter_pois,
     format_search_pois,
+    format_search_trips,
+    format_trip,
+    format_search_paths,
+    format_path,
     find_poi_by_name as ix_find_poi_by_name,
     filter_pois as ix_filter_pois,
     search_pois as ix_search_pois,
+    search_trips as ix_search_trips,
+    search_paths as ix_search_paths,
+    get_trip as ix_get_trip,
+    get_path as ix_get_path,
     find_section,
     get_poi as ix_get_poi,
     extract_poi_tags,
@@ -79,6 +87,7 @@ from common.lang_support import (
     is_supported,
 )
 from common.models import DEFAULT_EVAL_MODEL
+from common.textnorm import tokenize
 
 # ── Constants ───────────────────────────────────────────────────────────────────────
 QUESTIONS_FILE  = PROJECT_ROOT / "eval" / "questions.json"
@@ -95,6 +104,42 @@ COMPLEMENTARY_SEARCH_INSTRUCTION = (
     "options. State that the available visitor information does not confirm "
     "the combination; do not imply that separate places satisfy it."
 )
+ROUTE_INTENT_TERMS = frozenset({
+    # English
+    "route", "walking", "walk", "cycling", "cycle", "bicycle", "bike",
+    "trail", "track", "hiking", "hike", "trek",
+    # Spanish / Catalan / Galician / Basque
+    "ruta", "caminar", "caminata", "sendero", "senderismo", "bicicleta",
+    "ciclismo", "paseo", "cami", "bici", "ibilbide",
+    # Italian / French / Portuguese
+    "percorso", "piedi", "sentiero", "camminata", "bici", "bicicletta",
+    "randonnée", "randonnee", "velo", "ciclovia", "caminho",
+    # German / Dutch / Croatian
+    "wander", "wanderweg", "fahrrad", "radweg", "spaziergang", "route",
+    "wandeling", "fiets", "staza", "pješa", "setnja",
+})
+ROUTE_SEARCH_INSTRUCTION = (
+    "This is a physical walking, cycling, trail, track, or route request. "
+    "You must call search_paths now. Do not ask the visitor to clarify "
+    "before checking the available physical routes. Never substitute a "
+    "curated trip for a physical route."
+)
+NO_PATH_ANSWER_INSTRUCTION = (
+    "The visitor information has no matching physical path. State that "
+    "clearly and concisely now. Do not ask a follow-up question and do not "
+    "substitute a curated trip as though it were a route."
+)
+
+
+def is_physical_route_request(question: str) -> bool:
+    """Detect a physical-route request across the supported app languages."""
+    terms = tokenize(question)
+    return any(
+        term in ROUTE_INTENT_TERMS
+        or any(term.startswith(route) or route.startswith(term)
+               for route in ROUTE_INTENT_TERMS if len(route) >= 4)
+        for term in terms
+    )
 
 _SYSTEM_PROMPT_TEMPLATE = """\
 You are a tourism assistant for {destination}.  You answer visitor \
@@ -104,7 +149,7 @@ of every point of interest, trip and itinerary in the destination.
 The full section catalogue is listed below — you do NOT need to call any \
 tool to discover it.  Use this information directly.
 
-You have FIVE tools.  Pick the one that fits the question:
+You have TEN tools. Pick the one that fits the question:
 
   • get_section(section_id, sort?, limit?)
         List POIs inside one section.  Returns id + name + a one-line preview.
@@ -142,6 +187,25 @@ check whether several visitor concepts appear on the SAME place, for example \
 include the supporting text. Use a short concept phrase, not the entire \
 visitor question.
 
+  • search_trips(query, limit?)
+        Search curated suggestions for what to do over a theme, day, or
+        multi-day visit. These are editorial plans, NOT walking/biking
+        routes. Use for "what should I do for two days?", themed visits,
+        or curated itinerary suggestions.
+
+  • get_trip(trip_id)
+        Return the full ordered stops and description of one curated trip
+        suggestion. Use after search_trips().
+
+  • search_paths(query, limit?)
+        Search physical routes fetched from the destination's /paths data.
+        Use ONLY for walking, cycling, trail, track, or route requests.
+        Never use a trip as a substitute for a physical route.
+
+  • get_path(path_id)
+        Return the full ordered waypoint stops of one physical route.
+        Use after search_paths().
+
   • list_sections()
         Returns the catalogue below.  Rarely needed — sections are \
 pre-loaded.
@@ -163,6 +227,11 @@ filter_pois(indispensable=true) before browsing sections.
 - For "tell me about <name>" / "what is <name>" questions, call \
 find_poi_by_name() with detail="full" first — it returns the best match's \
 full record in one call.
+- For "what to do", themed visits, one-day, or multi-day plan requests,
+  search curated trips first. For walking, cycling, trail, track, or
+  route requests, search physical paths first. A curated trip is never a
+  physical route; if no path is available, say so rather than substituting
+  a trip. Do not ask the visitor to reformulate the route request.
 - After filter_pois: if the question needs a description, dates, \
 address, phone, architect, or any per-POI detail beyond the name, \
 call get_poi on the most relevant result before answering. \
@@ -386,6 +455,95 @@ TOOL_DEFS = [
     {
         "type": "function",
         "function": {
+            "name": "search_trips",
+            "description": (
+                "Search curated suggestions for what to do over a theme, "
+                "day, or multi-day visit. These are editorial suggestions, "
+                "not physical walking or biking routes."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "query": {
+                        "type": "string",
+                        "description": "Short trip theme or visit goal.",
+                    },
+                    "limit": {
+                        "type": "integer",
+                        "description": "Maximum suggestions (default 10).",
+                    },
+                },
+                "required": ["query"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "get_trip",
+            "description": (
+                "Return one curated trip suggestion with its ordered stops. "
+                "Use only after search_trips."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "trip_id": {
+                        "type": "string",
+                        "description": "Trip id, e.g. 'trip/4407' or '4407'.",
+                    },
+                },
+                "required": ["trip_id"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "search_paths",
+            "description": (
+                "Search physical walking, cycling, trail, track, or route "
+                "records fetched from /v120/paths. Never returns a trip."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "query": {
+                        "type": "string",
+                        "description": "Short route, activity, or trail query.",
+                    },
+                    "limit": {
+                        "type": "integer",
+                        "description": "Maximum routes (default 10).",
+                    },
+                },
+                "required": ["query"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "get_path",
+            "description": (
+                "Return one physical route from /v120/paths with ordered "
+                "waypoint stops. Use only after search_paths."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "path_id": {
+                        "type": "string",
+                        "description": "Path id, e.g. 'path/123' or '123'.",
+                    },
+                },
+                "required": ["path_id"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
             "name": "list_sections",
             "description": (
                 "Return the section catalogue.  Already embedded in your "
@@ -466,6 +624,40 @@ def execute_tool(name: str, args: dict, index: dict,
                                     limit=limit)
         cache[key] = result
         return result, False
+    if name == "search_trips":
+        query = (args.get("query") or "").strip()
+        limit = int(args.get("limit") or 10)
+        key = ("search_trips", query.lower(), limit)
+        if key in cache:
+            return cache[key], True
+        result = format_search_trips(index, query, limit=limit)
+        cache[key] = result
+        return result, False
+    if name == "get_trip":
+        trip_id = (args.get("trip_id") or "").strip()
+        key = ("get_trip", trip_id)
+        if key in cache:
+            return cache[key], True
+        result = format_trip(index, trip_id)
+        cache[key] = result
+        return result, False
+    if name == "search_paths":
+        query = (args.get("query") or "").strip()
+        limit = int(args.get("limit") or 10)
+        key = ("search_paths", query.lower(), limit)
+        if key in cache:
+            return cache[key], True
+        result = format_search_paths(index, query, limit=limit)
+        cache[key] = result
+        return result, False
+    if name == "get_path":
+        path_id = (args.get("path_id") or "").strip()
+        key = ("get_path", path_id)
+        if key in cache:
+            return cache[key], True
+        result = format_path(index, path_id)
+        cache[key] = result
+        return result, False
 
     return f"[ERROR] Unknown tool: {name}", False
 
@@ -494,6 +686,14 @@ def sections_accessed_from_calls(tool_calls: list, index: dict) -> list[str]:
     def add(title: str) -> None:
         if title and title not in seen:
             seen.append(title)
+
+    def add_itinerary_sections(itinerary: dict | None) -> None:
+        if not itinerary:
+            return
+        for step in itinerary.get("steps") or []:
+            for poi_id in step.get("poi_ids") or []:
+                for title in _section_titles_for_poi(index, poi_id):
+                    add(title)
 
     for call in tool_calls:
         tool = call.get("tool")
@@ -547,6 +747,30 @@ def sections_accessed_from_calls(tool_calls: list, index: dict) -> list[str]:
                 for t in _section_titles_for_poi(index, poi["poi_id"]):
                     add(t)
 
+        elif tool == "search_trips":
+            for itinerary in ix_search_trips(
+                index, args.get("query") or "",
+                limit=int(args.get("limit") or 10),
+            ):
+                add_itinerary_sections(itinerary)
+
+        elif tool == "get_trip":
+            add_itinerary_sections(ix_get_trip(
+                index, args.get("trip_id") or "",
+            ))
+
+        elif tool == "search_paths":
+            for itinerary in ix_search_paths(
+                index, args.get("query") or "",
+                limit=int(args.get("limit") or 10),
+            ):
+                add_itinerary_sections(itinerary)
+
+        elif tool == "get_path":
+            add_itinerary_sections(ix_get_path(
+                index, args.get("path_id") or "",
+            ))
+
         # list_sections doesn't access content
     return seen
 
@@ -571,6 +795,10 @@ def run_agentic_loop(question: str, system_prompt: str,
     completion_tokens = 0
     direct_evidence_missing = False
     complementary_retrieval_started = False
+    physical_route_request = is_physical_route_request(question)
+    path_search_started = False
+    no_matching_path = False
+    no_path_answer_enforced = False
 
     for round_num in range(MAX_TOOL_ROUNDS):
         rounds = round_num + 1
@@ -610,6 +838,19 @@ def run_agentic_loop(question: str, system_prompt: str,
         messages.append(assistant_msg)
 
         if not message.tool_calls:
+            if physical_route_request and not path_search_started:
+                messages.append({
+                    "role": "user",
+                    "content": ROUTE_SEARCH_INSTRUCTION,
+                })
+                continue
+            if no_matching_path and not no_path_answer_enforced:
+                no_path_answer_enforced = True
+                messages.append({
+                    "role": "user",
+                    "content": NO_PATH_ANSWER_INSTRUCTION,
+                })
+                continue
             # A small model can correctly discover that no single record
             # supports a compound request, then wrongly stop and ask the
             # visitor to choose a next search. Force one generic recovery
@@ -641,6 +882,10 @@ def run_agentic_loop(question: str, system_prompt: str,
                 "filter_pois", "get_section", "find_poi_by_name",
             }:
                 complementary_retrieval_started = True
+            if fn_name == "search_paths":
+                path_search_started = True
+                if result.startswith("No curated routes matched"):
+                    no_matching_path = True
             if hit:
                 cache_hits += 1
             tool_calls_made.append({

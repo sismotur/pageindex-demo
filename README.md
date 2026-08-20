@@ -98,8 +98,8 @@ POI-aware index uses the structure that already exists in the source.
                              ▼
               ┌──────────────────────────────────┐
               │  indexes/{dest}_{lang}.json      │ ← THE OFFLINE ARTIFACT
-              │  meta · destination_overview     │   (phone downloads this
-              │  trips · sections (deterministic │   once, then works with
+              │  meta · overview · trips · paths │   (phone downloads this
+              │  sections (deterministic         │   once, then works with
               │     summaries) · pois · facets · │   no internet connection)
               │  name_index · search_terms       │
               └──────────────┬───────────────────┘
@@ -110,10 +110,11 @@ POI-aware index uses the structure that already exists in the source.
               │  assistant/run_eval.py           │       litellm tool calls
               │  assistant/chat_demo.py          │       to oMLX / Ollama
               │                                  │       (reference impl of
-              │  Six tools (pure dict lookups):  │       the on-device loop)
+              │  Ten tools (pure dict lookups):  │       the on-device loop)
               │   list_sections, get_section,    │
               │   get_poi, find_poi_by_name,     │
-              │   filter_pois, search_pois       │
+              │   filter_pois, search_pois,      │
+              │   trips + physical paths         │
               └──────────────────────────────────┘
 ```
 
@@ -127,7 +128,7 @@ in a text editor — but no script consumes it.
 
 ### Tools exposed to the LLM
 
-The model has six tools, each a pure dict lookup against the index
+The model has ten tools, each a pure dict lookup against the index
 (no I/O, no LLM-in-the-loop):
 
 | Tool | Purpose |
@@ -138,6 +139,8 @@ The model has six tools, each a pure dict lookup against the index
 | `find_poi_by_name(query, limit)` | Diacritic-insensitive fuzzy lookup by POI name. |
 | `filter_pois(interest_level, type, tourist_type, section_id, indispensable, limit)` | Facet query, all filters AND together. |
 | `search_pois(query, section_id, limit)` | Same-record full-text evidence search for compound visitor needs; prevents unsupported claims that one place combines separate concepts. |
+| `search_trips(query, limit)` / `get_trip(id)` | Curated theme/day/multi-day suggestions from `/v120/trips`; never presented as routes. |
+| `search_paths(query, limit)` / `get_path(id)` | Physical walking/cycling/trail routes from `/v120/paths`; never substitutes a trip. |
 
 A typical answer flow:
 
@@ -148,6 +151,9 @@ A typical answer flow:
 - **"Restaurants with olive oil"** → `search_pois("olive oil restaurant")`;
   when no direct record exists, retrieve each concept separately and
   present complementary options without inventing the combination.
+- **"What should I do for two days?"** → `search_trips(...)`.
+- **"Show me a walking route"** → `search_paths(...)`; if the destination
+  supplies no `/paths` record, say so without substituting a trip.
 
 ---
 

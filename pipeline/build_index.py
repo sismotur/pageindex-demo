@@ -515,28 +515,86 @@ def build_destination_overview(dest_data: dict | None,
     return "\n\n".join(parts).strip()
 
 
-def build_trips(dest_data: dict | None) -> list[dict]:
-    """Return the curated trips with their itinerary POI names."""
-    if not dest_data:
-        return []
-    out = []
-    for t in dest_data.get("trips") or []:
-        if not t.get("itinerary"):
-            continue
-        steps = []
-        for step in t["itinerary"]:
-            steps.append({
-                "step": step.get("step", ""),
-                "pois": list(step.get("pois") or []),
-            })
-        out.append({
-            "trip_id":     t.get("id") or "",
-            "name":        t.get("name") or "",
-            "description": t.get("description") or "",
-            "url":         t.get("url") or "",
-            "steps":       steps,
+def _resolve_itinerary_steps(raw_steps: list[dict],
+                             name_index: dict[str, str]) -> list[dict]:
+    """Resolve ordered localized waypoint names to POI ids when exact.
+
+    Never discard an unresolved name: catalogues can contain itinerary
+    stops that are not represented by an individual POI record, or whose
+    translation does not exactly match the POI title.
+    """
+    steps = []
+    for position, raw_step in enumerate(raw_steps, 1):
+        names = list(raw_step.get("pois") or [])
+        poi_ids: list[str] = []
+        unresolved: list[str] = []
+        for name in names:
+            poi_id = name_index.get(normalize_text(name))
+            if poi_id:
+                poi_ids.append(poi_id)
+            else:
+                unresolved.append(name)
+        steps.append({
+            "position":             position,
+            "title":                raw_step.get("step") or "",
+            "poi_ids":              poi_ids,
+            "unresolved_poi_names": unresolved,
         })
-    return out
+    return steps
+
+
+def build_itineraries(dest_data: dict | None,
+                      name_index: dict[str, str]) -> tuple[list[dict], list[dict]]:
+    """Return curated trips and paths in the shared schema-v4 shape."""
+    if not dest_data:
+        return [], []
+
+    trips = []
+    for raw_trip in dest_data.get("trips") or []:
+        raw_steps = list(raw_trip.get("itinerary") or [])
+        # Some valid editorial trip suggestions have only a title and
+        # description (no ordered stops yet). Keep them searchable rather
+        # than silently deleting the suggestion from the offline corpus.
+        if not raw_steps and not (
+            raw_trip.get("id") or raw_trip.get("name") or raw_trip.get("description")
+        ):
+            continue
+        itinerary_id = raw_trip.get("id") or ""
+        trips.append({
+            "itinerary_id": itinerary_id,
+            # Kept as a backwards-compatible alias for v1–v3 consumers.
+            "trip_id":      itinerary_id,
+            "kind":         "trip",
+            "source_type":  raw_trip.get("type") or "TouristTrip",
+            "name":         raw_trip.get("name") or "",
+            "description":  raw_trip.get("description") or "",
+            "url":          raw_trip.get("url") or "",
+            "steps":        _resolve_itinerary_steps(raw_steps, name_index),
+        })
+
+    paths = []
+    for raw_path in dest_data.get("paths") or []:
+        # New snapshots retain step boundaries; older snapshots only have
+        # flat waypoints, which become one ordered "Waypoints" step.
+        raw_steps = list(raw_path.get("itinerary") or [])
+        if not raw_steps and raw_path.get("waypoints"):
+            raw_steps = [{"step": "Waypoints",
+                          "pois": list(raw_path.get("waypoints") or [])}]
+        if not raw_steps and not raw_path.get("name"):
+            continue
+        itinerary_id = raw_path.get("id") or ""
+        paths.append({
+            "itinerary_id": itinerary_id,
+            "path_id":      itinerary_id,
+            "kind":         "path",
+            "source_type":  "Path",
+            "name":         raw_path.get("name") or "",
+            "description":  raw_path.get("description") or "",
+            "url":          raw_path.get("url") or "",
+            "steps":        _resolve_itinerary_steps(raw_steps, name_index),
+        })
+
+    return trips, paths
 
 
 # ── Top-level builder ──────────────────────────────────────────────────────
@@ -573,18 +631,21 @@ def build_index(raw_pois: list[dict], dest_data: dict | None,
         if record["poi_id"]:
             normalised.append(record)
 
-    # Group into sections + summarise
-    sections = assemble_sections(normalised)
-    # Materialise the per-POI dictionary
-    pois_by_id = {p["poi_id"]: p for p in normalised}
-    # Facets
-    facets = build_facets(normalised, sections)
     # Name index — lossy on collisions, but at 367 POIs collisions are <2%
     name_index: dict[str, str] = {}
     for p in normalised:
         norm = p["normalized_name"]
         if norm and norm not in name_index:
             name_index[norm] = p["poi_id"]
+    # Group into sections + summarise
+    sections = assemble_sections(normalised)
+    # Materialise the per-POI dictionary
+    pois_by_id = {p["poi_id"]: p for p in normalised}
+    # Facets
+    facets = build_facets(normalised, sections)
+    # Curated itinerary records resolve waypoint names against this
+    # language's exact name index.
+    trips, paths = build_itineraries(dest_data, name_index)
 
     destination_display = ""
     if dest_data and dest_data.get("destination", {}).get("name"):
@@ -600,14 +661,13 @@ def build_index(raw_pois: list[dict], dest_data: dict | None,
             "generated_at":        datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
             "poi_count":           len(normalised),
             "section_count":       len(sections),
-            # v3: v2 section groups plus facets.search_terms, a
-            # deterministic full-text inverted index used by search_pois().
-            # Older readers can ignore both additions and still use POIs
-            # and the existing facet maps.
-            "schema_version":      3,
+            # v4: schema-v3 evidence search plus resolved curated trips
+            # and paths. Older readers can ignore the additions.
+            "schema_version":      4,
         },
         "destination_overview": build_destination_overview(dest_data, tourist_type_display),
-        "trips":                build_trips(dest_data),
+        "trips":                trips,
+        "paths":                paths,
         "sections":             sections,
         "pois":                 pois_by_id,
         "facets":               facets,

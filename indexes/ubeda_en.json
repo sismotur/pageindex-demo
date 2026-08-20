@@ -3,668 +3,885 @@
     "destination": "ubeda",
     "destination_display": "Úbeda",
     "lang": "en",
-    "generated_at": "2026-08-19T05:49:29Z",
+    "generated_at": "2026-08-20T05:01:25Z",
     "poi_count": 367,
     "section_count": 18,
-    "schema_version": 3
+    "schema_version": 4
   },
   "destination_overview": "Important and populous city located on the hills of its namesake, in the geographical center of the province, in a landscape populated by olive trees and cereal fields.\n\nÚbeda is an artistic and monumental city, no matter where you look, and one of the most stately and glorious towns in Andalusia. Castilian and Renaissance on all sides, it contains such a quantity of monuments, churches, palaces, and stately homes that the best thing to do is to stroll through it and virtually transport oneself to the time of its historical splendor: The Chapel of El Salvador, located in the incomparable square of the Town Hall, the Church of S. Pablo, the Church of Santa María de los Reales Alcázares, the Church of La Trinidad, the Oratory of San Juan de la Cruz, Monastery of Santa Clara, Vela de los Cobos Palace, Las Cadenas Palace, Casa de las Torres, Santiago Hospital, Hospital of the Honored Old of El Salvador, Clock Tower, Walls of La Cava, Pottery Museum, and the National Parador of Tourism, are some of the wonders that this surprising city contains.\n\nIn addition to these attractions, a visit to the walls and the splendid view obtained from there is suggested, as well as to its potters, especially to the house-museum of Paco Titos.\n\n- Tourism types: Heritage, Architecture, Short Break, Olive Oil\n- Networks: WORLD HERITAGE CITIES\n- Official website: https://www.turismodeubeda.com/index.php/es/",
   "trips": [
     {
+      "itinerary_id": "trip/4267",
       "trip_id": "trip/4267",
+      "kind": "trip",
+      "source_type": "TouristTrip",
       "name": "Viaje Promocional",
       "description": "Descubre Úbeda. Ciudad Patrimonio de la Humanidad.",
       "url": "https://inventrip.com/ubeda/trip/4267",
       "steps": [
         {
-          "step": "Cerca de ti",
-          "pois": [
-            "Church of San Lorenzo",
-            "House of the Towers",
-            "Puerta de Granada",
-            "San Lorenzo Viewpoints"
-          ]
+          "position": 1,
+          "title": "Cerca de ti",
+          "poi_ids": [
+            "poi/5141",
+            "poi/5142",
+            "poi/5143",
+            "poi/30143"
+          ],
+          "unresolved_poi_names": []
         },
         {
-          "step": "A tu alrededor",
-          "pois": [
-            "Palacio de los Medinilla",
-            "Interpretation Center \"The Walls of Úbeda: Tower of the Portillo del Santo Cristo\"",
-            "Old Convent of San Francisco",
-            "Cava Gardens and Children's Playground"
-          ]
+          "position": 2,
+          "title": "A tu alrededor",
+          "poi_ids": [
+            "poi/30131",
+            "poi/30139",
+            "poi/30140",
+            "poi/35685"
+          ],
+          "unresolved_poi_names": []
         }
       ]
     },
     {
+      "itinerary_id": "trip/4407",
       "trip_id": "trip/4407",
+      "kind": "trip",
+      "source_type": "TouristTrip",
       "name": "TASTE ÚBEDA",
       "description": "Enjoy our gastronomy in the wide variety of restaurants and tapas bars typical of the province, with local products that will not leave the diner indifferent.",
       "url": "https://inventrip.com/ubeda/trip/4407",
       "steps": [
         {
-          "step": "Restaurants",
-          "pois": [
-            "Restaurant \"Asador de Santiago\"",
-            "Restaurant \"Four Seasons\"",
-            "Restaurant Grill \"Al-Andalus\"",
-            "Restaurant Grill \"El Trujal\"",
-            "Restaurant \"Antique\"",
-            "Restaurant \"La Imprenta\"",
-            "Restaurant \"Cantina La Estación\"",
-            "Restaurant \"Casa Luciano\"",
-            "Restaurant \"Rosaleda de don Pedro\"",
-            "Restaurant \"Salón Condestable\"",
-            "Restaurant Mesón \"Gabino\"",
-            "D'Angelo Pizzeria Restaurant",
-            "Restaurant Pizzeria \"Venice\"",
-            "Restaurant \"El Zaguán\"",
-            "Restaurant Hermitage of Mother of God",
-            "Dean Ortega Palace. Tourism Parador"
-          ]
+          "position": 1,
+          "title": "Restaurants",
+          "poi_ids": [
+            "poi/35398",
+            "poi/35403",
+            "poi/35397",
+            "poi/35400",
+            "poi/35395",
+            "poi/35407",
+            "poi/35402",
+            "poi/35424",
+            "poi/35430",
+            "poi/35431",
+            "poi/35409",
+            "poi/35427",
+            "poi/35428",
+            "poi/35432",
+            "poi/35426",
+            "poi/30117"
+          ],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Tapas area",
-          "pois": [
-            "Royal Street Totem",
-            "Plaza 1º de Mayo tapas area",
-            "Tapas area at the Town Hall Square",
-            "Taperías area, Lower Street of El Salvador",
-            "Taperías area on Cristo Rey Avenue"
-          ]
+          "position": 2,
+          "title": "Tapas area",
+          "poi_ids": [
+            "poi/35695",
+            "poi/35702",
+            "poi/35703",
+            "poi/35704",
+            "poi/35708"
+          ],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Buy local products",
-          "pois": [
-            "Úbeda Pastry Shop",
-            "Los Baezanos Nougat Shop",
-            "Alejo & Doña Rosita Café",
-            "Croissant Bakery The Good Bread",
-            "Los Portalillos Pastry and Coffee Shop",
-            "Vandelvira Bakery",
-            "Paniaceite Bakery"
-          ]
+          "position": 3,
+          "title": "Buy local products",
+          "poi_ids": [
+            "poi/36163",
+            "poi/36165",
+            "poi/36167",
+            "poi/36168",
+            "poi/36169",
+            "poi/36170",
+            "poi/36179"
+          ],
+          "unresolved_poi_names": []
         }
       ]
     },
     {
+      "itinerary_id": "trip/4413",
       "trip_id": "trip/4413",
+      "kind": "trip",
+      "source_type": "TouristTrip",
       "name": "TO REST...",
       "description": "Different accommodations to stay and rest during your visit; from the most modern ones with all their equipment, to cozy rooms in beautiful Renaissance palaces.",
       "url": "https://inventrip.com/ubeda/trip/4413",
       "steps": [
         {
-          "step": "Tourist Apartments \"El Losal\"",
-          "pois": []
+          "position": 1,
+          "title": "Tourist Apartments \"El Losal\"",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Hotel Las Casas del Cónsul",
-          "pois": []
+          "position": 2,
+          "title": "Hotel Las Casas del Cónsul",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Hotel Las Casas del Cónsul",
-          "pois": []
+          "position": 3,
+          "title": "Hotel Las Casas del Cónsul",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Santa María de Úbeda Hostel",
-          "pois": []
+          "position": 4,
+          "title": "Santa María de Úbeda Hostel",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Hotel Afán de Rivera",
-          "pois": []
+          "position": 5,
+          "title": "Hotel Afán de Rivera",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Hotel María De Molina",
-          "pois": []
+          "position": 6,
+          "title": "Hotel María De Molina",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Hotel Nine Legends",
-          "pois": []
+          "position": 7,
+          "title": "Hotel Nine Legends",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Yit El Postigo Hotel",
-          "pois": []
+          "position": 8,
+          "title": "Yit El Postigo Hotel",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Tourist Apartments \"Palacio del Agua\"",
-          "pois": []
+          "position": 9,
+          "title": "Tourist Apartments \"Palacio del Agua\"",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Ordoñez Sandoval Hotel",
-          "pois": []
+          "position": 10,
+          "title": "Ordoñez Sandoval Hotel",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Hotel Palace of the Marquis of La Rambla",
-          "pois": []
+          "position": 11,
+          "title": "Hotel Palace of the Marquis of La Rambla",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Hotel Ciudad de Úbeda",
-          "pois": []
+          "position": 12,
+          "title": "Hotel Ciudad de Úbeda",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Hotel La Paz",
-          "pois": []
+          "position": 13,
+          "title": "Hotel La Paz",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Hotel Don Juan Boutique",
-          "pois": []
+          "position": 14,
+          "title": "Hotel Don Juan Boutique",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Tourist Apartments \"Fuente Redonda\"",
-          "pois": []
+          "position": 15,
+          "title": "Tourist Apartments \"Fuente Redonda\"",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Apartamentos Turísticos\" Quotidianum\"",
-          "pois": []
+          "position": 16,
+          "title": "Apartamentos Turísticos\" Quotidianum\"",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Hotel Álvar Fáñez",
-          "pois": []
+          "position": 17,
+          "title": "Hotel Álvar Fáñez",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Hotel Álvaro de Torres",
-          "pois": []
+          "position": 18,
+          "title": "Hotel Álvaro de Torres",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Tourist Apartments \"Sol Real\"",
-          "pois": []
+          "position": 19,
+          "title": "Tourist Apartments \"Sol Real\"",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Tourist Apartments \"Architettura\"",
-          "pois": []
+          "position": 20,
+          "title": "Tourist Apartments \"Architettura\"",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Yamaríes Inn",
-          "pois": []
+          "position": 21,
+          "title": "Yamaríes Inn",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Rosaleda De Don Pedro Hotel",
-          "pois": []
+          "position": 22,
+          "title": "Rosaleda De Don Pedro Hotel",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Dean Ortega Palace. Tourism Parador",
-          "pois": []
+          "position": 23,
+          "title": "Dean Ortega Palace. Tourism Parador",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Hotel Palacio de Úbeda G.L. Restaurant \"El Ábside\"",
-          "pois": []
+          "position": 24,
+          "title": "Hotel Palacio de Úbeda G.L. Restaurant \"El Ábside\"",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         }
       ]
     },
     {
+      "itinerary_id": "trip/4419",
       "trip_id": "trip/4419",
+      "kind": "trip",
+      "source_type": "TouristTrip",
       "name": "GUIDED TOURS",
       "description": "Discover the city in the best hands.",
       "url": "https://inventrip.com/ubeda/trip/4419",
       "steps": [
         {
-          "step": "Visit ubedaybaeza.com",
-          "pois": []
+          "position": 1,
+          "title": "Visit ubedaybaeza.com",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Vandelvira Tourism",
-          "pois": []
+          "position": 2,
+          "title": "Vandelvira Tourism",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Semer Tourism",
-          "pois": []
+          "position": 3,
+          "title": "Semer Tourism",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Discover \n\nÚbeda",
-          "pois": []
+          "position": 4,
+          "title": "Discover \n\nÚbeda",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Atlante",
-          "pois": []
+          "position": 5,
+          "title": "Atlante",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Seturja",
-          "pois": []
+          "position": 6,
+          "title": "Seturja",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Artisans",
-          "pois": []
+          "position": 7,
+          "title": "Artisans",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "A.P.I.T. Professional Association of Tourist Guides.",
-          "pois": []
+          "position": 8,
+          "title": "A.P.I.T. Professional Association of Tourist Guides.",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Fenice",
-          "pois": []
+          "position": 9,
+          "title": "Fenice",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Iberian Lynx Land",
-          "pois": []
+          "position": 10,
+          "title": "Iberian Lynx Land",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         }
       ]
     },
     {
+      "itinerary_id": "trip/4421",
       "trip_id": "trip/4421",
+      "kind": "trip",
+      "source_type": "TouristTrip",
       "name": "ÚBEDA FOR FAMILIES",
       "description": "Alternative routes to discover the Monumental City in all its splendor, while finding leisure and recreation places to relax with family and the little ones.",
       "url": "https://inventrip.com/ubeda/trip/4421",
       "steps": [
         {
-          "step": "Heritage Route",
-          "pois": [
-            "Ancient Butcheries",
-            "Clock Tower",
-            "Plateresque Facade on Gradas Street",
-            "Church of San Isidoro",
-            "Small playground",
-            "Hospital de Santiago",
+          "position": 1,
+          "title": "Heritage Route",
+          "poi_ids": [
+            "poi/30111",
+            "poi/30110",
+            "poi/30137",
+            "poi/30122",
+            "poi/35675",
+            "poi/5152"
+          ],
+          "unresolved_poi_names": [
             "Option A",
             "Option B"
           ]
         },
         {
-          "step": "Route 1",
-          "pois": [
-            "Clock Tower",
-            "Plateresque Facade on Gradas Street",
-            "Church of San Isidoro",
-            "Small playground",
-            "Plaza de Toros de Úbeda",
-            "Hospital de Santiago",
-            "North Park"
-          ]
+          "position": 2,
+          "title": "Route 1",
+          "poi_ids": [
+            "poi/30110",
+            "poi/30137",
+            "poi/30122",
+            "poi/35675",
+            "poi/5151",
+            "poi/5152",
+            "poi/7804"
+          ],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Route 2",
-          "pois": [
-            "Church and Convent of the Most Holy Trinity",
-            "Palacio de los Bussianos",
-            "Ortega's Head Groom Cover",
-            "Church of San Nicolás",
-            "Red Rooster Playground",
-            "Vandelvira Park"
-          ]
+          "position": 3,
+          "title": "Route 2",
+          "poi_ids": [
+            "poi/8439",
+            "poi/30123",
+            "poi/30160",
+            "poi/5161",
+            "poi/35682",
+            "poi/35683"
+          ],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Route 3",
-          "pois": [
-            "Olive Oil and Olive Grove Interpretation Center",
-            "Cocolet game room and playroom",
-            "Octagonal Tower",
-            "Palace of Don Luis de la Cueva",
-            "Convent of the Conception",
-            "Church of Saint Paul",
-            "Archaeological Museum - Mudéjar House",
-            "Water Synagogue",
-            "House of the Granada Venegas",
-            "Convent and Museum of San Juan de la Cruz",
-            "Walls and Losal Gate",
-            "Church of San Millán",
-            "Paco Tito Pottery Museum"
-          ]
+          "position": 4,
+          "title": "Route 3",
+          "poi_ids": [
+            "poi/30124",
+            "poi/35676",
+            "poi/30125",
+            "poi/30126",
+            "poi/5160",
+            "poi/5157",
+            "poi/6740",
+            "poi/30135",
+            "poi/30173",
+            "poi/6741",
+            "poi/30128",
+            "poi/30129",
+            "poi/30170"
+          ],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Route 4",
-          "pois": [
-            "Hotel Palace of the Marquis of La Rambla",
-            "Church of San Pedro",
-            "Hotel Palacio de Úbeda G.L. Restaurant \"El Ábside\"",
-            "Anguis de Medinilla Palace",
-            "Royal Monastery of Santa Clara",
-            "Ideal Cinema Theater",
-            "Vela de los Cobos Palace",
-            "Vázquez de Molina Palace",
-            "Church of Santo Domingo",
-            "Andalusian Art Museum House",
-            "Escape Room"
-          ]
+          "position": 5,
+          "title": "Route 4",
+          "poi_ids": [
+            "poi/30138",
+            "poi/5153",
+            "poi/30115",
+            "poi/30118",
+            "poi/30119",
+            "poi/35680",
+            "poi/5156",
+            "poi/5154",
+            "poi/30112",
+            "poi/30172",
+            "poi/35684"
+          ],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Route 5",
-          "pois": [
-            "Interpretation Center \"The Walls of Úbeda: Tower of the Portillo del Santo Cristo\"",
-            "Cava Gardens and Children's Playground",
-            "Viewpoint and monument of Álferez Rojas Navarrete",
-            "San Lorenzo Viewpoints",
-            "Church of San Lorenzo",
-            "House of the Towers",
-            "Tiznajo Forge Workshop",
-            "Puerta de Granada",
-            "Plaza Vázquez de Molina",
-            "Santa Lucía Viewpoints",
-            "Huerto del Carmen Children's Park",
-            "Ronda Antonio Muñoz Molina Children's Park"
-          ]
+          "position": 6,
+          "title": "Route 5",
+          "poi_ids": [
+            "poi/30139",
+            "poi/35685",
+            "poi/30708",
+            "poi/30143",
+            "poi/5141",
+            "poi/5142",
+            "poi/35515",
+            "poi/5143",
+            "poi/30536",
+            "poi/30148",
+            "poi/35678",
+            "poi/35679"
+          ],
+          "unresolved_poi_names": []
         }
       ]
     },
     {
+      "itinerary_id": "trip/4422",
       "trip_id": "trip/4422",
+      "kind": "trip",
+      "source_type": "TouristTrip",
       "name": "SHOPPING",
       "description": "Úbeda is a city with a lively commerce. It has a variety and abundance of establishments. There are places prepared to take a break, have a snack or a coffee, or play with the little ones in a park. You can also buy local products in workshops, bakeries, or artisan workshops.",
       "url": "https://inventrip.com/ubeda/trip/4422",
       "steps": [
         {
-          "step": "Royal Street Totem",
-          "pois": []
+          "position": 1,
+          "title": "Royal Street Totem",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Trinidad Street",
-          "pois": []
+          "position": 2,
+          "title": "Trinidad Street",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Mesones and Obispo Cobos Streets",
-          "pois": []
+          "position": 3,
+          "title": "Mesones and Obispo Cobos Streets",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "City of Linares Avenue",
-          "pois": []
+          "position": 4,
+          "title": "City of Linares Avenue",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Ramón y Cajal Avenue",
-          "pois": []
+          "position": 5,
+          "title": "Ramón y Cajal Avenue",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Avenida de la Libertad",
-          "pois": []
+          "position": 6,
+          "title": "Avenida de la Libertad",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Local products: food",
-          "pois": [
-            "Abastos Market",
-            "Convent of the Conception",
-            "Royal Monastery of Santa Clara",
-            "Royal Street Totem",
-            "Vandelvira Bakery",
-            "Paniaceite Bakery",
-            "Los Portalillos Pastry and Coffee Shop",
-            "Úbeda Pastry Shop",
-            "Croissant Bakery The Good Bread",
-            "Los Baezanos Nougat Shop",
-            "Alejo & Doña Rosita Café"
-          ]
+          "position": 7,
+          "title": "Local products: food",
+          "poi_ids": [
+            "poi/30161",
+            "poi/5160",
+            "poi/30119",
+            "poi/35695",
+            "poi/36170",
+            "poi/36179",
+            "poi/36169",
+            "poi/36163",
+            "poi/36168",
+            "poi/36165",
+            "poi/36167"
+          ],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Local products: handicrafts and souvenirs",
-          "pois": []
+          "position": 8,
+          "title": "Local products: handicrafts and souvenirs",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         }
       ]
     },
     {
+      "itinerary_id": "trip/4433",
       "trip_id": "trip/4433",
+      "kind": "trip",
+      "source_type": "TouristTrip",
       "name": "CRAFTS",
       "description": "Pottery workshops, esparto weaving, blacksmithing, stonemasonry...",
       "url": "https://inventrip.com/ubeda/trip/4433",
       "steps": [
         {
-          "step": "SCULPTURE AND RESTORATION",
-          "pois": [
-            "Sculpture and Restoration Workshop"
-          ]
+          "position": 1,
+          "title": "SCULPTURE AND RESTORATION",
+          "poi_ids": [
+            "poi/35504"
+          ],
+          "unresolved_poi_names": []
         },
         {
-          "step": "ESPARTO",
-          "pois": [
-            "UBEDÍES handicrafts, esparto workshop."
-          ]
+          "position": 2,
+          "title": "ESPARTO",
+          "poi_ids": [
+            "poi/35506"
+          ],
+          "unresolved_poi_names": []
         },
         {
-          "step": "GOLDSMITHING AND JEWELRY",
-          "pois": [
-            "Ferrandidz Jewelry"
-          ]
+          "position": 3,
+          "title": "GOLDSMITHING AND JEWELRY",
+          "poi_ids": [
+            "poi/35519"
+          ],
+          "unresolved_poi_names": []
         },
         {
-          "step": "MUDÉJAR WOODEN CEILINGS",
-          "pois": [
-            "Mudéjar coffered ceilings"
-          ]
+          "position": 4,
+          "title": "MUDÉJAR WOODEN CEILINGS",
+          "poi_ids": [
+            "poi/35499"
+          ],
+          "unresolved_poi_names": []
         },
         {
-          "step": "FORGING WORKSHOPS",
-          "pois": [
-            "Tiznajo Forge Workshop",
-            "Forging Workshop Úbeda.",
-            "ARTESUR Forge Workshop and Store"
-          ]
+          "position": 5,
+          "title": "FORGING WORKSHOPS",
+          "poi_ids": [
+            "poi/35515",
+            "poi/35518",
+            "poi/35511"
+          ],
+          "unresolved_poi_names": []
         },
         {
-          "step": "POTTERY",
-          "pois": [
-            "Alfar Alfonso Góngora",
-            "Melchor Tito Pottery",
-            "Pedro Góngora Pottery",
-            "Almarza Pottery",
-            "Fco. Expósito Tito Pottery",
-            "Paco Tito Pottery Museum",
-            "Valencia Street",
-            "Plaza de los Olleros",
-            "Juan Tito Pottery"
-          ]
+          "position": 6,
+          "title": "POTTERY",
+          "poi_ids": [
+            "poi/35493",
+            "poi/35495",
+            "poi/35494",
+            "poi/35491",
+            "poi/35492",
+            "poi/30170",
+            "poi/30169",
+            "poi/30537",
+            "poi/30707"
+          ],
+          "unresolved_poi_names": []
         }
       ]
     },
     {
+      "itinerary_id": "trip/4434",
       "trip_id": "trip/4434",
+      "kind": "trip",
+      "source_type": "TouristTrip",
       "name": "CULTURE AND LEISURE",
       "description": "CLICK ON THE LINK TO CHECK THE CULTURAL AND SPORTS ACTIVITIES THAT YOU CAN ENJOY.",
       "url": "https://inventrip.com/ubeda/trip/4434",
       "steps": [
         {
-          "step": "UPCOMING ACTIVITIES",
-          "pois": [
-            "BULLRING ACTIVITIES"
-          ]
+          "position": 1,
+          "title": "UPCOMING ACTIVITIES",
+          "poi_ids": [
+            "poi/39144"
+          ],
+          "unresolved_poi_names": []
         },
         {
-          "step": "BUILDINGS FOR CULTURE AND LEISURE",
-          "pois": [
-            "Ideal Cinema Theater",
-            "AUDITORIUM OF THE HOSPITAL OF SANTIAGO"
-          ]
+          "position": 2,
+          "title": "BUILDINGS FOR CULTURE AND LEISURE",
+          "poi_ids": [
+            "poi/35680",
+            "poi/39145"
+          ],
+          "unresolved_poi_names": []
         },
         {
-          "step": "SPORTS FACILITIES",
-          "pois": [
-            "UBEDA SPORT GYM",
-            "MUNICIPAL SPORTS CENTER \"EL VIEJO\"",
-            "North Park",
-            "Municipal swimming pools",
-            "Municipal sports facilities",
-            "AQUASPORT",
-            "FACTORY GYM-SPA",
-            "Vandelvira Park"
-          ]
+          "position": 3,
+          "title": "SPORTS FACILITIES",
+          "poi_ids": [
+            "poi/36552",
+            "poi/35477",
+            "poi/7804",
+            "poi/35478",
+            "poi/35898",
+            "poi/35716",
+            "poi/36554",
+            "poi/35683"
+          ],
+          "unresolved_poi_names": []
         },
         {
-          "step": "OTHERS",
-          "pois": [
-            "Escape Room"
-          ]
+          "position": 4,
+          "title": "OTHERS",
+          "poi_ids": [
+            "poi/35684"
+          ],
+          "unresolved_poi_names": []
         }
       ]
     },
     {
+      "itinerary_id": "trip/4435",
+      "trip_id": "trip/4435",
+      "kind": "trip",
+      "source_type": "TouristTrip",
+      "name": "PETS",
+      "description": "We can find VETERINARIANS, PET GROOMERS AND DOG BATHING, ANIMAL FEED...",
+      "url": "https://inventrip.com/ubeda/trip/4435",
+      "steps": []
+    },
+    {
+      "itinerary_id": "trip/4436",
       "trip_id": "trip/4436",
+      "kind": "trip",
+      "source_type": "TouristTrip",
       "name": "OTHER SERVICES",
       "description": "It includes gas stations, police, supermarkets, firefighters...",
       "url": "https://inventrip.com/ubeda/trip/4436",
       "steps": [
         {
-          "step": "CIVIL PROTECTION",
-          "pois": [
-            "Civil Protection"
-          ]
+          "position": 1,
+          "title": "CIVIL PROTECTION",
+          "poi_ids": [
+            "poi/35454"
+          ],
+          "unresolved_poi_names": []
         },
         {
-          "step": "FIREFIGHTERS",
-          "pois": [
-            "Firefighters",
+          "position": 2,
+          "title": "FIREFIGHTERS",
+          "poi_ids": [
+            "poi/35450"
+          ],
+          "unresolved_poi_names": [
             "TAXI STANDS",
             "BUS STATION"
           ]
         },
         {
-          "step": "POLICE",
-          "pois": [
-            "Old Granary"
-          ]
+          "position": 3,
+          "title": "POLICE",
+          "poi_ids": [
+            "poi/5147"
+          ],
+          "unresolved_poi_names": []
         },
         {
-          "step": "GAS STATIONS",
-          "pois": [
-            "RED AZUL Gas Station",
-            "Carrefour Gas Station",
-            "Gas station.",
-            "Gas station",
-            "San Miguel Gas Station",
-            "El Polígono Gas Station",
+          "position": 4,
+          "title": "GAS STATIONS",
+          "poi_ids": [
+            "poi/35416",
+            "poi/35418",
+            "poi/35422",
+            "poi/35422",
+            "poi/35417",
+            "poi/35425"
+          ],
+          "unresolved_poi_names": [
             "ELECTRIC VEHICLE CHARGING POINTS"
           ]
         }
       ]
     },
     {
+      "itinerary_id": "trip/4457",
       "trip_id": "trip/4457",
+      "kind": "trip",
+      "source_type": "TouristTrip",
       "name": "WHAT NOT TO MISS",
       "description": "Úbeda is a monumental city par excellence, the ultimate exponent of the Andalusian Renaissance. It is a Craft Interest Area of Andalusia and a land of gastronomy. It is the world's largest producer of Olive Oil. Rich in culture, it is the perfect destination for lovers of authenticity.",
       "url": "https://inventrip.com/ubeda/trip/4457",
       "steps": [
         {
-          "step": "Vázquez de Molina Square",
-          "pois": [
-            "Plaza Vázquez de Molina",
-            "Sacra Capilla del Salvador",
-            "Basilica of Saint Mary of the Royal Alcazars",
-            "Dean Ortega Palace. Tourism Parador",
-            "Renaissance Fountain",
-            "Old Granary",
-            "Cárcel Del Obispo",
-            "Palace of the Marquis of Mancera",
-            "Hospital of the Honorable Old People of El Salvador"
-          ]
+          "position": 1,
+          "title": "Vázquez de Molina Square",
+          "poi_ids": [
+            "poi/30536",
+            "poi/5148",
+            "poi/5144",
+            "poi/30117",
+            "poi/30151",
+            "poi/5147",
+            "poi/5145",
+            "poi/30116",
+            "poi/5149"
+          ],
+          "unresolved_poi_names": []
         },
         {
-          "step": "May First Square",
-          "pois": [
-            "1st of May Square",
-            "Church of Saint Paul",
-            "Old Town Hall Buildings",
-            "Old Convent of San Andrés"
-          ]
+          "position": 2,
+          "title": "May First Square",
+          "poi_ids": [
+            "poi/35831",
+            "poi/5157",
+            "poi/30108",
+            "poi/30109"
+          ],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Town Hall Square",
-          "pois": [
-            "Vázquez de Molina Palace",
-            "Vela de los Cobos Palace"
-          ]
+          "position": 3,
+          "title": "Town Hall Square",
+          "poi_ids": [
+            "poi/5154",
+            "poi/5156"
+          ],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Cultural Centers",
-          "pois": [
-            "Hospital de Santiago",
-            "Church of San Lorenzo"
-          ]
+          "position": 4,
+          "title": "Cultural Centers",
+          "poi_ids": [
+            "poi/5152",
+            "poi/5141"
+          ],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Other essentials",
-          "pois": [
-            "House of the Towers",
-            "Church of San Isidoro",
-            "Archaeological Museum - Mudéjar House",
-            "Church of San Nicolás",
-            "Hotel Palacio de Úbeda G.L. Restaurant \"El Ábside\""
-          ]
+          "position": 5,
+          "title": "Other essentials",
+          "poi_ids": [
+            "poi/5142",
+            "poi/30122",
+            "poi/6740",
+            "poi/5161",
+            "poi/30115"
+          ],
+          "unresolved_poi_names": []
         }
       ]
     },
     {
+      "itinerary_id": "trip/4476",
       "trip_id": "trip/4476",
+      "kind": "trip",
+      "source_type": "TouristTrip",
       "name": "OLIVE OIL TOURISM",
       "description": "Come to the capital of the main olive-growing region in the province of Jaén, the world's leading producer, and learn about the ancient culture of Extra Virgin Olive Oil in an interactive and practical way.",
       "url": "https://inventrip.com/ubeda/trip/4476",
       "steps": [
         {
-          "step": "OIL FOR SALE",
-          "pois": []
+          "position": 1,
+          "title": "OIL FOR SALE",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Olive Oil and Olive Grove Interpretation Center",
-          "pois": []
+          "position": 2,
+          "title": "Olive Oil and Olive Grove Interpretation Center",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "OLIVE OIL MILLS, SALES POINTS",
-          "pois": [
-            "ALMAZARA V. DE GUADALUPE SALES POINT",
-            "Baltasar Lara and Co. Sale of self-produced oil and wine.",
-            "ALMAZARA BALTASAR LARA Y CÍA.",
-            "ALMAZARA LA UNIÓN",
-            "VIRGEN DE GUADALUPE OLIVE OIL MILL",
-            "OLIVE MILL. Factory and sale of olive oil."
-          ]
+          "position": 3,
+          "title": "OLIVE OIL MILLS, SALES POINTS",
+          "poi_ids": [
+            "poi/35910",
+            "poi/35905",
+            "poi/36694",
+            "poi/36692",
+            "poi/36693",
+            "poi/35903"
+          ],
+          "unresolved_poi_names": []
         }
       ]
     },
     {
+      "itinerary_id": "trip/4540",
       "trip_id": "trip/4540",
+      "kind": "trip",
+      "source_type": "TouristTrip",
       "name": "HEALTH, COVID-19",
       "description": "Healthcare facilities (Primary care centers, pharmacies, hospitals, Red Cross...)",
       "url": "https://inventrip.com/ubeda/trip/4540",
       "steps": [
         {
-          "step": "HEALTH CENTERS AND HOSPITALS",
-          "pois": [
-            "Red Cross",
-            "Health Center",
-            "San Juan de la Cruz Regional Hospital",
-            "UBEDA EAST HEALTH CENTER"
-          ]
+          "position": 1,
+          "title": "HEALTH CENTERS AND HOSPITALS",
+          "poi_ids": [
+            "poi/35449",
+            "poi/35445",
+            "poi/35447",
+            "poi/36583"
+          ],
+          "unresolved_poi_names": []
         },
         {
-          "step": "PHARMACIES",
-          "pois": [
-            "Almagro Uceda Pharmacy",
-            "Rastro Pharmacy",
-            "Royal Pharmacy",
-            "La Corredera Pharmacy",
-            "Sanchez Ruiz Pharmacy, R and E",
-            "Martínez de Dios Pharmacy",
-            "Liñán-Monedero Pharmacy",
-            "Alfonsa Mesa Padilla Pharmacy",
-            "Cruz Rodríguez Pharmacy",
-            "Baras de La Torre Pharmacy",
-            "Cruz García Pharmacy",
-            "Obra Salido Pharmacy"
-          ]
+          "position": 2,
+          "title": "PHARMACIES",
+          "poi_ids": [
+            "poi/35377",
+            "poi/35361",
+            "poi/35505",
+            "poi/35390",
+            "poi/35399",
+            "poi/35392",
+            "poi/35391",
+            "poi/35393",
+            "poi/35386",
+            "poi/35381",
+            "poi/35383",
+            "poi/35396"
+          ],
+          "unresolved_poi_names": []
         }
       ]
     },
     {
+      "itinerary_id": "trip/4544",
       "trip_id": "trip/4544",
+      "kind": "trip",
+      "source_type": "TouristTrip",
       "name": "BREAKING NEWS",
       "description": "Stay informed about the latest news in Úbeda",
       "url": "https://inventrip.com/ubeda/trip/4544",
       "steps": [
         {
-          "step": "BULLRING ACTIVITIES",
-          "pois": []
+          "position": 1,
+          "title": "BULLRING ACTIVITIES",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Church of Santo Domingo",
-          "pois": []
+          "position": 2,
+          "title": "Church of Santo Domingo",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Municipal sports facilities",
-          "pois": []
+          "position": 3,
+          "title": "Municipal sports facilities",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         }
       ]
     },
     {
+      "itinerary_id": "trip/4925",
       "trip_id": "trip/4925",
+      "kind": "trip",
+      "source_type": "TouristTrip",
       "name": "What not to miss in Úbeda",
       "description": "Úbeda is a monumental city par excellence, the ultimate exponent of the Andalusian Renaissance. It is a Craft Interest Area of Andalusia and a land of gastronomy. It is the world's largest producer of Olive Oil. Rich in culture, it is the perfect destination for lovers of authenticity.",
       "url": "https://inventrip.com/ubeda/trip/4925",
       "steps": [
         {
-          "step": "1. What not to miss",
-          "pois": [
+          "position": 1,
+          "title": "1. What not to miss",
+          "poi_ids": [],
+          "unresolved_poi_names": [
             "1.1 Vazquez de Molina Square",
             "1.2 First of May Square",
             "1.3 Town Hall Square",
@@ -675,204 +892,276 @@
       ]
     },
     {
+      "itinerary_id": "trip/4926",
       "trip_id": "trip/4926",
+      "kind": "trip",
+      "source_type": "TouristTrip",
       "name": "Craftsmanship in Úbeda",
       "description": "Pottery workshops, esparto weaving, blacksmithing, stonemasonry...",
       "url": "https://inventrip.com/ubeda/trip/4926",
       "steps": [
         {
-          "step": "SCULPTURE AND RESTORATION",
-          "pois": [
-            "Sculpture and Restoration Workshop"
-          ]
+          "position": 1,
+          "title": "SCULPTURE AND RESTORATION",
+          "poi_ids": [
+            "poi/35504"
+          ],
+          "unresolved_poi_names": []
         },
         {
-          "step": "ESPARTO",
-          "pois": [
-            "UBEDÍES handicrafts, esparto workshop."
-          ]
+          "position": 2,
+          "title": "ESPARTO",
+          "poi_ids": [
+            "poi/35506"
+          ],
+          "unresolved_poi_names": []
         },
         {
-          "step": "GOLDSMITHING AND JEWELRY",
-          "pois": [
-            "Ferrandidz Jewelry"
-          ]
+          "position": 3,
+          "title": "GOLDSMITHING AND JEWELRY",
+          "poi_ids": [
+            "poi/35519"
+          ],
+          "unresolved_poi_names": []
         },
         {
-          "step": "MUDÉJAR WOODEN CEILINGS",
-          "pois": [
-            "Mudéjar coffered ceilings"
-          ]
+          "position": 4,
+          "title": "MUDÉJAR WOODEN CEILINGS",
+          "poi_ids": [
+            "poi/35499"
+          ],
+          "unresolved_poi_names": []
         },
         {
-          "step": "FORGING WORKSHOPS",
-          "pois": [
-            "Tiznajo Forge Workshop",
-            "Forging Workshop Úbeda.",
-            "ARTESUR Forge Workshop and Store"
-          ]
+          "position": 5,
+          "title": "FORGING WORKSHOPS",
+          "poi_ids": [
+            "poi/35515",
+            "poi/35518",
+            "poi/35511"
+          ],
+          "unresolved_poi_names": []
         },
         {
-          "step": "POTTERY",
-          "pois": [
-            "Alfar Alfonso Góngora",
-            "Melchor Tito Pottery",
-            "Pedro Góngora Pottery",
-            "Almarza Pottery",
-            "Fco. Expósito Tito Pottery",
-            "Paco Tito Pottery Museum",
-            "Valencia Street",
-            "Plaza de los Olleros",
-            "Juan Tito Pottery"
-          ]
+          "position": 6,
+          "title": "POTTERY",
+          "poi_ids": [
+            "poi/35493",
+            "poi/35495",
+            "poi/35494",
+            "poi/35491",
+            "poi/35492",
+            "poi/30170",
+            "poi/30169",
+            "poi/30537",
+            "poi/30707"
+          ],
+          "unresolved_poi_names": []
         }
       ]
     },
     {
+      "itinerary_id": "trip/5362",
       "trip_id": "trip/5362",
+      "kind": "trip",
+      "source_type": "TouristTrip",
       "name": "Discover Santiago de Compostela in a weekend: 15 places to see in the pilgrim city",
       "description": "So that you can get to know the city of Compostela in a weekend, we suggest 15 places to visit at your own pace.",
       "url": "https://inventrip.com/ubeda/trip/5362",
       "steps": [
         {
-          "step": "Santiago de Compostela Cathedral",
-          "pois": []
+          "position": 1,
+          "title": "Santiago de Compostela Cathedral",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Convent and Church of San Francisco",
-          "pois": []
+          "position": 2,
+          "title": "Convent and Church of San Francisco",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Monastery of San Martín Pinario",
-          "pois": []
+          "position": 3,
+          "title": "Monastery of San Martín Pinario",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Pazo de Fonseca",
-          "pois": []
+          "position": 4,
+          "title": "Pazo de Fonseca",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Plaza del Obradoiro",
-          "pois": []
+          "position": 5,
+          "title": "Plaza del Obradoiro",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Church of Santo Domingo",
-          "pois": []
+          "position": 6,
+          "title": "Church of Santo Domingo",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "City of Culture of Galicia",
-          "pois": []
+          "position": 7,
+          "title": "City of Culture of Galicia",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Church of Santa María la Real del Sar",
-          "pois": []
+          "position": 8,
+          "title": "Church of Santa María la Real del Sar",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Archbishop's Palace of Santiago de Compostela",
-          "pois": []
+          "position": 9,
+          "title": "Archbishop's Palace of Santiago de Compostela",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Pazo de Raxoi",
-          "pois": []
+          "position": 10,
+          "title": "Pazo de Raxoi",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Centro Galego de Arte Contemporáneo - CGAC",
-          "pois": []
+          "position": 11,
+          "title": "Centro Galego de Arte Contemporáneo - CGAC",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Alameda Park",
-          "pois": []
+          "position": 12,
+          "title": "Alameda Park",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Platerías Square",
-          "pois": []
+          "position": 13,
+          "title": "Platerías Square",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Quintana Square",
-          "pois": []
+          "position": 14,
+          "title": "Quintana Square",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Cervantes Square",
-          "pois": []
+          "position": 15,
+          "title": "Cervantes Square",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         }
       ]
     },
     {
+      "itinerary_id": "trip/6203",
       "trip_id": "trip/6203",
+      "kind": "trip",
+      "source_type": "TouristTrip",
       "name": "#TOP10 Must-Sees in Úbeda",
       "description": "Discover what not to miss in Úbeda, a World Heritage City, with this travel suggestion from Inventrip.",
       "url": "https://inventrip.com/ubeda/trip/6203",
       "steps": [
         {
-          "step": "Dean Ortega Palace. Tourism Parador",
-          "pois": []
+          "position": 1,
+          "title": "Dean Ortega Palace. Tourism Parador",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Úbeda - Heritage City",
-          "pois": []
+          "position": 2,
+          "title": "Úbeda - Heritage City",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "#TOP10",
-          "pois": [
-            "Sacra Capilla del Salvador",
-            "Basilica of Saint Mary of the Royal Alcazars",
-            "Church of Saint Paul",
-            "Clock Tower",
-            "Vela de los Cobos Palace",
-            "Old Granary",
-            "Hospital de Santiago",
-            "Vázquez de Molina Palace",
-            "Olive Oil and Olive Grove Interpretation Center",
-            "Plaza de Andalucía"
-          ]
+          "position": 3,
+          "title": "#TOP10",
+          "poi_ids": [
+            "poi/5148",
+            "poi/5144",
+            "poi/5157",
+            "poi/30110",
+            "poi/5156",
+            "poi/5147",
+            "poi/5152",
+            "poi/5154",
+            "poi/30124",
+            "poi/30538"
+          ],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Near Úbeda",
-          "pois": [
+          "position": 4,
+          "title": "Near Úbeda",
+          "poi_ids": [
+            "poi/36024",
+            "poi/36026",
+            "poi/35500"
+          ],
+          "unresolved_poi_names": [
             "Baeza - Unesco World Heritage",
             "Historic Ensemble of Sabiote",
             "Historic ensemble of Begíjar",
-            "Linares",
-            "Sanctuary of Our Lady of Guadalupe",
-            "Ariza Bridge",
-            "Dolmen of Úbeda"
+            "Linares"
           ]
         }
       ]
     },
     {
+      "itinerary_id": "trip/6209",
       "trip_id": "trip/6209",
+      "kind": "trip",
+      "source_type": "TouristTrip",
       "name": "Marqués de la Rambla Square",
       "description": "-",
       "url": "https://inventrip.com/ubeda/trip/6209",
       "steps": [
         {
-          "step": "Close",
-          "pois": [
-            "Hotel Palace of the Marquis of La Rambla",
-            "Rastro Street",
-            "ARTESUR Forge Workshop and Store"
-          ]
+          "position": 1,
+          "title": "Close",
+          "poi_ids": [
+            "poi/30138",
+            "poi/36360",
+            "poi/35511"
+          ],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Around",
-          "pois": [
-            "Plaza de San Pedro",
-            "CHURRO SHOP-CAFETERIA ALMINDEZ",
-            "Escape Room",
-            "Interpretation Center \"The Walls of Úbeda: Tower of the Portillo del Santo Cristo\""
-          ]
+          "position": 2,
+          "title": "Around",
+          "poi_ids": [
+            "poi/35955",
+            "poi/36950",
+            "poi/35684",
+            "poi/30139"
+          ],
+          "unresolved_poi_names": []
         }
       ]
     },
     {
+      "itinerary_id": "trip/6277",
       "trip_id": "trip/6277",
+      "kind": "trip",
+      "source_type": "TouristTrip",
       "name": "WHAT NOT TO MISS",
       "description": "Úbeda is a monumental city par excellence, the greatest exponent of the Andalusian Renaissance. It is an Area of Artisanal Interest in Andalusia and a land of gastronomy. It is the world's largest producer of Olive Oil. With a vibrant culture, it is the perfect destination for lovers of authenticity.",
       "url": "https://inventrip.com/ubeda/trip/6277",
       "steps": [
         {
-          "step": "1. What not to miss",
-          "pois": [
+          "position": 1,
+          "title": "1. What not to miss",
+          "poi_ids": [],
+          "unresolved_poi_names": [
             "1.1 Vázquez de Molina Square",
             "1.2 Plaza First of May",
             "1.3 Town Hall Square",
@@ -883,14 +1172,19 @@
       ]
     },
     {
+      "itinerary_id": "trip/6529",
       "trip_id": "trip/6529",
+      "kind": "trip",
+      "source_type": "TouristTrip",
       "name": "WHAT NOT TO MISS",
       "description": "Úbeda is a monumental city par excellence, the greatest exponent of the Andalusian Renaissance. It is an Area of Artisan Interest in Andalusia and a land of gastronomy. It is the world's largest producer of Olive Oil. With a vibrant culture, it is the perfect destination for lovers of authenticity.",
       "url": "https://inventrip.com/ubeda/trip/6529",
       "steps": [
         {
-          "step": "1. What not to miss",
-          "pois": [
+          "position": 1,
+          "title": "1. What not to miss",
+          "poi_ids": [],
+          "unresolved_poi_names": [
             "1.1 Vázquez de Molina Square",
             "1.2 Plaza First of May",
             "1.3 City Hall Square",
@@ -901,461 +1195,701 @@
       ]
     },
     {
+      "itinerary_id": "trip/6567",
+      "trip_id": "trip/6567",
+      "kind": "trip",
+      "source_type": "TouristTrip",
+      "name": "Invent your journey",
+      "description": "Plan your next trip with Inventrip.",
+      "url": "https://inventrip.com/ubeda/trip/6567",
+      "steps": []
+    },
+    {
+      "itinerary_id": "trip/6892",
       "trip_id": "trip/6892",
+      "kind": "trip",
+      "source_type": "TouristTrip",
       "name": "Ubeda Monumental",
       "description": "Route designed to see the majority of the monuments in Úbeda, with ample parking around Parque Norte.",
       "url": "https://inventrip.com/ubeda/trip/6892",
       "steps": [
         {
-          "step": "North Park",
-          "pois": []
+          "position": 1,
+          "title": "North Park",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Church of Saint John the Baptist",
-          "pois": []
+          "position": 2,
+          "title": "Church of Saint John the Baptist",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Hospital de Santiago",
-          "pois": []
+          "position": 3,
+          "title": "Hospital de Santiago",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Plaza de Toros de Úbeda",
-          "pois": []
+          "position": 4,
+          "title": "Plaza de Toros de Úbeda",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Mesones and Obispo Cobos Streets",
-          "pois": []
+          "position": 5,
+          "title": "Mesones and Obispo Cobos Streets",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Old Convent of La Victoria",
-          "pois": []
+          "position": 6,
+          "title": "Old Convent of La Victoria",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Church of San Isidoro",
-          "pois": []
+          "position": 7,
+          "title": "Church of San Isidoro",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Plateresque Facade on Gradas Street",
-          "pois": []
+          "position": 8,
+          "title": "Plateresque Facade on Gradas Street",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Plaza de Andalucía",
-          "pois": []
+          "position": 9,
+          "title": "Plaza de Andalucía",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Clock Tower",
-          "pois": []
+          "position": 10,
+          "title": "Clock Tower",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Ancient Butcheries",
-          "pois": []
+          "position": 11,
+          "title": "Ancient Butcheries",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Rastro Street",
-          "pois": []
+          "position": 12,
+          "title": "Rastro Street",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Interpretation Center \"The Walls of Úbeda: Tower of the Portillo del Santo Cristo\"",
-          "pois": []
+          "position": 13,
+          "title": "Interpretation Center \"The Walls of Úbeda: Tower of the Portillo del Santo Cristo\"",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Old Convent of San Francisco",
-          "pois": []
+          "position": 14,
+          "title": "Old Convent of San Francisco",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Cava Gardens and Children's Playground",
-          "pois": []
+          "position": 15,
+          "title": "Cava Gardens and Children's Playground",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Viewpoint and monument of Álferez Rojas Navarrete",
-          "pois": []
+          "position": 16,
+          "title": "Viewpoint and monument of Álferez Rojas Navarrete",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "San Lorenzo Viewpoints",
-          "pois": []
+          "position": 17,
+          "title": "San Lorenzo Viewpoints",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Church of San Lorenzo",
-          "pois": []
+          "position": 18,
+          "title": "Church of San Lorenzo",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Plaza de San Lorenzo",
-          "pois": []
+          "position": 19,
+          "title": "Plaza de San Lorenzo",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "House of the Towers",
-          "pois": []
+          "position": 20,
+          "title": "House of the Towers",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Puerta de Granada",
-          "pois": []
+          "position": 21,
+          "title": "Puerta de Granada",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Basilica of Saint Mary of the Royal Alcazars",
-          "pois": []
+          "position": 22,
+          "title": "Basilica of Saint Mary of the Royal Alcazars",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Plaza Vázquez de Molina",
-          "pois": []
+          "position": 23,
+          "title": "Plaza Vázquez de Molina",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Vázquez de Molina Palace",
-          "pois": []
+          "position": 24,
+          "title": "Vázquez de Molina Palace",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Renaissance Fountain",
-          "pois": []
+          "position": 25,
+          "title": "Renaissance Fountain",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Cárcel Del Obispo",
-          "pois": []
+          "position": 26,
+          "title": "Cárcel Del Obispo",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Palace of the Marquis of Mancera",
-          "pois": []
+          "position": 27,
+          "title": "Palace of the Marquis of Mancera",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Old Granary",
-          "pois": []
+          "position": 28,
+          "title": "Old Granary",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Sacra Capilla del Salvador",
-          "pois": []
+          "position": 29,
+          "title": "Sacra Capilla del Salvador",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Old Town Hall Buildings",
-          "pois": []
+          "position": 30,
+          "title": "Old Town Hall Buildings",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "1st of May Square",
-          "pois": []
+          "position": 31,
+          "title": "1st of May Square",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Church of Saint Paul",
-          "pois": []
+          "position": 32,
+          "title": "Church of Saint Paul",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Old Convent of San Andrés",
-          "pois": []
+          "position": 33,
+          "title": "Old Convent of San Andrés",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Palacio de los Torrente",
-          "pois": []
+          "position": 34,
+          "title": "Palacio de los Torrente",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Convent of the Conception",
-          "pois": []
+          "position": 35,
+          "title": "Convent of the Conception",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Abastos Market",
-          "pois": []
+          "position": 36,
+          "title": "Abastos Market",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Palace of Don Luis de la Cueva",
-          "pois": []
+          "position": 37,
+          "title": "Palace of Don Luis de la Cueva",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Octagonal Tower",
-          "pois": []
+          "position": 38,
+          "title": "Octagonal Tower",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Olive Oil and Olive Grove Interpretation Center",
-          "pois": []
+          "position": 39,
+          "title": "Olive Oil and Olive Grove Interpretation Center",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Church and Convent of the Most Holy Trinity",
-          "pois": []
+          "position": 40,
+          "title": "Church and Convent of the Most Holy Trinity",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Post and Telegraph Building",
-          "pois": []
+          "position": 41,
+          "title": "Post and Telegraph Building",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Palacio de los Bussianos",
-          "pois": []
+          "position": 42,
+          "title": "Palacio de los Bussianos",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Trinidad Street",
-          "pois": []
+          "position": 43,
+          "title": "Trinidad Street",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "North Park",
-          "pois": []
+          "position": 44,
+          "title": "North Park",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         }
       ]
     },
     {
+      "itinerary_id": "trip/7095",
+      "trip_id": "trip/7095",
+      "kind": "trip",
+      "source_type": "TouristTrip",
+      "name": "Invent your journey",
+      "description": "Plan your next trip with Inventrip.",
+      "url": "https://inventrip.com/ubeda/trip/7095",
+      "steps": []
+    },
+    {
+      "itinerary_id": "trip/7096",
+      "trip_id": "trip/7096",
+      "kind": "trip",
+      "source_type": "TouristTrip",
+      "name": "Invent your journey",
+      "description": "Plan your next trip with Inventrip.",
+      "url": "https://inventrip.com/ubeda/trip/7096",
+      "steps": []
+    },
+    {
+      "itinerary_id": "trip/7718",
       "trip_id": "trip/7718",
+      "kind": "trip",
+      "source_type": "TouristTrip",
       "name": "WHAT NOT TO MISS",
       "description": "Úbeda is a monumental city par excellence, the ultimate exponent of the Andalusian Renaissance. It is a Craft Interest Area of Andalusia and a land of gastronomy. It is the world's largest producer of Olive Oil. Rich in culture, it is the perfect destination for lovers of authenticity.",
       "url": "https://inventrip.com/ubeda/trip/7718",
       "steps": [
         {
-          "step": "Vázquez de Molina Square",
-          "pois": [
-            "Plaza Vázquez de Molina",
-            "Sacra Capilla del Salvador",
-            "Basilica of Saint Mary of the Royal Alcazars",
-            "Dean Ortega Palace. Tourism Parador",
-            "Renaissance Fountain",
-            "Old Granary",
-            "Cárcel Del Obispo",
-            "Palace of the Marquis of Mancera",
-            "Hospital of the Honorable Old People of El Salvador"
-          ]
+          "position": 1,
+          "title": "Vázquez de Molina Square",
+          "poi_ids": [
+            "poi/30536",
+            "poi/5148",
+            "poi/5144",
+            "poi/30117",
+            "poi/30151",
+            "poi/5147",
+            "poi/5145",
+            "poi/30116",
+            "poi/5149"
+          ],
+          "unresolved_poi_names": []
         },
         {
-          "step": "May First Square",
-          "pois": [
-            "1st of May Square",
-            "Church of Saint Paul",
-            "Old Town Hall Buildings",
-            "Old Convent of San Andrés"
-          ]
+          "position": 2,
+          "title": "May First Square",
+          "poi_ids": [
+            "poi/35831",
+            "poi/5157",
+            "poi/30108",
+            "poi/30109"
+          ],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Town Hall Square",
-          "pois": [
-            "Vázquez de Molina Palace",
-            "Vela de los Cobos Palace"
-          ]
+          "position": 3,
+          "title": "Town Hall Square",
+          "poi_ids": [
+            "poi/5154",
+            "poi/5156"
+          ],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Cultural Centers",
-          "pois": [
-            "Hospital de Santiago",
-            "Church of San Lorenzo"
-          ]
+          "position": 4,
+          "title": "Cultural Centers",
+          "poi_ids": [
+            "poi/5152",
+            "poi/5141"
+          ],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Other essentials",
-          "pois": [
-            "House of the Towers",
-            "Church of San Isidoro",
-            "Archaeological Museum - Mudéjar House",
-            "Church of San Nicolás",
-            "Hotel Palacio de Úbeda G.L. Restaurant \"El Ábside\""
-          ]
+          "position": 5,
+          "title": "Other essentials",
+          "poi_ids": [
+            "poi/5142",
+            "poi/30122",
+            "poi/6740",
+            "poi/5161",
+            "poi/30115"
+          ],
+          "unresolved_poi_names": []
         }
       ]
     },
     {
+      "itinerary_id": "trip/8107",
       "trip_id": "trip/8107",
+      "kind": "trip",
+      "source_type": "TouristTrip",
       "name": "Route of the Traditional Neighborhoods",
       "description": "We invite you to discover the heart of the city of Úbeda. This tour through the traditional neighborhoods of the historic center will take you to ostentatious palaces that hide incredible legends, but also to tranquil little squares where time seems to have stopped, and to towers that have witnessed the historical importance of Úbeda and now allow us to enjoy the extraordinary panoramic views of the city''s mountainous surroundings. Let''s not forget that we are in the city whose Hills are the most renowned throughout all Spanish-speaking territories.",
       "url": "https://inventrip.com/ubeda/trip/8107",
       "steps": [
         {
-          "step": "Ancient Butcheries",
-          "pois": []
+          "position": 1,
+          "title": "Ancient Butcheries",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Ruta de los Barrios Tradicionales",
-          "pois": []
+          "position": 2,
+          "title": "Ruta de los Barrios Tradicionales",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Anguis de Medinilla Palace",
-          "pois": []
+          "position": 3,
+          "title": "Anguis de Medinilla Palace",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Royal Monastery of Santa Clara",
-          "pois": []
+          "position": 4,
+          "title": "Royal Monastery of Santa Clara",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Andalusian Art Museum House",
-          "pois": []
+          "position": 5,
+          "title": "Andalusian Art Museum House",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Church of Santo Domingo",
-          "pois": []
+          "position": 6,
+          "title": "Church of Santo Domingo",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Puerta de Granada",
-          "pois": []
+          "position": 7,
+          "title": "Puerta de Granada",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Church of San Lorenzo",
-          "pois": []
+          "position": 8,
+          "title": "Church of San Lorenzo",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "House of the Towers",
-          "pois": []
+          "position": 9,
+          "title": "House of the Towers",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Palacio de los Medinilla",
-          "pois": []
+          "position": 10,
+          "title": "Palacio de los Medinilla",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Interpretation Center \"The Walls of Úbeda: Tower of the Portillo del Santo Cristo\"",
-          "pois": []
+          "position": 11,
+          "title": "Interpretation Center \"The Walls of Úbeda: Tower of the Portillo del Santo Cristo\"",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Hotel Palace of the Marquis of La Rambla",
-          "pois": []
+          "position": 12,
+          "title": "Hotel Palace of the Marquis of La Rambla",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Orozco Palace",
-          "pois": []
+          "position": 13,
+          "title": "Orozco Palace",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Church of San Pedro",
-          "pois": []
+          "position": 14,
+          "title": "Church of San Pedro",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Hotel Palacio de Úbeda G.L. Restaurant \"El Ábside\"",
-          "pois": []
+          "position": 15,
+          "title": "Hotel Palacio de Úbeda G.L. Restaurant \"El Ábside\"",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         }
       ]
     },
     {
+      "itinerary_id": "trip/8109",
       "trip_id": "trip/8109",
+      "kind": "trip",
+      "source_type": "TouristTrip",
       "name": "Route of the Three Cultures",
       "description": "The condition of Úbeda as a border city made it a strategic enclave for centuries, where Jews, Muslims, and Christians have left their mark. We invite you to immerse yourself in a fascinating medieval city where the traces of these three cultures intertwine, forming a rich historical, religious, and artistic kaleidoscope.",
       "url": "https://inventrip.com/ubeda/trip/8109",
       "steps": [
         {
-          "step": "Ancient Butcheries",
-          "pois": []
+          "position": 1,
+          "title": "Ancient Butcheries",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Route of the Three Cultures",
-          "pois": []
+          "position": 2,
+          "title": "Route of the Three Cultures",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "San Miguel Church",
-          "pois": []
+          "position": 3,
+          "title": "San Miguel Church",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Convent and Museum of San Juan de la Cruz",
-          "pois": []
+          "position": 4,
+          "title": "Convent and Museum of San Juan de la Cruz",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Walls and Losal Gate",
-          "pois": []
+          "position": 5,
+          "title": "Walls and Losal Gate",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Palacio de los Torrente",
-          "pois": []
+          "position": 6,
+          "title": "Palacio de los Torrente",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Convent of the Conception",
-          "pois": []
+          "position": 7,
+          "title": "Convent of the Conception",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Palace of Don Luis de la Cueva",
-          "pois": []
+          "position": 8,
+          "title": "Palace of Don Luis de la Cueva",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Archaeological Museum - Mudéjar House",
-          "pois": []
+          "position": 9,
+          "title": "Archaeological Museum - Mudéjar House",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Water Synagogue",
-          "pois": []
+          "position": 10,
+          "title": "Water Synagogue",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Olive Oil and Olive Grove Interpretation Center",
-          "pois": []
+          "position": 11,
+          "title": "Olive Oil and Olive Grove Interpretation Center",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Octagonal Tower",
-          "pois": []
+          "position": 12,
+          "title": "Octagonal Tower",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Church and Convent of the Most Holy Trinity",
-          "pois": []
+          "position": 13,
+          "title": "Church and Convent of the Most Holy Trinity",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Clock Tower",
-          "pois": []
+          "position": 14,
+          "title": "Clock Tower",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Church of San Isidoro",
-          "pois": []
+          "position": 15,
+          "title": "Church of San Isidoro",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Church of San Nicolás",
-          "pois": []
+          "position": 16,
+          "title": "Church of San Nicolás",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Jewish Quarter Square",
-          "pois": []
+          "position": 17,
+          "title": "Jewish Quarter Square",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         }
       ]
     },
     {
+      "itinerary_id": "trip/8111",
       "trip_id": "trip/8111",
+      "kind": "trip",
+      "source_type": "TouristTrip",
       "name": "Southern Renaissance Route",
       "description": "This route begins at Plaza Vázquez de Molina. This square constitutes the most important monumental complex of the city and corresponds to the so-called Exceptional Universal Value, EUV, for which UNESCO declared the city of Úbeda a World Heritage Site on July 3, 2003. Made up of a group of civil and religious buildings constructed in just fifty years, it forms the great Renaissance architectural ensemble of Spain and one of the most important in Europe.",
       "url": "https://inventrip.com/ubeda/trip/8111",
       "steps": [
         {
-          "step": "Southern Renaissance Route",
-          "pois": []
+          "position": 1,
+          "title": "Southern Renaissance Route",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Plaza Vázquez de Molina",
-          "pois": []
+          "position": 2,
+          "title": "Plaza Vázquez de Molina",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Renaissance Fountain",
-          "pois": []
+          "position": 3,
+          "title": "Renaissance Fountain",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Dean Ortega Palace. Tourism Parador",
-          "pois": []
+          "position": 4,
+          "title": "Dean Ortega Palace. Tourism Parador",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Sacra Capilla del Salvador",
-          "pois": []
+          "position": 5,
+          "title": "Sacra Capilla del Salvador",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Hospital of the Honorable Old People of El Salvador",
-          "pois": []
+          "position": 6,
+          "title": "Hospital of the Honorable Old People of El Salvador",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Santa Lucía Gate",
-          "pois": []
+          "position": 7,
+          "title": "Santa Lucía Gate",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Old Granary",
-          "pois": []
+          "position": 8,
+          "title": "Old Granary",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Palace of the Marquis of Mancera",
-          "pois": []
+          "position": 9,
+          "title": "Palace of the Marquis of Mancera",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Cárcel Del Obispo",
-          "pois": []
+          "position": 10,
+          "title": "Cárcel Del Obispo",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Basilica of Saint Mary of the Royal Alcazars",
-          "pois": []
+          "position": 11,
+          "title": "Basilica of Saint Mary of the Royal Alcazars",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Vela de los Cobos Palace",
-          "pois": []
+          "position": 12,
+          "title": "Vela de los Cobos Palace",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Old Town Hall Buildings",
-          "pois": []
+          "position": 13,
+          "title": "Old Town Hall Buildings",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Church of Saint Paul",
-          "pois": []
+          "position": 14,
+          "title": "Church of Saint Paul",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Ancient Butcheries",
-          "pois": []
+          "position": 15,
+          "title": "Ancient Butcheries",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         },
         {
-          "step": "Hospital de Santiago",
-          "pois": []
+          "position": 16,
+          "title": "Hospital de Santiago",
+          "poi_ids": [],
+          "unresolved_poi_names": []
         }
       ]
     }
   ],
+  "paths": [],
   "sections": [
     {
       "section_id": "unesco-world-heritage-and-city-overview",

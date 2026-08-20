@@ -305,6 +305,15 @@ def sanitize_tourist_answer(answer: str, index: dict) -> str:
     infer facts, change names, or alter the meaning of retrieved evidence.
     """
     sanitized = sanitize_poi_tags(answer, index)
+    protected_tags: list[str] = []
+
+    def protect_tag(match: re.Match) -> str:
+        protected_tags.append(match.group(0))
+        return f"__INVENTRIP_POI_TAG_{len(protected_tags) - 1}__"
+
+    # Do not apply prose replacements to the literal `poi` tag name or
+    # its machine-readable attributes.
+    sanitized = POI_TAG_RE.sub(protect_tag, sanitized)
     replacements = (
         (r"\bPOIs\b", "places"),
         (r"\bPOI\b", "place"),
@@ -313,6 +322,8 @@ def sanitize_tourist_answer(answer: str, index: dict) -> str:
     )
     for pattern, replacement in replacements:
         sanitized = re.sub(pattern, replacement, sanitized, flags=re.IGNORECASE)
+    for position, tag in enumerate(protected_tags):
+        sanitized = sanitized.replace(f"__INVENTRIP_POI_TAG_{position}__", tag)
     return sanitized
 
 
@@ -675,10 +686,9 @@ def _searchable_text(poi: dict) -> str:
 
 def _search_postings(index: dict, term: str) -> set[str]:
     """Resolve a normalized query term to its inverted-index postings.
-
-    Prefix compatibility handles harmless morphology
-    (restaurant/restaurants) without a language-specific stemmer. A v2
-    index falls back to a small local scan during a staged corpus upgrade.
+    Plural variants handle harmless morphology (restaurant/restaurants)
+    without a language-specific stemmer. A v2 index falls back to a
+    small local scan during a staged corpus upgrade.
     """
     search_terms = ((index.get("facets") or {}).get("search_terms") or {})
     if not search_terms:
@@ -687,15 +697,28 @@ def _search_postings(index: dict, term: str) -> set[str]:
             if term in set(tokenize(_searchable_text(poi)))
         }
 
-    # Union exact and prefix-compatible forms.  A direct plural word can
-    # exist in prose ("restaurants") while the category label is singular
-    # ("Restaurant"); using only the direct posting would hide the actual
-    # restaurant records.
-    matched: set[str] = set(search_terms.get(term) or [])
-    for indexed_term, ids in search_terms.items():
-        if indexed_term.startswith(term) or term.startswith(indexed_term):
-            matched.update(ids)
+    matched: set[str] = set()
+    for variant in _term_variants(term):
+        matched.update(search_terms.get(variant) or [])
     return matched
+
+
+def _term_variants(term: str) -> set[str]:
+    """Return conservative spelling variants for a single search term.
+
+    This intentionally avoids general prefix matching: a query such as
+    ``riverwalk`` must not match an unrelated ``river`` token. The three
+    transformations cover the common singular/plural forms used in the
+    catalogue while leaving other languages as exact lexical matches.
+    """
+    variants = {term}
+    if len(term) >= 4 and term.endswith("ies"):
+        variants.add(term[:-3] + "y")
+    elif len(term) >= 4 and term.endswith("es"):
+        variants.add(term[:-2])
+    elif len(term) >= 4 and term.endswith("s"):
+        variants.add(term[:-1])
+    return variants
 
 
 def _evidence_snippet(poi: dict, terms: list[str],
@@ -779,7 +802,182 @@ def format_search_pois(index: dict, query: str, section_id: str | None = None,
         else:
             lines.append(f"  {_poi_tag(poi)}")
     return "\n".join(lines)
+# ── Curated trips and physical paths ────────────────────────────────────────
 
+def _trip_tag(trip: dict) -> str:
+    """Return a curated-suggestion tag (not a physical route)."""
+    bare_id = str(trip.get("itinerary_id") or "").split("/", 1)[-1]
+    return f"<trip id={bare_id}>{trip.get('name') or '(unnamed trip)'}</trip>"
+
+
+def _path_tag(path: dict) -> str:
+    """Return a physical-route tag sourced only from /v120/paths."""
+    bare_id = str(path.get("itinerary_id") or "").split("/", 1)[-1]
+    return f"<path id={bare_id}>{path.get('name') or '(unnamed route)'}</path>"
+
+
+def _itinerary_search_text(itinerary: dict, index: dict) -> str:
+    """Build searchable visitor text without duplicating it in the JSON."""
+    parts = [itinerary.get("name") or "", itinerary.get("description") or ""]
+    for step in itinerary.get("steps") or []:
+        parts.append(step.get("title") or "")
+        parts.extend(step.get("unresolved_poi_names") or [])
+        for poi_id in step.get("poi_ids") or []:
+            poi = get_poi(index, poi_id)
+            if poi:
+                parts.append(poi.get("name") or "")
+                parts.append(poi.get("description") or "")
+                parts.append(poi.get("display_type") or "")
+                parts.extend(poi.get("display_tourist_types") or [])
+    return normalize_text(" ".join(parts))
+
+
+def _itinerary_relevance(itinerary: dict, terms: list[str],
+                         index: dict) -> int:
+    """Score a curated item by visitor-facing query evidence.
+
+    Unlike search_pois (which proves every property on the same POI),
+    itinerary suggestions are editorial recommendations. A visitor phrase
+    such as "food-focused" should find a trip whose resolved stops are
+    labelled Food even if the literal adjective "focused" is absent.
+    """
+    haystack = set(tokenize(_itinerary_search_text(itinerary, index)))
+    return sum(bool(_term_variants(term) & haystack) for term in terms)
+
+
+def _search_curated(index: dict, query: str, collection: str,
+                    limit: int) -> list[dict]:
+    """Search one curated collection (trips or paths), never both."""
+    terms = [term for term in tokenize(query) if len(term) >= 3]
+    if not terms:
+        return []
+    scored = [
+        (_itinerary_relevance(item, terms, index), item)
+        for item in (index.get(collection) or [])
+    ]
+    matches = [item for score, item in scored if score > 0]
+    matches.sort(key=lambda item: (
+        -_itinerary_relevance(item, terms, index),
+        normalize_text(item.get("name") or ""),
+        item.get("itinerary_id") or "",
+    ))
+    return matches[:max(1, limit)]
+
+
+def search_trips(index: dict, query: str, limit: int = 10) -> list[dict]:
+    """Find editorial suggestions for what to do; never returns paths."""
+    return _search_curated(index, query, "trips", limit)
+
+
+def search_paths(index: dict, query: str, limit: int = 10) -> list[dict]:
+    """Find physical walking/biking routes from /v120/paths; never trips."""
+    return _search_curated(index, query, "paths", limit)
+
+
+def _find_curated(index: dict, itinerary_id: str,
+                  collection: str) -> dict | None:
+    """Resolve a full or bare id within one collection only."""
+    raw = str(itinerary_id or "").strip()
+    if not raw:
+        return None
+    for item in index.get(collection) or []:
+        if item.get("itinerary_id") == raw:
+            return item
+    bare = raw.split("/", 1)[-1]
+    matches = [
+        item for item in index.get(collection) or []
+        if str(item.get("itinerary_id") or "").split("/", 1)[-1] == bare
+    ]
+    return matches[0] if len(matches) == 1 else None
+
+
+def get_trip(index: dict, trip_id: str) -> dict | None:
+    """Return one curated suggestion by full or bare trip id."""
+    return _find_curated(index, trip_id, "trips")
+
+
+def get_path(index: dict, path_id: str) -> dict | None:
+    """Return one physical route by full or bare path id."""
+    return _find_curated(index, path_id, "paths")
+
+def _curated_preview(item: dict, max_chars: int = 180) -> str:
+    """Trim a curated trip/path description for search output."""
+    description = (item.get("description") or "").strip()
+    if len(description) > max_chars:
+        description = description[:max_chars].rsplit(" ", 1)[0] + "…"
+    return description
+
+
+def _format_curated_search(index: dict, query: str, collection: str,
+                           label: str, limit: int) -> str:
+    """Format one semantically distinct collection without raw internals."""
+    matches = _search_curated(index, query, collection, limit)
+    if not matches:
+        return f"No curated {label.lower()} matched this request."
+    tag = _trip_tag if collection == "trips" else _path_tag
+    lines = [f'Curated {label.lower()} for "{query}" ({len(matches)}):']
+    for item in matches:
+        stops = len(item.get("steps") or [])
+        preview = _curated_preview(item)
+        suffix = f" — {stops} stops"
+        if preview:
+            suffix += f". {preview}"
+        lines.append(f"  {tag(item)}{suffix}")
+    return "\n".join(lines)
+
+
+def format_search_trips(index: dict, query: str, limit: int = 10) -> str:
+    """Render editorial suggestions for what to do; never a physical route."""
+    return _format_curated_search(index, query, "trips", "Trip suggestions", limit)
+
+
+def format_search_paths(index: dict, query: str, limit: int = 10) -> str:
+    """Render physical walking/biking routes from /v120/paths only."""
+    return _format_curated_search(index, query, "paths", "Routes", limit)
+
+
+def _format_curated_detail(index: dict, itinerary_id: str, collection: str,
+                           tag_builder, unavailable: str) -> str:
+    """Render ordered trip/path stops, preserving unlinked source names."""
+    item = _find_curated(index, itinerary_id, collection)
+    if not item:
+        return unavailable
+    lines = [f"# {tag_builder(item)}"]
+    description = (item.get("description") or "").strip()
+    if description:
+        lines.extend(["", description])
+    steps = item.get("steps") or []
+    if not steps:
+        lines.extend(["", "No ordered stops are available for this item."])
+        return "\n".join(lines)
+    lines.append("")
+    for step in steps:
+        position = step.get("position") or "?"
+        title = step.get("title") or f"Stop {position}"
+        lines.append(f"{position}. {title}")
+        for poi_id in step.get("poi_ids") or []:
+            poi = get_poi(index, poi_id)
+            if poi:
+                lines.append(f"   - {_poi_tag(poi)}")
+        for name in step.get("unresolved_poi_names") or []:
+            lines.append(f"   - {name}")
+    return "\n".join(lines)
+
+
+def format_trip(index: dict, trip_id: str) -> str:
+    """Render one curated suggestion; it is not a physical route."""
+    return _format_curated_detail(
+        index, trip_id, "trips", _trip_tag,
+        "That curated trip suggestion is not available.",
+    )
+
+
+def format_path(index: dict, path_id: str) -> str:
+    """Render one physical walking/biking route from /v120/paths."""
+    return _format_curated_detail(
+        index, path_id, "paths", _path_tag,
+        "That physical route is not available.",
+    )
 
 def format_filter_pois(index: dict, limit: int = 20, **filters: Any) -> str:
     """Render facet-filter results without exposing filter internals."""

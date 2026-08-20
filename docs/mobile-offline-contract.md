@@ -9,7 +9,7 @@
 
 This document is the **complete contract** for the on-device assistant.
 A phone downloads one index file per `(destination, language)` and then
-works **with no internet connection**: the LLM (Gemma 4 E2B) and all six
+works **with no internet connection**: the LLM (Gemma 4 E2B) and all ten
 retrieval tools run locally.
 
 ---
@@ -26,6 +26,7 @@ retrieval tools run locally.
 │  Tool layer  ← port of assistant/index_tools.py             │
 │    list_sections / get_section / get_poi /                  │
 │    find_poi_by_name / filter_pois / search_pois             │
+│    search_trips / get_trip / search_paths / get_path        │
 │    (pure lookups over the parsed JSON — no DB, no network)  │
 │                                                             │
 │  Agentic loop  ← port of assistant/run_eval.py              │
@@ -37,7 +38,7 @@ retrieval tools run locally.
 └─────────────────────────────────────────────────────────────┘
 ```
 
-Measured baseline for this exact stack (E2B, oMLX serving, schema v3
+Measured baseline for this exact stack (E2B, oMLX serving, schema v4
 index, 20 visitor questions, English, 2026-08-16): composite **0.830**,
 grounding **75.0%**, content-fetch **95%**, **3.1 s**/question, 13,950
 prompt + 241 completion tokens/question. The same E2B weights are the
@@ -47,13 +48,14 @@ deployment target; expect ≥ the 70% rubric thresholds on EN/ES/IT.
 
 ## 2. The index file (`indexes/{dest}_{lang}.json`)
 
-One JSON object, `meta.schema_version == 3`. Sizes: ~0.7–0.9 MB per pair
+One JSON object, `meta.schema_version == 4`. Sizes: ~0.7–1.1 MB per pair
 (367 POIs, Úbeda). Parse it fully into memory at session start.
 
 Schema v2 adds the optional `sections[].groups` field. Schema v3 adds
 `facets.search_terms`, the deterministic full-text evidence index used by
-`search_pois`. Older readers can ignore either addition —
-`sections[].poi_ids` and POI records remain complete.
+`search_pois`. Schema v4 adds resolved `trips[]` and `paths[]`. Older
+readers can ignore these additions — `sections[].poi_ids` and POI records
+remain complete.
 
 ```jsonc
 {
@@ -64,7 +66,7 @@ Schema v2 adds the optional `sections[].groups` field. Schema v3 adds
     "generated_at": "2026-08-16T05:13:09Z",
     "poi_count": 367,
     "section_count": 18,
-    "schema_version": 3
+    "schema_version": 4
   },
   "destination_overview": "…multi-line string, embedded in the system prompt…",
   "trips": [
@@ -321,6 +323,67 @@ For compound requests (`X with Y`, `X near Y`, `X that offers Y`), the
 agent first runs one combined `search_pois` evidence check. If it has no
 direct match, the runtime forces separate complementary retrieval in the
 same turn; it must not ask the visitor to choose a next search.
+
+### 3.8 Schema v4: curated trips versus physical paths
+
+Schema v4 adds two collections with the same underlying shape but
+different visitor meaning:
+
+```json
+{
+  "trips": [{
+    "itinerary_id": "trip/4407",
+    "trip_id": "trip/4407",
+    "kind": "trip",
+    "source_type": "TouristTrip",
+    "name": "TASTE ÚBEDA",
+    "description": "…",
+    "url": "https://inventrip.com/ubeda/trip/4407",
+    "steps": [{
+      "position": 1,
+      "title": "Restaurants",
+      "poi_ids": ["poi/35398", "poi/35403"],
+      "unresolved_poi_names": []
+    }]
+  }],
+  "paths": [{
+    "itinerary_id": "path/9001",
+    "path_id": "path/9001",
+    "kind": "path",
+    "source_type": "Path",
+    "name": "Example Walking Route",
+    "description": "…",
+    "url": "…",
+    "steps": [{
+      "position": 1,
+      "title": "Start",
+      "poi_ids": ["poi/…"],
+      "unresolved_poi_names": ["Source waypoint with no POI record"]
+    }]
+  }]
+}
+```
+
+- **Trips** come from `/v120/trips`: editorial suggestions for what to
+  do over a theme, one day, or several days. They are not physical routes.
+- **Paths** come only from `/v120/paths`: walking, cycling, trail, or
+  route candidates. Never represent a trip as a path.
+- `poi_ids` are localized exact name matches from the itinerary source.
+  `unresolved_poi_names` preserves stops that cannot be linked offline.
+- An empty `paths[]` is valid. Current Úbeda en/es/it snapshots have no
+  `/paths` records; the assistant must state that no physical route is
+  available rather than substituting a trip.
+
+The four tools remain separate:
+
+| Tool | Visitor intent | Output tag |
+|---|---|---|
+| `search_trips` / `get_trip` | What to do, themed/day/multi-day suggestions | `<trip id=…>…</trip>` |
+| `search_paths` / `get_path` | Walking, cycling, trail, track, route | `<path id=…>…</path>` |
+
+The app may later make trip/path tags tappable, but this reference
+implementation does not claim an Android navigation contract for them
+yet. POI stops retain the existing `<poi id=… type=…>…</poi>` contract.
 
 ---
 

@@ -145,16 +145,26 @@ def fetch_paths(session, base_url: str, route_ids: list, lang: str) -> list:
             name = get_localized(p.get("name", []), lang)
             desc = get_localized(p.get("description", []), lang)
             waypoints = []
+            itinerary = []
             for step in p.get("itinerary", []):
+                step_name = get_localized(step.get("name", []), lang)
+                step_waypoints = []
                 for item in step.get("itemListElement", []):
                     wp = get_localized(item.get("name", []), lang)
                     if wp:
                         waypoints.append(wp)
+                        step_waypoints.append(wp)
+                if step_name or step_waypoints:
+                    itinerary.append({
+                        "step": step_name,
+                        "pois": step_waypoints,
+                    })
             paths.append({
                 "id":         p.get("identifier", str(rid)),
                 "name":       name,
                 "description": desc,
                 "waypoints":  waypoints,
+                "itinerary":  itinerary,
             })
             print(f"  [path {rid}] \"{name}\"  ({len(waypoints)} waypoints)")
         except SystemExit:

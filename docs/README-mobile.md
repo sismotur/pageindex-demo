@@ -307,7 +307,26 @@ olive-oil cuisine. The assistant must explain that evidence gap in normal
 tourist language, then offer separately labelled complementary options;
 it must never invent the relationship.
 
-### 4.8 `name_index` and name search
+### 4.8 Curated trips and physical paths
+
+Schema v4 adds `trips[]` and `paths[]`, both with ordered step records:
+`position`, `title`, resolved `poi_ids`, and preserved
+`unresolved_poi_names`.
+
+- `trips[]` comes from `/v120/trips`: editorial suggestions for a theme,
+  day, or multi-day visit. A trip is **not** a physical route.
+- `paths[]` comes only from `/v120/paths`: walking, cycling, trail, or
+  route candidates. A path must never be substituted with a trip.
+- Current Úbeda en/es/it snapshots have `paths: []`; this is valid. The
+  app should state that no published physical route is available instead
+  of inventing or reclassifying a trip.
+
+The offline assistant exposes `search_trips`/`get_trip` and
+`search_paths`/`get_path` separately. A future mobile parser may handle
+`<trip id=…>` and `<path id=…>` tags, but only POI tag navigation is
+currently specified for the Android app.
+
+### 4.9 `name_index` and name search
 
 `name_index` maps **normalized** POI names to `poi_id`. It is lossy on
 collisions (first writer wins; < 2% of POIs in practice) — treat it as
@@ -322,7 +341,7 @@ The reference fuzzy search (port of `assistant/index_tools.py`) ranks:
 
 ties broken by interest level. Return the top 5.
 
-### 4.9 Text normalization — must match exactly
+### 4.10 Text normalization — must match exactly
 
 Indexed names and user queries only meet if both sides normalize
 identically (port of `common/textnorm.py`):

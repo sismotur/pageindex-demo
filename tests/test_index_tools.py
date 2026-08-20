@@ -28,12 +28,20 @@ from index_tools import (
     format_filter_pois,
     format_poi,
     format_search_pois,
+    format_search_trips,
+    format_search_paths,
     format_section,
     format_sections_overview,
+    format_trip,
+    format_path,
     get_poi,
     get_pois,
+    get_trip,
+    get_path,
     poi_uri,
     search_pois,
+    search_trips,
+    search_paths,
     sanitize_poi_tags,
     sanitize_tourist_answer,
     strip_poi_tags,
@@ -78,8 +86,8 @@ class TestTextNorm:
 class TestSectionGroups:
     """Sections with > 30 POIs must carry a consistent per-type group map."""
 
-    def test_schema_version_is_3(self, index):
-        assert index["meta"]["schema_version"] == 3
+    def test_schema_version_is_4(self, index):
+        assert index["meta"]["schema_version"] == 4
 
     def test_large_sections_have_groups(self, index):
         grouped = {s["section_id"] for s in index["sections"] if s.get("groups")}
@@ -274,9 +282,11 @@ class TestEvidenceSearch:
         singular = search_pois(index, "restaurant", section_id="gastronomy")
         plural = search_pois(index, "restaurants", section_id="gastronomy")
         assert singular
-        assert {item["poi"]["poi_id"] for item in singular} == {
-            item["poi"]["poi_id"] for item in plural
-        }
+        assert plural
+        # Plural also matches visitor descriptions that mention restaurants,
+        # so ranking can include non-restaurant venues. It must still
+        # resolve real Restaurant records through the singular variant.
+        assert "poi/65817" in {item["poi"]["poi_id"] for item in plural}
 
     def test_evidence_formatter_no_internal_filter_leak(self, index):
         out = format_search_pois(
@@ -290,6 +300,92 @@ class TestEvidenceSearch:
         out = format_search_pois(index, "olive oil", section_id="gastronomy")
         assert "<poi id=" in out
         assert " type=OilMill>" in out
+
+# ── Curated trip suggestions and physical paths ─────────────────────────────
+
+class TestCuratedItineraries:
+    """Trips are suggestions; paths are physical routes from /v120/paths."""
+
+    def test_schema_v4_has_trips_and_paths(self, index):
+        assert index["meta"]["schema_version"] == 4
+        assert len(index["trips"]) == 29
+        # Úbeda currently advertises no /paths route IDs. Empty is valid.
+        assert index["paths"] == []
+
+    def test_trip_steps_keep_order_and_resolution(self, index):
+        trip = get_trip(index, "trip/4407")
+        assert trip is not None
+        assert trip["kind"] == "trip"
+        assert trip["name"] == "TASTE ÚBEDA"
+        assert [step["position"] for step in trip["steps"]] == \
+            list(range(1, len(trip["steps"]) + 1))
+        assert any(step["poi_ids"] for step in trip["steps"])
+        for step in trip["steps"]:
+            for poi_id in step["poi_ids"]:
+                assert poi_id in index["pois"]
+
+    def test_trip_search_returns_trip_tags_not_path_tags(self, index):
+        out = format_search_trips(index, "taste ubeda", limit=3)
+        assert "<trip id=4407>TASTE ÚBEDA</trip>" in out
+        assert "<path " not in out
+
+    def test_trip_detail_has_tagged_ordered_poi_stops(self, index):
+        out = format_trip(index, "4407")  # bare numeric id accepted
+        assert out.startswith("# <trip id=4407>TASTE ÚBEDA</trip>")
+        assert "1. Restaurants" in out
+        assert "<poi id=" in out
+        assert "[poi/" not in out
+
+    def test_missing_path_is_truthful(self, index):
+        assert search_paths(index, "walking") == []
+        assert format_search_paths(index, "walking") == \
+            "No curated routes matched this request."
+        assert format_path(index, "path/999") == \
+            "That physical route is not available."
+
+    def test_synthetic_path_never_appears_as_trip(self, index):
+        synthetic = dict(index)
+        synthetic["paths"] = [{
+            "itinerary_id": "path/9001",
+            "path_id": "path/9001",
+            "kind": "path",
+            "source_type": "Path",
+            "name": "Riverwalk9001 Walking Route",
+            "description": "A walking route beside the river.",
+            "url": "",
+            "steps": [{
+                "position": 1,
+                "title": "Start",
+                "poi_ids": ["poi/36026"],
+                "unresolved_poi_names": ["River viewpoint"],
+            }],
+        }]
+        assert search_trips(synthetic, "riverwalk9001") == []
+        paths = search_paths(synthetic, "riverwalk9001")
+        assert [path["itinerary_id"] for path in paths] == ["path/9001"]
+        out = format_path(synthetic, "9001")
+        assert out.startswith("# <path id=9001>Riverwalk9001 Walking Route</path>")
+        assert "<poi id=36026" in out
+        assert "River viewpoint" in out
+
+    def test_unresolved_waypoints_survive_rendering(self, index):
+        synthetic = dict(index)
+        synthetic["trips"] = [{
+            "itinerary_id": "trip/9002",
+            "trip_id": "trip/9002",
+            "kind": "trip",
+            "source_type": "TouristTrip",
+            "name": "Local Discovery",
+            "description": "A local suggestion.",
+            "url": "",
+            "steps": [{
+                "position": 1,
+                "title": "Meet",
+                "poi_ids": [],
+                "unresolved_poi_names": ["Uncatalogued meeting point"],
+            }],
+        }]
+        assert "Uncatalogued meeting point" in format_trip(synthetic, "9002")
 
 
 # ── POI tags in answers (app deep links) ─────────────────────────────────────
@@ -372,6 +468,13 @@ class TestPoiTags:
         )
         sanitized = sanitize_tourist_answer(answer, index)
         assert sanitized == "I found 2 places and one place: Ghost."
+
+    def test_tourist_answer_sanitizer_preserves_known_poi_tag(self, index):
+        answer = "POIs include <poi id=36694 type=OilMill>Almazara</poi>."
+        sanitized = sanitize_tourist_answer(answer, index)
+        assert sanitized.startswith("places include ")
+        assert "<poi id=36694 type=OilMill>Almazara</poi>" in sanitized
+        assert "<place " not in sanitized
 
     def test_no_tags_returns_empty(self, index):
         assert extract_poi_tags("no tags here", index) == []

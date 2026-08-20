@@ -49,6 +49,9 @@ from run_eval import (   # noqa: E402
     DEFAULT_INDEX,
     NO_DIRECT_EVIDENCE_PREFIX,
     COMPLEMENTARY_SEARCH_INSTRUCTION,
+    is_physical_route_request,
+    ROUTE_SEARCH_INSTRUCTION,
+    NO_PATH_ANSWER_INSTRUCTION,
 )
 from index_tools import (   # noqa: E402
     load_index,
@@ -124,6 +127,14 @@ def _status_for_call(name: str, args: dict) -> str:
         return "Finding suitable places"
     if name == "search_pois":
         return "Checking visitor information"
+    if name == "search_trips":
+        return "Finding visit suggestions"
+    if name == "get_trip":
+        return "Loading visit suggestion"
+    if name == "search_paths":
+        return "Looking for routes"
+    if name == "get_path":
+        return "Loading route details"
     if name == "list_sections":
         return "Checking available information"
     return f"Calling {name}"
@@ -152,6 +163,10 @@ def run_turn(question: str, messages: list[dict],
     rounds     = 0
     direct_evidence_missing = False
     complementary_retrieval_started = False
+    physical_route_request = is_physical_route_request(question)
+    path_search_started = False
+    no_matching_path = False
+    no_path_answer_enforced = False
 
     for round_num in range(MAX_TOOL_ROUNDS):
         rounds = round_num + 1
@@ -227,6 +242,19 @@ def run_turn(question: str, messages: list[dict],
             messages.append(assistant_msg)
 
             if not acc_tool_calls:
+                if physical_route_request and not path_search_started:
+                    messages.append({
+                        "role": "user",
+                        "content": ROUTE_SEARCH_INSTRUCTION,
+                    })
+                    continue
+                if no_matching_path and not no_path_answer_enforced:
+                    no_path_answer_enforced = True
+                    messages.append({
+                        "role": "user",
+                        "content": NO_PATH_ANSWER_INSTRUCTION,
+                    })
+                    continue
                 if direct_evidence_missing and not complementary_retrieval_started:
                     messages.append({
                         "role": "user",
@@ -277,6 +305,19 @@ def run_turn(question: str, messages: list[dict],
             messages.append(assistant_msg)
 
             if not message.tool_calls:
+                if physical_route_request and not path_search_started:
+                    messages.append({
+                        "role": "user",
+                        "content": ROUTE_SEARCH_INSTRUCTION,
+                    })
+                    continue
+                if no_matching_path and not no_path_answer_enforced:
+                    no_path_answer_enforced = True
+                    messages.append({
+                        "role": "user",
+                        "content": NO_PATH_ANSWER_INSTRUCTION,
+                    })
+                    continue
                 if direct_evidence_missing and not complementary_retrieval_started:
                     messages.append({
                         "role": "user",
@@ -310,6 +351,10 @@ def run_turn(question: str, messages: list[dict],
                 "filter_pois", "get_section", "find_poi_by_name",
             }:
                 complementary_retrieval_started = True
+            if fn_name == "search_paths":
+                path_search_started = True
+                if result.startswith("No curated routes matched"):
+                    no_matching_path = True
             if hit:
                 cache_hits += 1
             tool_calls_made.append({

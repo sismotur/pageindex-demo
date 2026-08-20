@@ -299,7 +299,7 @@ files still score.
 
 ## LLM tool surface
 
-Six tools, all pure dict lookups against the index. No I/O, no
+Ten tools, all pure dict lookups against the index. No I/O, no
 LLM-in-the-loop, no line slicing.
 
 | Tool | Purpose |
@@ -310,6 +310,8 @@ LLM-in-the-loop, no line slicing.
 | `find_poi_by_name(query, limit)` | Diacritic-insensitive fuzzy lookup by name. |
 | `filter_pois(interest_level, type, tourist_type, section_id, indispensable, limit)` | Facet query, all filters AND together. |
 | `search_pois(query, section_id, limit)` | Same-record full-text evidence search for compound visitor requests. |
+| `search_trips(query, limit)` / `get_trip(id)` | Editorial day/theme/multi-day suggestions from `/v120/trips`; never physical routes. |
+| `search_paths(query, limit)` / `get_path(id)` | Physical walking/cycling/trail routes from `/v120/paths`; never substitutes a trip. |
 
 Typical flows handled by the model:
 
