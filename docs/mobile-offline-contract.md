@@ -139,9 +139,9 @@ Notes for ports:
 
 ---
 
-## 3. The six tools (exact semantics)
+## 3. The ten tools (exact semantics)
 
-All six are pure functions over the parsed index. **Outputs are text
+All ten are pure functions over the parsed index. **Outputs are text
 blobs returned to the LLM verbatim** — match the Python formatting
 exactly, because the system prompt and the model's learned behaviour
 depend on it. Reference: `assistant/index_tools.py`.
@@ -276,9 +276,9 @@ Results sorted by `(interest_level, zoom_level, name)`, default
 `limit=20`, rendered like `find_poi_by_name` with a header line
 `Filter {active_filters}: N matches` and a trailing
 `  …more matches available (raise limit)` when truncated.
-### 3.6 Schema v3 override: evidence search and tourist-safe output
+### 3.6 Schema v3/v4 overrides: evidence, tags, trips, and paths
 
-This section is authoritative for schema v3 and supersedes older v2
+This section is authoritative for schema v3/v4 and supersedes older v2
 examples above that show raw ids, category labels, interest levels, or
 filter echoes.
 
@@ -407,17 +407,21 @@ Swift: `s.decomposedStringWithCompatibilityMapping` +
 
 ---
 
-## 5. System prompt (verbatim template)
+## 5. System prompt contract
 
-Built once per session; `{{...}}` are interpolated. Port from
-`assistant/run_eval.py::_SYSTEM_PROMPT_TEMPLATE` — do not paraphrase:
+Built once per session. The authoritative template is
+`assistant/run_eval.py::_SYSTEM_PROMPT_TEMPLATE`; the older illustrative
+excerpt below remains only as background. Ports must mirror the **current
+Python template**, including `search_pois`, `search_trips`, `get_trip`,
+`search_paths`, `get_path`, tourist-safe output rules, validated POI
+tags, and the rule that trips are never physical routes.
 
 ```
 You are a tourism assistant for {destination}.  You answer visitor questions using the {destination} POI index, which is a structured catalogue of every point of interest, trip and itinerary in the destination.
 
 The full section catalogue is listed below — you do NOT need to call any tool to discover it.  Use this information directly.
 
-You have FIVE tools.  Pick the one that fits the question:
+You have TEN tools. Pick the one that fits the question:
 
   • get_section(section_id, sort?, limit?)
         List POIs inside one section.  Returns id + name + a one-line preview.
@@ -436,6 +440,12 @@ You have FIVE tools.  Pick the one that fits the question:
           - filter_pois(tourist_type="FOOD TOURISM", limit=10) → food spots
           - filter_pois(type="OilMill") → all olive-oil mills
           - filter_pois(interest_level=1, section_id="religious-heritage")
+
+  • search_trips(query, limit?) / get_trip(trip_id)
+        Curated theme/day/multi-day visit suggestions. A trip is not a route.
+
+  • search_paths(query, limit?) / get_path(path_id)
+        Physical walking/cycling/trail routes only. Never substitute a trip.
 
   • list_sections()
         Returns the catalogue below.  Rarely needed — sections are pre-loaded.
@@ -496,7 +506,7 @@ if no answer after the loop:
     llm.chat(messages + [recovery_msg(lang)])   # no tools
 ```
 
-- **TOOL_DEFS**: the five JSON schemas in §3, copied verbatim from
+- **TOOL_DEFS**: the ten JSON schemas in §3, copied verbatim from
   `assistant/run_eval.py::TOOL_DEFS` (descriptions included — the model
   reads them).
 - **Temperature 0**, always.
