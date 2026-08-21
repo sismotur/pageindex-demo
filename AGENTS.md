@@ -321,6 +321,9 @@ Typical flows handled by the model:
 - **"Indispensable POIs"** → `filter_pois(indispensable=true)`.
 - **"Indispensable food spots"** →
   `filter_pois(indispensable=true, tourist_type="FOOD TOURISM")`.
+- **Physical route intent** is guarded deterministically: one
+  `search_paths` lookup is forced, then the assistant answers once. This
+  prevents repeated clarification/instruction loops on small models.
 
 Pre-warm: every section's `get_section(id, "interest", 50)` result is
 cached at session start, so subsequent calls are instant.

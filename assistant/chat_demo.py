@@ -50,8 +50,8 @@ from run_eval import (   # noqa: E402
     NO_DIRECT_EVIDENCE_PREFIX,
     COMPLEMENTARY_SEARCH_INSTRUCTION,
     is_physical_route_request,
-    ROUTE_SEARCH_INSTRUCTION,
     NO_PATH_ANSWER_INSTRUCTION,
+    route_lookup_context,
 )
 from index_tools import (   # noqa: E402
     load_index,
@@ -167,6 +167,7 @@ def run_turn(question: str, messages: list[dict],
     path_search_started = False
     no_matching_path = False
     no_path_answer_enforced = False
+    route_lookup_enforced = False
 
     for round_num in range(MAX_TOOL_ROUNDS):
         rounds = round_num + 1
@@ -179,8 +180,8 @@ def run_turn(question: str, messages: list[dict],
             # Hold an attempted final answer until we know it is not the
             # "no direct match; what should I search next?" failure mode.
             hold_stream_content = (
-                direct_evidence_missing
-                and not complementary_retrieval_started
+                (direct_evidence_missing and not complementary_retrieval_started)
+                or (physical_route_request and not path_search_started)
             )
 
             try:
@@ -243,9 +244,30 @@ def run_turn(question: str, messages: list[dict],
 
             if not acc_tool_calls:
                 if physical_route_request and not path_search_started:
+                    if route_lookup_enforced:
+                        answer = sanitize_tourist_answer(acc_content.strip(), index)
+                        break
+                    route_lookup_enforced = True
+                    route_result, route_hit = execute_tool(
+                        "search_paths", {"query": question}, index,
+                        sections_text, cache,
+                    )
+                    path_search_started = True
+                    no_matching_path = route_result.startswith(
+                        "No curated routes matched"
+                    )
+                    if route_hit:
+                        cache_hits += 1
+                    tool_calls_made.append({
+                        "tool": "search_paths",
+                        "args": {"query": question},
+                        "result_preview": route_result[:250],
+                        "cache_hit": route_hit,
+                        "automatic": True,
+                    })
                     messages.append({
                         "role": "user",
-                        "content": ROUTE_SEARCH_INSTRUCTION,
+                        "content": route_lookup_context(route_result),
                     })
                     continue
                 if no_matching_path and not no_path_answer_enforced:
@@ -306,9 +328,32 @@ def run_turn(question: str, messages: list[dict],
 
             if not message.tool_calls:
                 if physical_route_request and not path_search_started:
+                    if route_lookup_enforced:
+                        answer = sanitize_tourist_answer(
+                            (message.content or "").strip(), index
+                        )
+                        break
+                    route_lookup_enforced = True
+                    route_result, route_hit = execute_tool(
+                        "search_paths", {"query": question}, index,
+                        sections_text, cache,
+                    )
+                    path_search_started = True
+                    no_matching_path = route_result.startswith(
+                        "No curated routes matched"
+                    )
+                    if route_hit:
+                        cache_hits += 1
+                    tool_calls_made.append({
+                        "tool": "search_paths",
+                        "args": {"query": question},
+                        "result_preview": route_result[:250],
+                        "cache_hit": route_hit,
+                        "automatic": True,
+                    })
                     messages.append({
                         "role": "user",
-                        "content": ROUTE_SEARCH_INSTRUCTION,
+                        "content": route_lookup_context(route_result),
                     })
                     continue
                 if no_matching_path and not no_path_answer_enforced:

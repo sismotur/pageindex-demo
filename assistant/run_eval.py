@@ -110,13 +110,13 @@ ROUTE_INTENT_TERMS = frozenset({
     "trail", "track", "hiking", "hike", "trek",
     # Spanish / Catalan / Galician / Basque
     "ruta", "caminar", "caminata", "sendero", "senderismo", "bicicleta",
-    "ciclismo", "paseo", "cami", "bici", "ibilbide",
+    "ciclismo", "paseo", "camin", "bici", "ibilbide",
     # Italian / French / Portuguese
     "percorso", "piedi", "sentiero", "camminata", "bici", "bicicletta",
     "randonnée", "randonnee", "velo", "ciclovia", "caminho",
     # German / Dutch / Croatian
     "wander", "wanderweg", "fahrrad", "radweg", "spaziergang", "route",
-    "wandeling", "fiets", "staza", "pješa", "setnja",
+    "wandeling", "fiets", "staza", "pjesa", "setnja",
 })
 ROUTE_SEARCH_INSTRUCTION = (
     "This is a physical walking, cycling, trail, track, or route request. "
@@ -136,11 +136,27 @@ def is_physical_route_request(question: str) -> bool:
     terms = tokenize(question)
     return any(
         term in ROUTE_INTENT_TERMS
-        or any(term.startswith(route) or route.startswith(term)
-               for route in ROUTE_INTENT_TERMS if len(route) >= 4)
+        or any(
+            len(term) >= 4 and term.startswith(route)
+            for route in ROUTE_INTENT_TERMS if len(route) >= 4
+        )
         for term in terms
     )
 
+
+def route_lookup_context(result: str) -> str:
+    """Return an internal instruction after a forced physical path lookup."""
+    if result.startswith("No curated routes matched"):
+        return (
+            "A physical-route lookup has already completed and found no "
+            "matching published route. Answer the visitor clearly now. Do "
+            "not ask a follow-up question and do not substitute a trip."
+        )
+    return (
+        "A physical-route lookup has already completed. Use these route "
+        "results to answer the visitor; do not offer a curated trip as a "
+        "physical route:\n\n" + result
+    )
 _SYSTEM_PROMPT_TEMPLATE = """\
 You are a tourism assistant for {destination}.  You answer visitor \
 questions using the {destination} POI index, which is a structured catalogue \
@@ -799,6 +815,7 @@ def run_agentic_loop(question: str, system_prompt: str,
     path_search_started = False
     no_matching_path = False
     no_path_answer_enforced = False
+    route_lookup_enforced = False
 
     for round_num in range(MAX_TOOL_ROUNDS):
         rounds = round_num + 1
@@ -839,9 +856,37 @@ def run_agentic_loop(question: str, system_prompt: str,
 
         if not message.tool_calls:
             if physical_route_request and not path_search_started:
+                # E2B occasionally responds to a route request with a
+                # clarification question without calling search_paths.
+                # Perform exactly one deterministic lookup ourselves and
+                # feed the result back; never re-inject the same demand in
+                # a loop.
+                if route_lookup_enforced:
+                    answer = sanitize_tourist_answer(
+                        (message.content or "").strip(), index
+                    )
+                    break
+                route_lookup_enforced = True
+                route_result, route_hit = execute_tool(
+                    "search_paths", {"query": question}, index,
+                    sections_text, cache,
+                )
+                path_search_started = True
+                no_matching_path = route_result.startswith(
+                    "No curated routes matched"
+                )
+                if route_hit:
+                    cache_hits += 1
+                tool_calls_made.append({
+                    "tool": "search_paths",
+                    "args": {"query": question},
+                    "result_preview": route_result[:300],
+                    "cache_hit": route_hit,
+                    "automatic": True,
+                })
                 messages.append({
                     "role": "user",
-                    "content": ROUTE_SEARCH_INSTRUCTION,
+                    "content": route_lookup_context(route_result),
                 })
                 continue
             if no_matching_path and not no_path_answer_enforced:

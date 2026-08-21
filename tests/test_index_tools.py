@@ -47,6 +47,7 @@ from index_tools import (
     strip_poi_tags,
 )
 from common.textnorm import normalize_text, tokenize
+from run_eval import is_physical_route_request
 
 INDEX_FILE = PROJECT_ROOT / "indexes" / "ubeda_en.json"
 
@@ -79,6 +80,26 @@ class TestTextNorm:
 
     def test_tokenize(self):
         assert tokenize("Casa de las Torres") == ["casa", "de", "las", "torres"]
+
+
+class TestRouteIntent:
+    """Physical-route control must not trigger on ordinary tourist questions."""
+
+    @pytest.mark.parametrize("question", [
+        "Can you suggest a walking route in Úbeda?",
+        "¿Puedes sugerirme una ruta a pie en Úbeda?",
+        "¿Hay senderos para caminar?",
+        "Vorrei un percorso in bicicletta",
+    ])
+    def test_detects_physical_route_requests(self, question):
+        assert is_physical_route_request(question)
+
+    def test_spanish_breakfast_question_is_not_a_route(self):
+        # Regression for `se` falsely matching Croatian `setnja` through
+        # symmetric prefix matching, which caused a 14-round chat loop.
+        assert not is_physical_route_request(
+            "se puedec desayunar aceite autenr"
+        )
 
 
 # ── Schema v3: section groups + evidence search ─────────────────────────────

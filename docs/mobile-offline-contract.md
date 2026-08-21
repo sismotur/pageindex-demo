@@ -385,6 +385,27 @@ The app may later make trip/path tags tappable, but this reference
 implementation does not claim an Android navigation contract for them
 yet. POI stops retain the existing `<poi id=… type=…>…</poi>` contract.
 
+### 3.9 Route-intent loop safety
+
+The runtime applies a deterministic multilingual route-intent guard before
+accepting an answer to walking/cycling/trail questions:
+
+1. A physical-route request must perform exactly one `search_paths`
+   lookup. If the small model initially answers with a clarification
+   question instead of a tool call, the runtime performs that lookup
+   automatically and supplies the result to the next model turn.
+2. If no path matches, the model receives one explicit no-route
+   instruction and must answer concisely. It may not ask the visitor to
+   reformulate the route request and may not substitute a trip.
+3. The automatic lookup is bounded to one attempt per user turn. A model
+   that still declines to use data cannot trigger repeated instructions
+   or an infinite conversation loop.
+
+The intent detector uses normalized route words/stems across supported
+languages and rejects short-token prefix matches. This avoids false
+classification of ordinary text such as Spanish `se` as a Croatian route
+word (`setnja`).
+
 ---
 
 ## 4. Text normalization (critical for name search)

@@ -155,6 +155,10 @@ A typical answer flow:
 - **"Show me a walking route"** → `search_paths(...)`; if the destination
   supplies no `/paths` record, say so without substituting a trip.
 
+For route requests, the runtime forces exactly one physical-path lookup
+before accepting an answer and bounds no-route recovery to one turn. This
+prevents the small on-device model from repeating clarification prompts.
+
 ---
 
 ## Data source
