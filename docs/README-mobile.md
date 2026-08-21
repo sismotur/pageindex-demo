@@ -41,6 +41,12 @@ The app receives final answers with tag-ready POI mentions:
 the inner text; only make it tappable after verifying `poi/36694` exists
 in the downloaded `pois` map. Unknown tags remain plain text.
 
+Every non-social visitor request is source-grounded against the
+downloaded index during its current turn. If a visitor selects a previous
+`<poi>`, `<trip>`, or `<path>` tag by name, the runtime retrieves that
+specific record again before answering; it never relies only on an earlier
+model paraphrase. Turn logs expose grounding metadata for QA.
+
 ---
 
 ## 2. API integration (how the index is produced)

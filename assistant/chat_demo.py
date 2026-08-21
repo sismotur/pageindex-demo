@@ -52,12 +52,18 @@ from run_eval import (   # noqa: E402
     is_physical_route_request,
     NO_PATH_ANSWER_INSTRUCTION,
     route_lookup_context,
+    SOURCE_GROUNDING_TOOLS,
+    GROUNDING_REQUIRED_INSTRUCTION,
+    requires_current_turn_grounding,
+    grounding_failure_message,
+    selected_source_context,
 )
 from index_tools import (   # noqa: E402
     load_index,
     format_sections_overview,
     format_section,
     extract_poi_tags,
+    resolve_history_selection,
     sanitize_tourist_answer,
 )
 from common.lang_support import (   # noqa: E402
@@ -168,6 +174,46 @@ def run_turn(question: str, messages: list[dict],
     no_matching_path = False
     no_path_answer_enforced = False
     route_lookup_enforced = False
+    grounding_required = requires_current_turn_grounding(question)
+    grounded = False
+    grounding_retry_enforced = False
+    grounding_tools: list[str] = []
+    automatic_source_calls: list[dict] = []
+
+    # Resolve concise selections against validated tags from earlier
+    # assistant turns before asking the model to answer. This prevents
+    # "Secundaria 2" from being answered from paraphrased chat memory.
+    selection = resolve_history_selection(question, messages[:-1], index)
+    if selection:
+        tool_name, arg_name = {
+            "poi": ("get_poi", "poi_id"),
+            "trip": ("get_trip", "trip_id"),
+            "path": ("get_path", "path_id"),
+        }[selection["kind"]]
+        result, hit = execute_tool(
+            tool_name, {arg_name: selection["id"]}, index, sections_text, cache
+        )
+        if hit:
+            cache_hits += 1
+        tool_calls_made.append({
+            "tool": tool_name,
+            "args": {arg_name: selection["id"]},
+            "result_preview": result[:250],
+            "cache_hit": hit,
+            "automatic": True,
+            "source_selection": selection,
+        })
+        grounded = True
+        grounding_tools.append(tool_name)
+        automatic_source_calls.append({
+            "tool": tool_name,
+            "args": {arg_name: selection["id"]},
+            "source_selection": selection,
+        })
+        messages.append({
+            "role": "user",
+            "content": selected_source_context(selection, result),
+        })
 
     for round_num in range(MAX_TOOL_ROUNDS):
         rounds = round_num + 1
@@ -182,6 +228,7 @@ def run_turn(question: str, messages: list[dict],
             hold_stream_content = (
                 (direct_evidence_missing and not complementary_retrieval_started)
                 or (physical_route_request and not path_search_started)
+                or (grounding_required and not grounded)
             )
 
             try:
@@ -265,6 +312,12 @@ def run_turn(question: str, messages: list[dict],
                         "cache_hit": route_hit,
                         "automatic": True,
                     })
+                    grounded = True
+                    grounding_tools.append("search_paths")
+                    automatic_source_calls.append({
+                        "tool": "search_paths",
+                        "args": {"query": question},
+                    })
                     messages.append({
                         "role": "user",
                         "content": route_lookup_context(route_result),
@@ -283,6 +336,16 @@ def run_turn(question: str, messages: list[dict],
                         "content": COMPLEMENTARY_SEARCH_INSTRUCTION,
                     })
                     continue
+                if grounding_required and not grounded:
+                    if not grounding_retry_enforced:
+                        grounding_retry_enforced = True
+                        messages.append({
+                            "role": "user",
+                            "content": GROUNDING_REQUIRED_INSTRUCTION,
+                        })
+                        continue
+                    answer = grounding_failure_message(index)
+                    break
                 answer = sanitize_tourist_answer(acc_content.strip(), index)
                 break
 
@@ -351,6 +414,12 @@ def run_turn(question: str, messages: list[dict],
                         "cache_hit": route_hit,
                         "automatic": True,
                     })
+                    grounded = True
+                    grounding_tools.append("search_paths")
+                    automatic_source_calls.append({
+                        "tool": "search_paths",
+                        "args": {"query": question},
+                    })
                     messages.append({
                         "role": "user",
                         "content": route_lookup_context(route_result),
@@ -369,6 +438,16 @@ def run_turn(question: str, messages: list[dict],
                         "content": COMPLEMENTARY_SEARCH_INSTRUCTION,
                     })
                     continue
+                if grounding_required and not grounded:
+                    if not grounding_retry_enforced:
+                        grounding_retry_enforced = True
+                        messages.append({
+                            "role": "user",
+                            "content": GROUNDING_REQUIRED_INSTRUCTION,
+                        })
+                        continue
+                    answer = grounding_failure_message(index)
+                    break
                 answer = sanitize_tourist_answer((message.content or "").strip(), index)
                 break
 
@@ -387,6 +466,10 @@ def run_turn(question: str, messages: list[dict],
                 on_status(_status_for_call(fn_name, fn_args))
 
             result, hit = execute_tool(fn_name, fn_args, index, sections_text, cache)
+            if fn_name in SOURCE_GROUNDING_TOOLS:
+                grounded = True
+                if fn_name not in grounding_tools:
+                    grounding_tools.append(fn_name)
             if fn_name == "search_pois":
                 if result.startswith(NO_DIRECT_EVIDENCE_PREFIX):
                     direct_evidence_missing = True
@@ -414,7 +497,9 @@ def run_turn(question: str, messages: list[dict],
                 "content":      result,
             })
 
-    # Fallback: recover the last assistant text if loop ended without one
+    # Fallback: never recover a model-only tourism answer after the round cap.
+    if not answer and grounding_required and not grounded:
+        answer = grounding_failure_message(index)
     if not answer:
         for msg in reversed(messages):
             if msg["role"] == "assistant" and msg.get("content"):
@@ -440,6 +525,9 @@ def run_turn(question: str, messages: list[dict],
         "tool_calls": tool_calls_made,
         "rounds":     rounds,
         "cache_hits": cache_hits,
+        "grounded":   grounded or not grounding_required,
+        "grounding_tools": grounding_tools,
+        "automatic_source_calls": automatic_source_calls,
         "error":      error,
     }
 
@@ -504,6 +592,9 @@ def run_conversation(thread: dict, system_prompt: str,
             "poi_refs":   extract_poi_tags(result["answer"], index),
             "latency":    elapsed,
             "cache_hits": result["cache_hits"],
+            "grounded":   result["grounded"],
+            "grounding_tools": result["grounding_tools"],
+            "automatic_source_calls": result["automatic_source_calls"],
             "error":      result["error"],
         })
 

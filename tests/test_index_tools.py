@@ -47,9 +47,14 @@ from index_tools import (
     strip_poi_tags,
 )
 from common.textnorm import normalize_text, tokenize
-from run_eval import is_physical_route_request
+from run_eval import (
+    grounding_failure_message,
+    is_physical_route_request,
+    requires_current_turn_grounding,
+)
 
 INDEX_FILE = PROJECT_ROOT / "indexes" / "ubeda_en.json"
+SPANISH_INDEX_FILE = PROJECT_ROOT / "indexes" / "ubeda_es.json"
 
 
 @pytest.fixture(scope="module")
@@ -57,6 +62,13 @@ def index():
     if not INDEX_FILE.exists():
         pytest.skip(f"Index file not found: {INDEX_FILE}")
     return load_index(INDEX_FILE)
+
+
+@pytest.fixture(scope="module")
+def spanish_index():
+    if not SPANISH_INDEX_FILE.exists():
+        pytest.skip(f"Index file not found: {SPANISH_INDEX_FILE}")
+    return load_index(SPANISH_INDEX_FILE)
 
 
 # ── Text normalisation ───────────────────────────────────────────────────────
@@ -100,6 +112,53 @@ class TestRouteIntent:
         assert not is_physical_route_request(
             "se puedec desayunar aceite autenr"
         )
+
+
+class TestStrictGrounding:
+    def test_social_messages_do_not_require_retrieval(self):
+        assert not requires_current_turn_grounding("hola")
+        assert not requires_current_turn_grounding("Thanks")
+        assert requires_current_turn_grounding("hoteles cerca del ayuntamiento")
+
+    def test_failure_message_follows_index_language(self, index):
+        spanish = dict(index)
+        spanish["meta"] = dict(index["meta"], lang="es")
+        assert grounding_failure_message(spanish).startswith("No he podido")
+
+    def test_resolves_unique_trip_selection_from_history(self, spanish_index):
+        from index_tools import resolve_history_selection
+        history = [{
+            "role": "assistant",
+            "content": (
+                '<trip id=4453>Ú. en Familia-R. Secundaria 2</trip>'
+            ),
+        }]
+        selection = resolve_history_selection(
+            "Secundaria 2", history, spanish_index
+        )
+        assert selection == {
+            "kind": "trip",
+            "id": "trip/4453",
+            "label": "Ú. en Familia-R. Secundaria 2",
+        }
+
+    def test_resolves_unique_poi_selection_from_history(self, index):
+        from index_tools import resolve_history_selection
+        history = [{
+            "role": "assistant",
+            "content": '<poi id=36026 type=TouristAttraction>Ariza Bridge</poi>',
+        }]
+        selection = resolve_history_selection("Ariza", history, index)
+        assert selection["kind"] == "poi"
+        assert selection["id"] == "poi/36026"
+
+    def test_unknown_history_tag_cannot_be_selected(self, index):
+        from index_tools import resolve_history_selection
+        history = [{
+            "role": "assistant",
+            "content": '<trip id=999999>Imaginary Weekend</trip>',
+        }]
+        assert resolve_history_selection("Weekend", history, index) is None
 
 
 # ── Schema v3: section groups + evidence search ─────────────────────────────

@@ -406,6 +406,30 @@ languages and rejects short-token prefix matches. This avoids false
 classification of ordinary text such as Spanish `se` as a Croatian route
 word (`setnja`).
 
+### 3.10 Strict current-turn grounding
+
+Tourist answers use a fail-closed source rule:
+
+1. Every non-social user turn must have a current-turn source retrieval
+   (`get_poi`, `get_section`, name/facet/evidence search, trip, or path)
+   before an answer is accepted. `list_sections` alone is not enough.
+2. If the model tries to answer without retrieval, the runtime gives it
+   one internal grounding retry. A second no-tool answer returns a
+   localized safe failure message instead of model-memory prose.
+3. A concise selection of a validated prior tag is resolved
+   deterministically. For example, after
+   `<trip id=4453>Ú. en Familia-R. Secundaria 2</trip>`, the user can say
+   `Secundaria 2`; the runtime automatically calls
+   `get_trip("trip/4453")` before response generation.
+4. The turn log carries `grounded`, `grounding_tools`, and
+   `automatic_source_calls` for QA. The app should treat an ungrounded
+   failure response as ordinary text, not a recommendation.
+
+Grounding means the answer is based on the current downloaded index. It
+does not promise verbatim wording: the model may paraphrase retrieved
+data, but must not introduce location/trip facts without a current
+retrieval result.
+
 ---
 
 ## 4. Text normalization (critical for name search)

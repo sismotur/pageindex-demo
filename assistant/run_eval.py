@@ -76,6 +76,7 @@ from index_tools import (
     find_section,
     get_poi as ix_get_poi,
     extract_poi_tags,
+    resolve_history_selection,
     sanitize_tourist_answer,
 )
 from common.lang_support import (
@@ -87,7 +88,7 @@ from common.lang_support import (
     is_supported,
 )
 from common.models import DEFAULT_EVAL_MODEL
-from common.textnorm import tokenize
+from common.textnorm import normalize_text, tokenize
 
 # ── Constants ───────────────────────────────────────────────────────────────────────
 QUESTIONS_FILE  = PROJECT_ROOT / "eval" / "questions.json"
@@ -131,6 +132,38 @@ NO_PATH_ANSWER_INSTRUCTION = (
 )
 
 
+SOURCE_GROUNDING_TOOLS = frozenset({
+    "get_poi", "get_section", "find_poi_by_name", "filter_pois",
+    "search_pois", "search_trips", "get_trip", "search_paths", "get_path",
+})
+GROUNDING_REQUIRED_INSTRUCTION = (
+    "This is a tourist information request and requires current source "
+    "retrieval from the downloaded index before answering. Call the "
+    "appropriate retrieval tool now. Do not answer from previous "
+    "assistant prose or general knowledge."
+)
+SOCIAL_ONLY_MESSAGES = frozenset({
+    "hola", "hello", "hi", "hey", "gracias", "thanks", "thank you",
+    "adios", "adiós", "bye", "bonjour", "ciao", "hallo", "ola",
+})
+GROUNDING_FAILURE_MESSAGES = {
+    "ca": "No he pogut recuperar informació turística verificada de les dades descarregades.",
+    "de": "Ich konnte keine verifizierten touristischen Informationen aus den heruntergeladenen Daten abrufen.",
+    "en": "I could not retrieve verified visitor information from the downloaded data.",
+    "es": "No he podido recuperar información turística verificada de los datos descargados.",
+    "eu": "Ezin izan dut deskargatutako datuetatik turismo-informazio egiaztatua berreskuratu.",
+    "fr": "Je n’ai pas pu récupérer d’informations touristiques vérifiées depuis les données téléchargées.",
+    "gl": "Non puiden recuperar información turística verificada dos datos descargados.",
+    "hi": "मैं डाउनलोड किए गए डेटा से सत्यापित पर्यटन जानकारी प्राप्त नहीं कर सका।",
+    "hr": "Nisam uspio dohvatiti provjerene turističke informacije iz preuzetih podataka.",
+    "it": "Non sono riuscito a recuperare informazioni turistiche verificate dai dati scaricati.",
+    "ja": "ダウンロード済みデータから検証済みの観光情報を取得できませんでした。",
+    "nl": "Ik kon geen geverifieerde toeristische informatie uit de gedownloade gegevens ophalen.",
+    "pt": "Não consegui recuperar informações turísticas verificadas dos dados transferidos.",
+    "ru": "Не удалось получить проверенную туристическую информацию из загруженных данных.",
+    "uk": "Не вдалося отримати перевірену туристичну інформацію із завантажених даних.",
+    "zh": "无法从已下载的数据中获取经过验证的旅游信息。",
+}
 def is_physical_route_request(question: str) -> bool:
     """Detect a physical-route request across the supported app languages."""
     terms = tokenize(question)
@@ -141,6 +174,28 @@ def is_physical_route_request(question: str) -> bool:
             for route in ROUTE_INTENT_TERMS if len(route) >= 4
         )
         for term in terms
+    )
+
+
+def requires_current_turn_grounding(question: str) -> bool:
+    """True for all non-social requests in the tourist assistant."""
+    normalized = normalize_text(question)
+    return bool(normalized) and normalized not in SOCIAL_ONLY_MESSAGES
+
+
+def grounding_failure_message(index: dict) -> str:
+    """Return a localized safe failure instead of ungrounded tourism prose."""
+    lang = (index.get("meta") or {}).get("lang") or "en"
+    return GROUNDING_FAILURE_MESSAGES.get(lang, GROUNDING_FAILURE_MESSAGES["en"])
+
+
+def selected_source_context(selection: dict, result: str) -> str:
+    """Build internal context after a validated prior-tag selection."""
+    return (
+        f"The visitor selected this previously shown {selection['kind']}. "
+        "Use this freshly retrieved source record to answer, including "
+        "available ordered stops. Do not answer from earlier assistant "
+        f"paraphrase:\n\n{result}"
     )
 
 
@@ -816,6 +871,11 @@ def run_agentic_loop(question: str, system_prompt: str,
     no_matching_path = False
     no_path_answer_enforced = False
     route_lookup_enforced = False
+    grounding_required = requires_current_turn_grounding(question)
+    grounded = False
+    grounding_retry_enforced = False
+    grounding_tools: list[str] = []
+    automatic_source_calls: list[dict] = []
 
     for round_num in range(MAX_TOOL_ROUNDS):
         rounds = round_num + 1
@@ -884,6 +944,12 @@ def run_agentic_loop(question: str, system_prompt: str,
                     "cache_hit": route_hit,
                     "automatic": True,
                 })
+                grounded = True
+                grounding_tools.append("search_paths")
+                automatic_source_calls.append({
+                    "tool": "search_paths",
+                    "args": {"query": question},
+                })
                 messages.append({
                     "role": "user",
                     "content": route_lookup_context(route_result),
@@ -906,6 +972,16 @@ def run_agentic_loop(question: str, system_prompt: str,
                     "content": COMPLEMENTARY_SEARCH_INSTRUCTION,
                 })
                 continue
+            if grounding_required and not grounded:
+                if not grounding_retry_enforced:
+                    grounding_retry_enforced = True
+                    messages.append({
+                        "role": "user",
+                        "content": GROUNDING_REQUIRED_INSTRUCTION,
+                    })
+                    continue
+                answer = grounding_failure_message(index)
+                break
             answer = sanitize_tourist_answer((message.content or "").strip(), index)
             break
 
@@ -918,6 +994,10 @@ def run_agentic_loop(question: str, system_prompt: str,
                 pass
 
             result, hit = execute_tool(fn_name, fn_args, index, sections_text, cache)
+            if fn_name in SOURCE_GROUNDING_TOOLS:
+                grounded = True
+                if fn_name not in grounding_tools:
+                    grounding_tools.append(fn_name)
             if fn_name == "search_pois":
                 if result.startswith(NO_DIRECT_EVIDENCE_PREFIX):
                     direct_evidence_missing = True
@@ -945,6 +1025,8 @@ def run_agentic_loop(question: str, system_prompt: str,
                 "content":      result,
             })
 
+    if not answer and grounding_required and not grounded:
+        answer = grounding_failure_message(index)
     if not answer:
         for msg in reversed(messages):
             if msg["role"] == "assistant" and msg.get("content"):
@@ -976,6 +1058,9 @@ def run_agentic_loop(question: str, system_prompt: str,
         "cache_hits": cache_hits,
         "prompt_tokens":     prompt_tokens,
         "completion_tokens": completion_tokens,
+        "grounded": grounded or not grounding_required,
+        "grounding_tools": grounding_tools,
+        "automatic_source_calls": automatic_source_calls,
         "error":      error,
     }
 
@@ -1123,6 +1208,9 @@ def main() -> None:
             "latency_seconds":  elapsed,
             "prompt_tokens":     loop["prompt_tokens"],
             "completion_tokens": loop["completion_tokens"],
+            "grounded":         loop["grounded"],
+            "grounding_tools":  loop["grounding_tools"],
+            "automatic_source_calls": loop["automatic_source_calls"],
             "error":            loop["error"],
         }
         results.append(result)
@@ -1132,7 +1220,7 @@ def main() -> None:
         print(f"  [{status}] {elapsed}s  rounds={loop['rounds']}  "
               f"tools={tools}  cache={loop['cache_hits']}  "
               f"tokens={loop['prompt_tokens']}+{loop['completion_tokens']}  "
-              f"tags={len(poi_refs)}")
+              f"tags={len(poi_refs)}  grounded={loop['grounded']}")
 
     total_elapsed = round(time.time() - total_start, 1)
     print(f"\n[INFO] All questions complete in {total_elapsed}s")

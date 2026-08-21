@@ -324,6 +324,10 @@ Typical flows handled by the model:
 - **Physical route intent** is guarded deterministically: one
   `search_paths` lookup is forced, then the assistant answers once. This
   prevents repeated clarification/instruction loops on small models.
+- **Strict grounding**: every non-social tourist turn needs a current-turn
+  source-bearing retrieval. Prior `<poi>`, `<trip>`, and `<path>` tag
+  selections resolve directly to `get_*`; after one failed grounding retry,
+  return a localized safe failure rather than model-memory advice.
 
 Pre-warm: every section's `get_section(id, "interest", 50)` result is
 cached at session start, so subsequent calls are instant.

@@ -184,6 +184,14 @@ POI_TAG_EMPTY_RE = re.compile(
     r"<poi\s+(?:[^>]*?\s)?id\s*=\s*\"?(?:poi/)?(\d+)\"?[^>]*/>",
     re.IGNORECASE,
 )
+TRIP_TAG_RE = re.compile(
+    r"<trip\b[^>]*\bid\s*=\s*\"?(?:trip/)?(\d+)\"?[^>]*>(.*?)</trip>",
+    re.IGNORECASE | re.DOTALL,
+)
+PATH_TAG_RE = re.compile(
+    r"<path\b[^>]*\bid\s*=\s*\"?(?:path/)?(\d+)\"?[^>]*>(.*?)</path>",
+    re.IGNORECASE | re.DOTALL,
+)
 
 
 def poi_uri(destination_slug: str, poi_id: str) -> str:
@@ -899,6 +907,73 @@ def get_trip(index: dict, trip_id: str) -> dict | None:
 def get_path(index: dict, path_id: str) -> dict | None:
     """Return one physical route by full or bare path id."""
     return _find_curated(index, path_id, "paths")
+
+
+def resolve_history_selection(question: str, messages: list[dict],
+                              index: dict) -> dict | None:
+    """Resolve a concise follow-up against validated prior assistant tags.
+
+    Example: after the assistant offers
+    `<trip id=4453>Ú. en Familia-R. Secundaria 2</trip>`, the user can
+    say “Secundaria 2”. This returns a validated source selection:
+    `{kind: "trip", id: "trip/4453", label: "…"}`.
+
+    Matching is deliberately conservative: a unique normalized substring
+    or all-token match is required. Ambiguous references return None so
+    the grounding gate asks the model to retrieve rather than guessing.
+    """
+    query = normalize_text(question)
+    query_tokens = set(query.split())
+    if len(query) < 3 or not query_tokens:
+        return None
+
+    candidates: list[dict] = []
+    for message in messages:
+        if message.get("role") != "assistant":
+            continue
+        content = message.get("content") or ""
+        for ref in extract_poi_tags(content, index):
+            if ref.get("known"):
+                candidates.append({
+                    "kind": "poi",
+                    "id": ref["poi_id"],
+                    "label": ref.get("text") or ref.get("name") or "",
+                })
+        for match in TRIP_TAG_RE.finditer(content):
+            item = get_trip(index, f"trip/{match.group(1)}")
+            if item:
+                candidates.append({
+                    "kind": "trip",
+                    "id": item["itinerary_id"],
+                    "label": match.group(2).strip() or item.get("name", ""),
+                })
+        for match in PATH_TAG_RE.finditer(content):
+            item = get_path(index, f"path/{match.group(1)}")
+            if item:
+                candidates.append({
+                    "kind": "path",
+                    "id": item["itinerary_id"],
+                    "label": match.group(2).strip() or item.get("name", ""),
+                })
+
+    # Keep one candidate per source id, then score the user reference.
+    unique = {(item["kind"], item["id"]): item for item in candidates}
+    scored: list[tuple[int, dict]] = []
+    for item in unique.values():
+        label = normalize_text(item["label"])
+        label_tokens = set(label.split())
+        if query in label:
+            scored.append((100 + len(query), item))
+        elif query_tokens.issubset(label_tokens):
+            scored.append((50 + len(query_tokens), item))
+
+    if not scored:
+        return None
+    scored.sort(key=lambda pair: pair[0], reverse=True)
+    best_score, best = scored[0]
+    if len(scored) > 1 and scored[1][0] == best_score:
+        return None
+    return best
 
 def _curated_preview(item: dict, max_chars: int = 180) -> str:
     """Trim a curated trip/path description for search output."""

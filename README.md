@@ -159,6 +159,11 @@ For route requests, the runtime forces exactly one physical-path lookup
 before accepting an answer and bounds no-route recovery to one turn. This
 prevents the small on-device model from repeating clarification prompts.
 
+All non-social tourist requests also require a current-turn content
+retrieval. A selected prior POI/trip/path tag is resolved directly to its
+source record; if the model fails to retrieve after one bounded retry, the
+assistant returns a localized safe failure instead of ungrounded advice.
+
 ---
 
 ## Data source
