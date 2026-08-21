@@ -177,10 +177,42 @@ def is_physical_route_request(question: str) -> bool:
     )
 
 
+TRIP_PLAN_INTENT_TERMS = frozenset({
+    # English
+    "plan", "itinerary", "itiner", "day", "days", "weekend",
+    # Spanish / Catalan / Galician / Basque
+    "plan", "itinerario", "recorrido", "dia", "dias", "semana",
+    "detalle", "detalles", "visita",
+    # Italian / French / Portuguese
+    "piano", "itinerario", "giorno", "giorni", "fine", "settimana",
+    "programme", "jour", "jours", "semaine", "roteiro", "dia", "dias",
+    # German / Dutch / Croatian
+    "plan", "tag", "tage", "wochenende", "reiseroute", "dagen",
+    "weekend", "itinerar", "dan", "dana",
+})
+TRIP_DETAIL_REQUIRED_INSTRUCTION = (
+    "The visitor asked for a plan or itinerary. You have source trip "
+    "suggestions, but you must not invent a new option or combine stops "
+    "from several trips. Choose the most suitable returned trip and call "
+    "get_trip now. Base the final plan only on that retrieved trip detail."
+)
 def requires_current_turn_grounding(question: str) -> bool:
     """True for all non-social requests in the tourist assistant."""
     normalized = normalize_text(question)
     return bool(normalized) and normalized not in SOCIAL_ONLY_MESSAGES
+
+
+def requires_trip_detail(question: str) -> bool:
+    """True when a visitor requests a concrete curated plan/detail."""
+    terms = tokenize(question)
+    return any(
+        term in TRIP_PLAN_INTENT_TERMS
+        or any(
+            len(term) >= 4 and term.startswith(intent)
+            for intent in TRIP_PLAN_INTENT_TERMS if len(intent) >= 4
+        )
+        for term in terms
+    )
 
 
 def grounding_failure_message(index: dict) -> str:
@@ -303,6 +335,9 @@ full record in one call.
   route requests, search physical paths first. A curated trip is never a
   physical route; if no path is available, say so rather than substituting
   a trip. Do not ask the visitor to reformulate the route request.
+- After search_trips, do not invent named plans, option headings, or
+  day-by-day stop combinations. Present only returned <trip> tags, or
+  call get_trip for one returned source trip before describing its plan.
 - After filter_pois: if the question needs a description, dates, \
 address, phone, architect, or any per-POI detail beyond the name, \
 call get_poi on the most relevant result before answering. \
@@ -876,9 +911,19 @@ def run_agentic_loop(question: str, system_prompt: str,
     grounding_retry_enforced = False
     grounding_tools: list[str] = []
     automatic_source_calls: list[dict] = []
+    trip_detail_required = requires_trip_detail(question)
+    trip_search_started = False
+    trip_search_has_results = False
+    trip_detail_started = False
+    trip_detail_enforced = False
+    source_detail_answer = ""
 
     for round_num in range(MAX_TOOL_ROUNDS):
         rounds = round_num + 1
+        if source_detail_answer:
+            answer = sanitize_tourist_answer(source_detail_answer, index)
+            messages.append({"role": "assistant", "content": answer})
+            break
         try:
             response = litellm.completion(
                 model=model,
@@ -972,6 +1017,17 @@ def run_agentic_loop(question: str, system_prompt: str,
                     "content": COMPLEMENTARY_SEARCH_INSTRUCTION,
                 })
                 continue
+            if (trip_detail_required and trip_search_started
+                    and trip_search_has_results and not trip_detail_started):
+                if not trip_detail_enforced:
+                    trip_detail_enforced = True
+                    messages.append({
+                        "role": "user",
+                        "content": TRIP_DETAIL_REQUIRED_INSTRUCTION,
+                    })
+                    continue
+                answer = grounding_failure_message(index)
+                break
             if grounding_required and not grounded:
                 if not grounding_retry_enforced:
                     grounding_retry_enforced = True
@@ -1011,6 +1067,17 @@ def run_agentic_loop(question: str, system_prompt: str,
                 path_search_started = True
                 if result.startswith("No curated routes matched"):
                     no_matching_path = True
+            if fn_name == "search_trips":
+                trip_search_started = True
+                trip_search_has_results = not result.startswith(
+                    "No curated trip suggestions"
+                )
+            if fn_name == "get_trip":
+                trip_detail_started = True
+                if trip_detail_required:
+                    source_detail_answer = result
+            if fn_name == "get_path":
+                source_detail_answer = result
             if hit:
                 cache_hits += 1
             tool_calls_made.append({

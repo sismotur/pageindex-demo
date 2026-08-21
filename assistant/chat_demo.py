@@ -57,6 +57,8 @@ from run_eval import (   # noqa: E402
     requires_current_turn_grounding,
     grounding_failure_message,
     selected_source_context,
+    requires_trip_detail,
+    TRIP_DETAIL_REQUIRED_INSTRUCTION,
 )
 from index_tools import (   # noqa: E402
     load_index,
@@ -179,6 +181,12 @@ def run_turn(question: str, messages: list[dict],
     grounding_retry_enforced = False
     grounding_tools: list[str] = []
     automatic_source_calls: list[dict] = []
+    trip_detail_required = requires_trip_detail(question)
+    trip_search_started = False
+    trip_search_has_results = False
+    trip_detail_started = False
+    trip_detail_enforced = False
+    source_detail_answer = ""
 
     # Resolve concise selections against validated tags from earlier
     # assistant turns before asking the model to answer. This prevents
@@ -205,6 +213,10 @@ def run_turn(question: str, messages: list[dict],
         })
         grounded = True
         grounding_tools.append(tool_name)
+        if tool_name == "get_trip":
+            trip_detail_started = True
+        if tool_name in {"get_trip", "get_path"}:
+            source_detail_answer = result
         automatic_source_calls.append({
             "tool": tool_name,
             "args": {arg_name: selection["id"]},
@@ -217,6 +229,10 @@ def run_turn(question: str, messages: list[dict],
 
     for round_num in range(MAX_TOOL_ROUNDS):
         rounds = round_num + 1
+        if source_detail_answer:
+            answer = sanitize_tourist_answer(source_detail_answer, index)
+            messages.append({"role": "assistant", "content": answer})
+            break
 
         if stream:
             # ── Streaming round ──────────────────────────────────────────
@@ -336,6 +352,17 @@ def run_turn(question: str, messages: list[dict],
                         "content": COMPLEMENTARY_SEARCH_INSTRUCTION,
                     })
                     continue
+                if (trip_detail_required and trip_search_started
+                        and trip_search_has_results and not trip_detail_started):
+                    if not trip_detail_enforced:
+                        trip_detail_enforced = True
+                        messages.append({
+                            "role": "user",
+                            "content": TRIP_DETAIL_REQUIRED_INSTRUCTION,
+                        })
+                        continue
+                    answer = grounding_failure_message(index)
+                    break
                 if grounding_required and not grounded:
                     if not grounding_retry_enforced:
                         grounding_retry_enforced = True
@@ -438,6 +465,17 @@ def run_turn(question: str, messages: list[dict],
                         "content": COMPLEMENTARY_SEARCH_INSTRUCTION,
                     })
                     continue
+                if (trip_detail_required and trip_search_started
+                        and trip_search_has_results and not trip_detail_started):
+                    if not trip_detail_enforced:
+                        trip_detail_enforced = True
+                        messages.append({
+                            "role": "user",
+                            "content": TRIP_DETAIL_REQUIRED_INSTRUCTION,
+                        })
+                        continue
+                    answer = grounding_failure_message(index)
+                    break
                 if grounding_required and not grounded:
                     if not grounding_retry_enforced:
                         grounding_retry_enforced = True
@@ -483,6 +521,17 @@ def run_turn(question: str, messages: list[dict],
                 path_search_started = True
                 if result.startswith("No curated routes matched"):
                     no_matching_path = True
+            if fn_name == "search_trips":
+                trip_search_started = True
+                trip_search_has_results = not result.startswith(
+                    "No curated trip suggestions"
+                )
+            if fn_name == "get_trip":
+                trip_detail_started = True
+                if trip_detail_required:
+                    source_detail_answer = result
+            if fn_name == "get_path":
+                source_detail_answer = result
             if hit:
                 cache_hits += 1
             tool_calls_made.append({

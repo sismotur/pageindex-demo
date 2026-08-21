@@ -424,6 +424,10 @@ Tourist answers use a fail-closed source rule:
 4. The turn log carries `grounded`, `grounding_tools`, and
    `automatic_source_calls` for QA. The app should treat an ungrounded
    failure response as ordinary text, not a recommendation.
+5. A plan request that finds a curated trip must retrieve `get_trip`
+   before rendering a day-by-day or ordered-stop answer. The runtime
+   renders the retrieved source steps directly; it does not let the model
+   invent named option headings or merge stops from several trips.
 
 Grounding means the answer is based on the current downloaded index. It
 does not promise verbatim wording: the model may paraphrase retrieved

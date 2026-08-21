@@ -51,6 +51,7 @@ from run_eval import (
     grounding_failure_message,
     is_physical_route_request,
     requires_current_turn_grounding,
+    requires_trip_detail,
 )
 
 INDEX_FILE = PROJECT_ROOT / "indexes" / "ubeda_en.json"
@@ -119,6 +120,14 @@ class TestStrictGrounding:
         assert not requires_current_turn_grounding("hola")
         assert not requires_current_turn_grounding("Thanks")
         assert requires_current_turn_grounding("hoteles cerca del ayuntamiento")
+
+    @pytest.mark.parametrize("question", [
+        "dame un plan de cosas que ver en dos días",
+        "show me a weekend itinerary",
+        "dame los detalles del recorrido",
+    ])
+    def test_plan_detail_intent(self, question):
+        assert requires_trip_detail(question)
 
     def test_failure_message_follows_index_language(self, index):
         spanish = dict(index)
