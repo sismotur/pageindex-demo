@@ -243,13 +243,9 @@ def run_turn(question: str, messages: list[dict],
             acc_content    = ""
             acc_tool_calls: list[dict] = []
             streaming_live = False
-            # Hold an attempted final answer until we know it is not the
-            # "no direct match; what should I search next?" failure mode.
-            hold_stream_content = (
-                (direct_evidence_missing and not complementary_retrieval_started)
-                or (physical_route_request and not path_search_started)
-                or (grounding_required and not grounded)
-            )
+            # Raw model deltas may contain malformed <poi>/<trip>/<path>
+            # tags. Buffer until sanitization has validated the full answer.
+            hold_stream_content = True
 
             try:
                 response_stream = litellm.completion(
@@ -268,17 +264,7 @@ def run_turn(question: str, messages: list[dict],
                 delta = chunk.choices[0].delta
 
                 if delta.content:
-                    if not streaming_live and not hold_stream_content:
-                        if on_stream_start:
-                            on_stream_start()
-                        else:
-                            sys.stdout.write("\033[2K\rAssistant: ")
-                            sys.stdout.flush()
-                        streaming_live = True
                     acc_content += delta.content
-                    if not hold_stream_content:
-                        sys.stdout.write(delta.content)
-                        sys.stdout.flush()
 
                 if delta.tool_calls:
                     for tc_delta in delta.tool_calls:
