@@ -428,6 +428,9 @@ Tourist answers use a fail-closed source rule:
    before rendering a day-by-day or ordered-stop answer. The runtime
    renders the retrieved source steps directly; it does not let the model
    invent named option headings or merge stops from several trips.
+   If the model ignores one `get_trip` instruction, the runtime retrieves
+   the highest-ranked trip returned by `search_trips` and renders that
+   source record instead of failing a valid plan request.
 
 Grounding means the answer is based on the current downloaded index. It
 does not promise verbatim wording: the model may paraphrase retrieved

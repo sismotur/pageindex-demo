@@ -67,6 +67,7 @@ from index_tools import (   # noqa: E402
     extract_poi_tags,
     resolve_history_selection,
     resolve_trip_query,
+    search_trips,
     sanitize_tourist_answer,
 )
 from common.lang_support import (   # noqa: E402
@@ -185,6 +186,7 @@ def run_turn(question: str, messages: list[dict],
     trip_detail_required = requires_trip_detail(question)
     trip_search_started = False
     trip_search_has_results = False
+    trip_search_default: dict | None = None
     trip_detail_started = False
     trip_detail_enforced = False
     source_detail_answer = ""
@@ -230,6 +232,41 @@ def run_turn(question: str, messages: list[dict],
             "role": "user",
             "content": selected_source_context(selection, result),
         })
+    def use_default_trip_detail() -> bool:
+        """Fetch the top source trip when E2B ignores get_trip once."""
+        nonlocal grounded, cache_hits, source_detail_answer, trip_detail_started
+        if not trip_search_default:
+            return False
+        selected_id = trip_search_default["itinerary_id"]
+        result, hit = execute_tool(
+            "get_trip", {"trip_id": selected_id}, index, sections_text, cache
+        )
+        if hit:
+            cache_hits += 1
+        selection_meta = {
+            "kind": "trip",
+            "id": selected_id,
+            "label": trip_search_default.get("name", ""),
+        }
+        tool_calls_made.append({
+            "tool": "get_trip",
+            "args": {"trip_id": selected_id},
+            "result_preview": result[:250],
+            "cache_hit": hit,
+            "automatic": True,
+            "source_selection": selection_meta,
+        })
+        grounded = True
+        if "get_trip" not in grounding_tools:
+            grounding_tools.append("get_trip")
+        automatic_source_calls.append({
+            "tool": "get_trip",
+            "args": {"trip_id": selected_id},
+            "source_selection": selection_meta,
+        })
+        trip_detail_started = True
+        source_detail_answer = result
+        return True
 
     for round_num in range(MAX_TOOL_ROUNDS):
         rounds = round_num + 1
@@ -351,6 +388,8 @@ def run_turn(question: str, messages: list[dict],
                             "content": TRIP_DETAIL_REQUIRED_INSTRUCTION,
                         })
                         continue
+                    if use_default_trip_detail():
+                        continue
                     answer = grounding_failure_message(index)
                     assistant_msg["content"] = answer
                     break
@@ -468,6 +507,8 @@ def run_turn(question: str, messages: list[dict],
                             "content": TRIP_DETAIL_REQUIRED_INSTRUCTION,
                         })
                         continue
+                    if use_default_trip_detail():
+                        continue
                     answer = grounding_failure_message(index)
                     break
                 if grounding_required and not grounded:
@@ -518,9 +559,12 @@ def run_turn(question: str, messages: list[dict],
                     no_matching_path = True
             if fn_name == "search_trips":
                 trip_search_started = True
-                trip_search_has_results = not result.startswith(
-                    "No curated trip suggestions"
+                trip_matches = search_trips(
+                    index, fn_args.get("query") or "",
+                    limit=int(fn_args.get("limit") or 10),
                 )
+                trip_search_has_results = bool(trip_matches)
+                trip_search_default = trip_matches[0] if trip_matches else None
             if fn_name == "get_trip":
                 trip_detail_started = True
                 if trip_detail_required:

@@ -915,6 +915,7 @@ def run_agentic_loop(question: str, system_prompt: str,
     trip_detail_required = requires_trip_detail(question)
     trip_search_started = False
     trip_search_has_results = False
+    trip_search_default: dict | None = None
     trip_detail_started = False
     trip_detail_enforced = False
     source_detail_answer = ""
@@ -1052,6 +1053,41 @@ def run_agentic_loop(question: str, system_prompt: str,
                         "content": TRIP_DETAIL_REQUIRED_INSTRUCTION,
                     })
                     continue
+                if trip_search_default:
+                    selected_id = trip_search_default["itinerary_id"]
+                    result, hit = execute_tool(
+                        "get_trip", {"trip_id": selected_id}, index,
+                        sections_text, cache,
+                    )
+                    if hit:
+                        cache_hits += 1
+                    tool_calls_made.append({
+                        "tool": "get_trip",
+                        "args": {"trip_id": selected_id},
+                        "result_preview": result[:300],
+                        "cache_hit": hit,
+                        "automatic": True,
+                        "source_selection": {
+                            "kind": "trip",
+                            "id": selected_id,
+                            "label": trip_search_default.get("name", ""),
+                        },
+                    })
+                    grounded = True
+                    if "get_trip" not in grounding_tools:
+                        grounding_tools.append("get_trip")
+                    automatic_source_calls.append({
+                        "tool": "get_trip",
+                        "args": {"trip_id": selected_id},
+                        "source_selection": {
+                            "kind": "trip",
+                            "id": selected_id,
+                            "label": trip_search_default.get("name", ""),
+                        },
+                    })
+                    trip_detail_started = True
+                    source_detail_answer = result
+                    continue
                 answer = grounding_failure_message(index)
                 break
             if grounding_required and not grounded:
@@ -1095,9 +1131,12 @@ def run_agentic_loop(question: str, system_prompt: str,
                     no_matching_path = True
             if fn_name == "search_trips":
                 trip_search_started = True
-                trip_search_has_results = not result.startswith(
-                    "No curated trip suggestions"
+                trip_matches = ix_search_trips(
+                    index, fn_args.get("query") or "",
+                    limit=int(fn_args.get("limit") or 10),
                 )
+                trip_search_has_results = bool(trip_matches)
+                trip_search_default = trip_matches[0] if trip_matches else None
             if fn_name == "get_trip":
                 trip_detail_started = True
                 if trip_detail_required:
