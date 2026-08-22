@@ -77,6 +77,7 @@ from index_tools import (
     get_poi as ix_get_poi,
     extract_poi_tags,
     resolve_history_selection,
+    resolve_trip_query,
     sanitize_tourist_answer,
 )
 from common.lang_support import (
@@ -917,6 +918,31 @@ def run_agentic_loop(question: str, system_prompt: str,
     trip_detail_started = False
     trip_detail_enforced = False
     source_detail_answer = ""
+    direct_trip_selection = resolve_trip_query(question, index)
+    if direct_trip_selection:
+        result, hit = execute_tool(
+            "get_trip", {"trip_id": direct_trip_selection["id"]},
+            index, sections_text, cache,
+        )
+        if hit:
+            cache_hits += 1
+        tool_calls_made.append({
+            "tool": "get_trip",
+            "args": {"trip_id": direct_trip_selection["id"]},
+            "result_preview": result[:300],
+            "cache_hit": hit,
+            "automatic": True,
+            "source_selection": direct_trip_selection,
+        })
+        grounded = True
+        grounding_tools.append("get_trip")
+        automatic_source_calls.append({
+            "tool": "get_trip",
+            "args": {"trip_id": direct_trip_selection["id"]},
+            "source_selection": direct_trip_selection,
+        })
+        trip_detail_started = True
+        source_detail_answer = result
 
     for round_num in range(MAX_TOOL_ROUNDS):
         rounds = round_num + 1

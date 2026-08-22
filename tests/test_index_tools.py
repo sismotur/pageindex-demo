@@ -39,6 +39,7 @@ from index_tools import (
     get_trip,
     get_path,
     poi_uri,
+    resolve_trip_query,
     search_pois,
     search_trips,
     search_paths,
@@ -168,6 +169,16 @@ class TestStrictGrounding:
             "content": '<trip id=999999>Imaginary Weekend</trip>',
         }]
         assert resolve_history_selection("Weekend", history, index) is None
+
+    def test_direct_trip_title_overrides_route_word(self, spanish_index):
+        selection = resolve_trip_query(
+            "quiero las rutas por úbeda", spanish_index
+        )
+        assert selection == {
+            "kind": "trip",
+            "id": "trip/4420",
+            "label": "RUTAS POR ÚBEDA",
+        }
 
 
 # ── Schema v3: section groups + evidence search ─────────────────────────────

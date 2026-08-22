@@ -192,6 +192,14 @@ PATH_TAG_RE = re.compile(
     r"<path\b[^>]*\bid\s*=\s*\"?(?:path/)?(\d+)\"?[^>]*>(.*?)</path>",
     re.IGNORECASE | re.DOTALL,
 )
+TRIP_TAG_OPEN_RE = re.compile(
+    r"<trip\b[^>]*\bid\s*=\s*\"?(?:trip/)?(\d+)\"?[^>]*>",
+    re.IGNORECASE,
+)
+PATH_TAG_OPEN_RE = re.compile(
+    r"<path\b[^>]*\bid\s*=\s*\"?(?:path/)?(\d+)\"?[^>]*>",
+    re.IGNORECASE,
+)
 
 
 def poi_uri(destination_slug: str, poi_id: str) -> str:
@@ -305,6 +313,81 @@ def sanitize_poi_tags(answer: str, index: dict) -> str:
     sanitized = POI_TAG_RE.sub(full_tag, answer or "")
     return POI_TAG_EMPTY_RE.sub(empty_tag, sanitized)
 
+
+def _sanitize_collection_tags(answer: str, index: dict, *,
+                              collection: str, prefix: str,
+                              full_re: re.Pattern,
+                              open_re: re.Pattern) -> str:
+    """Validate and canonicalize trip/path tags against index records.
+
+    A frequent small-model malformed form is:
+      **RUTAS POR ÚBEDA** (<trip id=4420>)
+    The bare known tag is repaired to a source-backed wrapped tag:
+      <trip id=4420>RUTAS POR ÚBEDA</trip>
+    Unknown ids become ordinary text and can never be selectable.
+    """
+    def item_for(bare: str) -> dict | None:
+        return _find_curated(index, f"{prefix}/{bare}", collection)
+    protected_tags: list[str] = []
+
+    def protect(tag: str) -> str:
+        protected_tags.append(tag)
+        return f"__INVENTRIP_{collection.upper()}_TAG_{len(protected_tags) - 1}__"
+
+    def full_tag(match: re.Match) -> str:
+        item = item_for(match.group(1))
+        if item is None:
+            return match.group(2)
+        tag = _trip_tag_with_text(item, match.group(2)) if collection == "trips" \
+            else _path_tag_with_text(item, match.group(2))
+        return protect(tag)
+
+    sanitized = full_re.sub(full_tag, answer or "")
+
+    # Repair the normal Markdown bold presentation before handling any
+    # remaining dangling tag. The known source label wins over a model
+    # rewording, so later follow-up selection is deterministic.
+    bold_pattern = re.compile(
+        rf"\*\*(?P<label>[^*\n]+)\*\*\s*\(\s*<{collection[:-1]}\b"
+        rf"[^>]*\bid\s*=\s*\"?(?:{prefix}/)?(?P<id>\d+)\"?[^>]*>\s*\)",
+        re.IGNORECASE,
+    )
+
+    def bold_tag(match: re.Match) -> str:
+        item = item_for(match.group("id"))
+        if item is None:
+            return match.group("label")
+        tag = _trip_tag(item) if collection == "trips" else _path_tag(item)
+        return protect(tag)
+
+    sanitized = bold_pattern.sub(bold_tag, sanitized)
+
+    def dangling_tag(match: re.Match) -> str:
+        item = item_for(match.group(1))
+        if item is None:
+            return ""
+        tag = _trip_tag(item) if collection == "trips" else _path_tag(item)
+        return protect(tag)
+
+    sanitized = open_re.sub(dangling_tag, sanitized)
+    for position, tag in enumerate(protected_tags):
+        sanitized = sanitized.replace(
+            f"__INVENTRIP_{collection.upper()}_TAG_{position}__", tag
+        )
+    return sanitized
+
+
+def sanitize_itinerary_tags(answer: str, index: dict) -> str:
+    """Validate full/dangling `<trip>` and `<path>` tags against the index."""
+    sanitized = _sanitize_collection_tags(
+        answer, index, collection="trips", prefix="trip",
+        full_re=TRIP_TAG_RE, open_re=TRIP_TAG_OPEN_RE,
+    )
+    return _sanitize_collection_tags(
+        sanitized, index, collection="paths", prefix="path",
+        full_re=PATH_TAG_RE, open_re=PATH_TAG_OPEN_RE,
+    )
+
 def sanitize_tourist_answer(answer: str, index: dict) -> str:
     """Apply deterministic presentation rules to a final visitor answer.
 
@@ -313,6 +396,7 @@ def sanitize_tourist_answer(answer: str, index: dict) -> str:
     infer facts, change names, or alter the meaning of retrieved evidence.
     """
     sanitized = sanitize_poi_tags(answer, index)
+    sanitized = sanitize_itinerary_tags(sanitized, index)
     protected_tags: list[str] = []
 
     def protect_tag(match: re.Match) -> str:
@@ -816,12 +900,20 @@ def _trip_tag(trip: dict) -> str:
     """Return a curated-suggestion tag (not a physical route)."""
     bare_id = str(trip.get("itinerary_id") or "").split("/", 1)[-1]
     return f"<trip id={bare_id}>{trip.get('name') or '(unnamed trip)'}</trip>"
+def _trip_tag_with_text(trip: dict, text: str) -> str:
+    """Return a canonical trip tag while preserving a visible label."""
+    bare_id = str(trip.get("itinerary_id") or "").split("/", 1)[-1]
+    return f"<trip id={bare_id}>{text}</trip>"
 
 
 def _path_tag(path: dict) -> str:
     """Return a physical-route tag sourced only from /v120/paths."""
     bare_id = str(path.get("itinerary_id") or "").split("/", 1)[-1]
     return f"<path id={bare_id}>{path.get('name') or '(unnamed route)'}</path>"
+def _path_tag_with_text(path: dict, text: str) -> str:
+    """Return a canonical path tag while preserving a visible label."""
+    bare_id = str(path.get("itinerary_id") or "").split("/", 1)[-1]
+    return f"<path id={bare_id}>{text}</path>"
 
 
 def _itinerary_search_text(itinerary: dict, index: dict) -> str:
@@ -907,6 +999,32 @@ def get_trip(index: dict, trip_id: str) -> dict | None:
 def get_path(index: dict, path_id: str) -> dict | None:
     """Return one physical route by full or bare path id."""
     return _find_curated(index, path_id, "paths")
+
+
+def resolve_trip_query(question: str, index: dict) -> dict | None:
+    """Resolve a direct user reference to a known curated trip title.
+
+    A title such as “RUTAS POR ÚBEDA” contains a route-like word but is an
+    editorial trip, not a physical path. Exact or contained source-title
+    matches take precedence over generic route intent. Ambiguities are
+    deliberately rejected.
+    """
+    query = normalize_text(question)
+    if len(query) < 4:
+        return None
+    matches = []
+    for trip in index.get("trips") or []:
+        name = normalize_text(trip.get("name") or "")
+        if len(name) >= 4 and (query == name or name in query):
+            matches.append(trip)
+    if len(matches) != 1:
+        return None
+    trip = matches[0]
+    return {
+        "kind": "trip",
+        "id": trip["itinerary_id"],
+        "label": trip.get("name") or "",
+    }
 
 
 def resolve_history_selection(question: str, messages: list[dict],

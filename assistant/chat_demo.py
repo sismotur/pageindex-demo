@@ -66,6 +66,7 @@ from index_tools import (   # noqa: E402
     format_section,
     extract_poi_tags,
     resolve_history_selection,
+    resolve_trip_query,
     sanitize_tourist_answer,
 )
 from common.lang_support import (   # noqa: E402
@@ -191,7 +192,10 @@ def run_turn(question: str, messages: list[dict],
     # Resolve concise selections against validated tags from earlier
     # assistant turns before asking the model to answer. This prevents
     # "Secundaria 2" from being answered from paraphrased chat memory.
-    selection = resolve_history_selection(question, messages[:-1], index)
+    selection = (
+        resolve_history_selection(question, messages[:-1], index)
+        or resolve_trip_query(question, index)
+    )
     if selection:
         tool_name, arg_name = {
             "poi": ("get_poi", "poi_id"),
@@ -362,6 +366,7 @@ def run_turn(question: str, messages: list[dict],
                         })
                         continue
                     answer = grounding_failure_message(index)
+                    assistant_msg["content"] = answer
                     break
                 if grounding_required and not grounded:
                     if not grounding_retry_enforced:
@@ -372,8 +377,10 @@ def run_turn(question: str, messages: list[dict],
                         })
                         continue
                     answer = grounding_failure_message(index)
+                    assistant_msg["content"] = answer
                     break
                 answer = sanitize_tourist_answer(acc_content.strip(), index)
+                assistant_msg["content"] = answer
                 break
 
             # Convert accumulated deltas to tool-call dispatch format
@@ -422,6 +429,7 @@ def run_turn(question: str, messages: list[dict],
                         answer = sanitize_tourist_answer(
                             (message.content or "").strip(), index
                         )
+                        assistant_msg["content"] = answer
                         break
                     route_lookup_enforced = True
                     route_result, route_hit = execute_tool(
@@ -487,6 +495,7 @@ def run_turn(question: str, messages: list[dict],
                     answer = grounding_failure_message(index)
                     break
                 answer = sanitize_tourist_answer((message.content or "").strip(), index)
+                assistant_msg["content"] = answer
                 break
 
             raw_tool_calls = message.tool_calls
