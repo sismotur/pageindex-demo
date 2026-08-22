@@ -1152,8 +1152,9 @@ def _format_curated_detail(index: dict, itinerary_id: str, collection: str,
             poi = get_poi(index, poi_id)
             if poi:
                 lines.append(f"   - {_poi_tag(poi)}")
-        for name in step.get("unresolved_poi_names") or []:
-            lines.append(f"   - {name}")
+        # `unresolved_poi_names` is retained in the index for QA only.
+        # It may be a stale or foreign-language source label, so never
+        # present it as a tourist-visible or app-openable place.
     return "\n".join(lines)
 
 

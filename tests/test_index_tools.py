@@ -48,6 +48,7 @@ from index_tools import (
     strip_poi_tags,
 )
 from common.textnorm import normalize_text, tokenize
+from pipeline.build_index import _resolve_itinerary_steps
 from run_eval import (
     grounding_failure_message,
     is_physical_route_request,
@@ -186,8 +187,8 @@ class TestStrictGrounding:
 class TestSectionGroups:
     """Sections with > 30 POIs must carry a consistent per-type group map."""
 
-    def test_schema_version_is_4(self, index):
-        assert index["meta"]["schema_version"] == 4
+    def test_schema_version_is_5(self, index):
+        assert index["meta"]["schema_version"] == 5
 
     def test_large_sections_have_groups(self, index):
         grouped = {s["section_id"] for s in index["sections"] if s.get("groups")}
@@ -406,8 +407,8 @@ class TestEvidenceSearch:
 class TestCuratedItineraries:
     """Trips are suggestions; paths are physical routes from /v120/paths."""
 
-    def test_schema_v4_has_trips_and_paths(self, index):
-        assert index["meta"]["schema_version"] == 4
+    def test_schema_v5_has_trips_and_paths(self, index):
+        assert index["meta"]["schema_version"] == 5
         assert len(index["trips"]) == 29
         # Úbeda currently advertises no /paths route IDs. Empty is valid.
         assert index["paths"] == []
@@ -466,9 +467,9 @@ class TestCuratedItineraries:
         out = format_path(synthetic, "9001")
         assert out.startswith("# <path id=9001>Riverwalk9001 Walking Route</path>")
         assert "<poi id=36026" in out
-        assert "River viewpoint" in out
+        assert "River viewpoint" not in out
 
-    def test_unresolved_waypoints_survive_rendering(self, index):
+    def test_unresolved_waypoints_are_not_rendered_to_tourists(self, index):
         synthetic = dict(index)
         synthetic["trips"] = [{
             "itinerary_id": "trip/9002",
@@ -485,7 +486,29 @@ class TestCuratedItineraries:
                 "unresolved_poi_names": ["Uncatalogued meeting point"],
             }],
         }]
-        assert "Uncatalogued meeting point" in format_trip(synthetic, "9002")
+        assert "Uncatalogued meeting point" not in format_trip(synthetic, "9002")
+
+    def test_source_identifier_has_priority_over_names(self):
+        steps = _resolve_itinerary_steps(
+            [{"step": "One", "pois": [{"name": "Wrong title", "poi_id": "30117"}]}],
+            name_index={"wrong title": "poi/999"},
+            alias_name_index={"wrong title": "poi/998"},
+            valid_poi_ids={"poi/30117"},
+        )
+        assert steps[0]["poi_ids"] == ["poi/30117"]
+        assert steps[0]["poi_resolutions"][0]["resolution"] == "source_id"
+
+    def test_spanish_trip_aliases_link_but_absent_stop_stays_hidden(self, spanish_index):
+        trip = get_trip(spanish_index, "trip/4444")
+        lodging = next(step for step in trip["steps"] if step["title"].startswith("4."))
+        resolved = {item["source_name"]: item for item in lodging["poi_resolutions"]}
+        assert resolved["Yit El Postigo Hotel"]["poi_id"] == "poi/30459"
+        assert resolved["Yit El Postigo Hotel"]["resolution"] == "cross_language_alias"
+        assert "CR La Casería de Tito" in lodging["unresolved_poi_names"]
+
+        rendered = format_trip(spanish_index, "trip/4444")
+        assert "<poi id=30459 type=Hotel>Hotel Yit El Postigo</poi>" in rendered
+        assert "CR La Casería de Tito" not in rendered
 
 
 # ── POI tags in answers (app deep links) ─────────────────────────────────────

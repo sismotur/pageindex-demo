@@ -3,10 +3,10 @@
     "destination": "ubeda",
     "destination_display": "Úbeda",
     "lang": "it",
-    "generated_at": "2026-08-20T05:01:25Z",
+    "generated_at": "2026-08-22T03:54:48Z",
     "poi_count": 367,
     "section_count": 18,
-    "schema_version": 4
+    "schema_version": 5
   },
   "destination_overview": "Importante e popolosa città situata sui Colli che portano il suo nome, nel centro geografico della provincia, in un paesaggio ricco di ulivi e campi di cereali.\n\nÙbeda è una città artistica e monumentale, ovunque si guardi, ed una delle località più signorili e gloriose dell'Andalusia. Castigliana e rinascimentale da ogni punto di vista, racchiude così tanti monumenti, chiese, palazzi e case signorili che è meglio passeggiare per le sue strade e trasportarsi virtualmente al tempo del suo splendore storico: la Cappella del Salvador, situata nell'incomparabile piazza del Municipio, la Chiesa di S. Paolo, la Chiesa di Santa Maria dei Reali Alcázares, la Chiesa della Trinità, l'Oratorio di San Giovanni della Croce, il Monastero di Santa Clara, il Palazzo Vela de los Cobos, il Palazzo de las Cadenas, la Casa de las Torres, l'Ospedale di Santiago, l'Ospedale dei Vecchi Onorati del Salvador, la Torre dell'Orologio, le Mura della Cava, il Museo della Ceramica e il Parador Nazionale del Turismo, sono alcune delle meraviglie che contiene questa sorprendente città.\n\nOltre a questi attrattivi, si consiglia una visita alle mura e alla splendida vista che si ottiene da lì; e ai suoi ceramisti, specialmente alla casa-museo di Paco Titos.\n\n- Tourism types: Patrimonio, Architettura, Gite, Turismo Dell'Olio\n- Networks: WORLD HERITAGE CITIES\n- Official website: https://www.turismodeubeda.com/index.php/es/",
   "trips": [
@@ -40,6 +40,88 @@
             "poi/35426",
             "poi/30117"
           ],
+          "poi_resolutions": [
+            {
+              "poi_id": "poi/35398",
+              "source_name": "Ristorante \"Asador de Santiago\"",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/35403",
+              "source_name": "Ristorante \"Quattro Stagioni\"",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/35397",
+              "source_name": "Ristorante Asador \"Al-Andalus\"",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/35400",
+              "source_name": "Ristorante Asador \"El Trujal\"",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/35395",
+              "source_name": "Ristorante \"Antique\"",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/35407",
+              "source_name": "Ristorante \"La Stampa\"",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/35402",
+              "source_name": "Ristorante \"Cantina La Estación\"",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/35424",
+              "source_name": "Ristorante \"Casa Luciano\"",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/35430",
+              "source_name": "Ristorante \"Rosaleda de don Pedro\"",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/35431",
+              "source_name": "Ristorante \"Salón Condestable\"",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/35409",
+              "source_name": "Ristorante Mesón \"Gabino\"",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/35427",
+              "source_name": "Ristorante Pizzeria D'Angelo",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/35428",
+              "source_name": "Ristorante Pizzeria \"Venecia\"",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/35432",
+              "source_name": "Ristorante \"El Zaguán\"",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/35426",
+              "source_name": "Ristorante Ermita Madre de Dios",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/30117",
+              "source_name": "Palazzo del Decano Ortega. Parador de Turismo",
+              "resolution": "localized_name"
+            }
+          ],
           "unresolved_poi_names": []
         },
         {
@@ -51,6 +133,33 @@
             "poi/35703",
             "poi/35704",
             "poi/35708"
+          ],
+          "poi_resolutions": [
+            {
+              "poi_id": "poi/35695",
+              "source_name": "Totem Calle Real",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/35702",
+              "source_name": "Zona delle tapas Piazza 1º maggio",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/35703",
+              "source_name": "Zona delle taverne Piazza del Municipio",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/35704",
+              "source_name": "Zona dei bar per tapas in Calle Baja del Salvador",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/35708",
+              "source_name": "Zona dei bar e ristoranti in Avenida Cristo Rey",
+              "resolution": "localized_name"
+            }
           ],
           "unresolved_poi_names": []
         },
@@ -65,6 +174,43 @@
             "poi/36169",
             "poi/36170",
             "poi/36179"
+          ],
+          "poi_resolutions": [
+            {
+              "poi_id": "poi/36163",
+              "source_name": "Pasticceria Úbeda",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/36165",
+              "source_name": "Torroneria Los Baezanos",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/36167",
+              "source_name": "Caffetteria Alejo & Doña Rosita",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/36168",
+              "source_name": "Pasticceria El Buen Pan",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/36169",
+              "source_name": "Pasticceria Caffetteria Los Portalillos",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/36170",
+              "source_name": "Pasticceria Vandelvira",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/36179",
+              "source_name": "Panetteria Paniaceite",
+              "resolution": "localized_name"
+            }
           ],
           "unresolved_poi_names": []
         }
@@ -83,144 +229,168 @@
           "position": 1,
           "title": "Appartamenti turistici \"El Losal\"",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 2,
           "title": "Hotel Las Casas del Cónsul",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 3,
           "title": "Hotel Las Casas del Cónsul",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 4,
           "title": "Ostello Santa María di Úbeda",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 5,
           "title": "Hotel Afán de Rivera",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 6,
           "title": "Hotel María De Molina",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 7,
           "title": "Hotel Nove Leggende",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 8,
           "title": "Hotel Yit El Postigo",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 9,
           "title": "Appartamenti Turistici \"Palacio del Agua\"",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 10,
           "title": "Hotel Ordoñez Sandoval",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 11,
           "title": "Hotel Palazzo del Marchese de la Rambla",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 12,
           "title": "Hotel Ciudad de Úbeda",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 13,
           "title": "Hotel La Pace",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 14,
           "title": "Hotel Don Juan Boutique",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 15,
           "title": "Appartamenti Turistici \"Fuente Redonda\"",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 16,
           "title": "Appartamenti turistici \"Quotidianum\"",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 17,
           "title": "Hotel Álvar Fáñez",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 18,
           "title": "Hotel Álvaro de Torres",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 19,
           "title": "Appartamenti Turistici \"Sol Real\"",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 20,
           "title": "Appartamenti Turistici \"Architettura\"",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 21,
           "title": "Ospizio Yamaríes",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 22,
           "title": "Hotel Rosaleda Di Don Pedro",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 23,
           "title": "Palazzo del Decano Ortega. Parador de Turismo",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 24,
           "title": "Ristorante Hotel Palazzo di Úbeda G.L. \"El Ábside\"",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         }
       ]
@@ -238,60 +408,70 @@
           "position": 1,
           "title": "Visitaubedaybaeza.com",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 2,
           "title": "Vandelvira Turismo",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 3,
           "title": "Turismo di Semer",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 4,
           "title": "Scopri Úbeda",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 5,
           "title": "Atlante",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 6,
           "title": "Scusi",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 7,
           "title": "Artigiani",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 8,
           "title": "A.P.I.T. Associazione Professionale Guide Turistiche.",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 9,
           "title": "Fenice",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 10,
           "title": "Terra della lince iberica",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         }
       ]
@@ -316,6 +496,38 @@
             "poi/35675",
             "poi/5152"
           ],
+          "poi_resolutions": [
+            {
+              "poi_id": "poi/30111",
+              "source_name": "Antiche Macellerie",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/30110",
+              "source_name": "Torre dell'orologio",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/30137",
+              "source_name": "Portada Plateresca calle Gradas",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/30122",
+              "source_name": "Chiesa di San Isidoro",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/35675",
+              "source_name": "Piccolo parco giochi",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/5152",
+              "source_name": "Ospedale di Santiago",
+              "resolution": "localized_name"
+            }
+          ],
           "unresolved_poi_names": [
             "Opzione A",
             "Opzione B"
@@ -333,6 +545,43 @@
             "poi/5152",
             "poi/7804"
           ],
+          "poi_resolutions": [
+            {
+              "poi_id": "poi/30110",
+              "source_name": "Torre dell'orologio",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/30137",
+              "source_name": "Portada Plateresca calle Gradas",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/30122",
+              "source_name": "Chiesa di San Isidoro",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/35675",
+              "source_name": "Piccolo parco giochi",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/5151",
+              "source_name": "Plaza de Toros de Úbeda",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/5152",
+              "source_name": "Ospedale di Santiago",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/7804",
+              "source_name": "Parco Nord",
+              "resolution": "localized_name"
+            }
+          ],
           "unresolved_poi_names": []
         },
         {
@@ -345,6 +594,38 @@
             "poi/5161",
             "poi/35682",
             "poi/35683"
+          ],
+          "poi_resolutions": [
+            {
+              "poi_id": "poi/8439",
+              "source_name": "Chiesa e Convento della Santissima Trinità",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/30123",
+              "source_name": "Palazzo dei Bussianos",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/30160",
+              "source_name": "Copertina del Cavallerizzo Ortega",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/5161",
+              "source_name": "Chiesa di San Nicola",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/35682",
+              "source_name": "Parco giochi del Gallo Rosso",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/35683",
+              "source_name": "Parco Vandelvira",
+              "resolution": "localized_name"
+            }
           ],
           "unresolved_poi_names": []
         },
@@ -366,6 +647,73 @@
             "poi/30129",
             "poi/30170"
           ],
+          "poi_resolutions": [
+            {
+              "poi_id": "poi/30124",
+              "source_name": "Centro di Interpretazione dell'Oliveto e dell'Olio",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/35676",
+              "source_name": "Sala giochi e ludoteca Cocolet",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/30125",
+              "source_name": "Torre Ottogonale",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/30126",
+              "source_name": "Palazzo Don Luis de la Cueva",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/5160",
+              "source_name": "Convento della Concezione",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/5157",
+              "source_name": "Chiesa di San Paolo",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/6740",
+              "source_name": "Museo Archeologico - Casa Mudéjar",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/30135",
+              "source_name": "Sinagoga dell'Acqua",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/30173",
+              "source_name": "Casa dei Granada Venegas",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/6741",
+              "source_name": "Convento e Museo di San Giovanni della Croce",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/30128",
+              "source_name": "Mura e Porta del Losal",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/30129",
+              "source_name": "Chiesa di San Millán",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/30170",
+              "source_name": "Museo della Ceramica \"Paco Tito\"",
+              "resolution": "localized_name"
+            }
+          ],
           "unresolved_poi_names": []
         },
         {
@@ -383,6 +731,63 @@
             "poi/30112",
             "poi/30172",
             "poi/35684"
+          ],
+          "poi_resolutions": [
+            {
+              "poi_id": "poi/30138",
+              "source_name": "Hotel Palazzo del Marchese de la Rambla",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/5153",
+              "source_name": "Chiesa di San Pietro",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/30115",
+              "source_name": "Ristorante Hotel Palazzo di Úbeda G.L. \"El Ábside\"",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/30118",
+              "source_name": "Palazzo Anguis de Medinilla",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/30119",
+              "source_name": "Reale Monastero di Santa Chiara",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/35680",
+              "source_name": "Teatro Ideal Cinema",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/5156",
+              "source_name": "Palazzo Vela de los Cobos",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/5154",
+              "source_name": "Palazzo Vázquez de Molina",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/30112",
+              "source_name": "Chiesa di Santo Domingo",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/30172",
+              "source_name": "Casa Museo Arte Andalusí",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/35684",
+              "source_name": "Sala Escaperoom",
+              "resolution": "localized_name"
+            }
           ],
           "unresolved_poi_names": []
         },
@@ -403,6 +808,68 @@
             "poi/35678",
             "poi/35679"
           ],
+          "poi_resolutions": [
+            {
+              "poi_id": "poi/30139",
+              "source_name": "Centro di Interpretazione \"Le Mura di Úbeda: Torrione di Portillo del Santo Cristo\"",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/35685",
+              "source_name": "Giardini della Cava e parco giochi",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/30708",
+              "source_name": "Belvedere e monumento dell'Alfiere Rojas Navarrete",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/30143",
+              "source_name": "Belvedere di San Lorenzo",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/5141",
+              "source_name": "Chiesa di San Lorenzo",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/5142",
+              "source_name": "Casa delle Torri",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/35515",
+              "source_name": "Officina di fabbro Tiznajo",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/5143",
+              "source_name": "Porta di Granada",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/30536",
+              "source_name": "Piazza Vázquez de Molina",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/30148",
+              "source_name": "Belvedere di Santa Lucia",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/35678",
+              "source_name": "Parco giochi Huerto del Carmen",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/35679",
+              "source_name": "Parco giochi Ronda Antonio Muñoz Molina",
+              "resolution": "localized_name"
+            }
+          ],
           "unresolved_poi_names": []
         }
       ]
@@ -420,36 +887,42 @@
           "position": 1,
           "title": "Totem Calle Real",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 2,
           "title": "Via Trinidad",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 3,
           "title": "Strade Mesones e Obispo Cobos",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 4,
           "title": "Via Ciudad de Linares",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 5,
           "title": "Avenida Ramón y Cajal",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 6,
           "title": "Via della Libertà",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
@@ -468,12 +941,70 @@
             "poi/36165",
             "poi/36167"
           ],
+          "poi_resolutions": [
+            {
+              "poi_id": "poi/30161",
+              "source_name": "Mercato di approvvigionamento",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/5160",
+              "source_name": "Convento della Concezione",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/30119",
+              "source_name": "Reale Monastero di Santa Chiara",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/35695",
+              "source_name": "Totem Calle Real",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/36170",
+              "source_name": "Pasticceria Vandelvira",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/36179",
+              "source_name": "Panetteria Paniaceite",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/36169",
+              "source_name": "Pasticceria Caffetteria Los Portalillos",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/36163",
+              "source_name": "Pasticceria Úbeda",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/36168",
+              "source_name": "Pasticceria El Buen Pan",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/36165",
+              "source_name": "Torroneria Los Baezanos",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/36167",
+              "source_name": "Caffetteria Alejo & Doña Rosita",
+              "resolution": "localized_name"
+            }
+          ],
           "unresolved_poi_names": []
         },
         {
           "position": 8,
           "title": "Prodotti locali: artigianato e souvenir",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         }
       ]
@@ -493,6 +1024,13 @@
           "poi_ids": [
             "poi/35504"
           ],
+          "poi_resolutions": [
+            {
+              "poi_id": "poi/35504",
+              "source_name": "Laboratorio di scultura e restauro",
+              "resolution": "localized_name"
+            }
+          ],
           "unresolved_poi_names": []
         },
         {
@@ -500,6 +1038,13 @@
           "title": "SPARTO",
           "poi_ids": [
             "poi/35506"
+          ],
+          "poi_resolutions": [
+            {
+              "poi_id": "poi/35506",
+              "source_name": "UBEDÍES artigianato, laboratorio di sparto.",
+              "resolution": "localized_name"
+            }
           ],
           "unresolved_poi_names": []
         },
@@ -509,6 +1054,13 @@
           "poi_ids": [
             "poi/35519"
           ],
+          "poi_resolutions": [
+            {
+              "poi_id": "poi/35519",
+              "source_name": "Gioielleria Ferrandidz",
+              "resolution": "localized_name"
+            }
+          ],
           "unresolved_poi_names": []
         },
         {
@@ -516,6 +1068,13 @@
           "title": "SOFFITTI MUDÉJAR",
           "poi_ids": [
             "poi/35499"
+          ],
+          "poi_resolutions": [
+            {
+              "poi_id": "poi/35499",
+              "source_name": "Intarsi mudéjar",
+              "resolution": "localized_name"
+            }
           ],
           "unresolved_poi_names": []
         },
@@ -526,6 +1085,23 @@
             "poi/35515",
             "poi/35518",
             "poi/35511"
+          ],
+          "poi_resolutions": [
+            {
+              "poi_id": "poi/35515",
+              "source_name": "Officina di fabbro Tiznajo",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/35518",
+              "source_name": "Officina di fabbro a Úbeda.",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/35511",
+              "source_name": "Officina e negozio di fabbro ARTESUR",
+              "resolution": "localized_name"
+            }
           ],
           "unresolved_poi_names": []
         },
@@ -542,6 +1118,53 @@
             "poi/30169",
             "poi/30537",
             "poi/30707"
+          ],
+          "poi_resolutions": [
+            {
+              "poi_id": "poi/35493",
+              "source_name": "Alfar Alfonso Góngora",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/35495",
+              "source_name": "Alfarería Melchor Tito",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/35494",
+              "source_name": "Alfabetizzazione Pedro Góngora",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/35491",
+              "source_name": "Alfarería Almarza",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/35492",
+              "source_name": "Alfarería Fco. Expósito Tito",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/30170",
+              "source_name": "Museo della Ceramica \"Paco Tito\"",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/30169",
+              "source_name": "Via Valencia",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/30537",
+              "source_name": "Piazza degli Olleros",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/30707",
+              "source_name": "Alfarería Juan Tito",
+              "resolution": "localized_name"
+            }
           ],
           "unresolved_poi_names": []
         }
@@ -562,6 +1185,13 @@
           "poi_ids": [
             "poi/39144"
           ],
+          "poi_resolutions": [
+            {
+              "poi_id": "poi/39144",
+              "source_name": "ATTIVITÀ IN PLAZA DE TOROS",
+              "resolution": "localized_name"
+            }
+          ],
           "unresolved_poi_names": []
         },
         {
@@ -570,6 +1200,18 @@
           "poi_ids": [
             "poi/35680",
             "poi/39145"
+          ],
+          "poi_resolutions": [
+            {
+              "poi_id": "poi/35680",
+              "source_name": "Teatro Ideal Cinema",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/39145",
+              "source_name": "AUDITORIO DEL H. DE SANTIAGO",
+              "resolution": "localized_name"
+            }
           ],
           "unresolved_poi_names": []
         },
@@ -586,6 +1228,48 @@
             "poi/36554",
             "poi/35683"
           ],
+          "poi_resolutions": [
+            {
+              "poi_id": "poi/36552",
+              "source_name": "PALESTRA UBEDA SPORT",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/35477",
+              "source_name": "POLIVALENTE COMUNALE \"IL VECCHIO\"",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/7804",
+              "source_name": "Parco Nord",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/35478",
+              "source_name": "Piscine pubbliche",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/35898",
+              "source_name": "Campi sportivi comunali",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/35716",
+              "source_name": "AQUASPORT",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/36554",
+              "source_name": "PALESTRA FACTORY-SPA",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/35683",
+              "source_name": "Parco Vandelvira",
+              "resolution": "localized_name"
+            }
+          ],
           "unresolved_poi_names": []
         },
         {
@@ -593,6 +1277,13 @@
           "title": "ALTRO",
           "poi_ids": [
             "poi/35684"
+          ],
+          "poi_resolutions": [
+            {
+              "poi_id": "poi/35684",
+              "source_name": "Sala Escaperoom",
+              "resolution": "localized_name"
+            }
           ],
           "unresolved_poi_names": []
         }
@@ -623,6 +1314,13 @@
           "poi_ids": [
             "poi/35454"
           ],
+          "poi_resolutions": [
+            {
+              "poi_id": "poi/35454",
+              "source_name": "Protezione Civile",
+              "resolution": "localized_name"
+            }
+          ],
           "unresolved_poi_names": []
         },
         {
@@ -630,6 +1328,13 @@
           "title": "VIGILI DEL FUOCO",
           "poi_ids": [
             "poi/35450"
+          ],
+          "poi_resolutions": [
+            {
+              "poi_id": "poi/35450",
+              "source_name": "Vigili del fuoco",
+              "resolution": "localized_name"
+            }
           ],
           "unresolved_poi_names": [
             "POSTEGGI PER TAXI",
@@ -641,6 +1346,13 @@
           "title": "POLIZIA",
           "poi_ids": [
             "poi/5147"
+          ],
+          "poi_resolutions": [
+            {
+              "poi_id": "poi/5147",
+              "source_name": "Antico Pósito",
+              "resolution": "localized_name"
+            }
           ],
           "unresolved_poi_names": []
         },
@@ -654,6 +1366,38 @@
             "poi/35422",
             "poi/35417",
             "poi/35425"
+          ],
+          "poi_resolutions": [
+            {
+              "poi_id": "poi/35416",
+              "source_name": "Stazione di servizio RED AZUL",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/35418",
+              "source_name": "Distributore di benzina Carrefour",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/35422",
+              "source_name": "Distributore di benzina.",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/35422",
+              "source_name": "Distributore di benzina",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/35417",
+              "source_name": "Distributore di benzina San Miguel",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/35425",
+              "source_name": "Stazione di servizio El Polígono",
+              "resolution": "localized_name"
+            }
           ],
           "unresolved_poi_names": [
             "PUNTI DI RICARICA PER VEICOLI ELETTRICI"
@@ -684,6 +1428,53 @@
             "poi/30116",
             "poi/5149"
           ],
+          "poi_resolutions": [
+            {
+              "poi_id": "poi/30536",
+              "source_name": "Piazza Vázquez de Molina",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/5148",
+              "source_name": "Sacra Cappella del Salvatore",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/5144",
+              "source_name": "Basilica di Santa Maria dei Reali Alcazari",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/30117",
+              "source_name": "Palazzo del Decano Ortega. Parador de Turismo",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/30151",
+              "source_name": "Fonte Rinascimentale",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/5147",
+              "source_name": "Antico Pósito",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/5145",
+              "source_name": "Prigione del Vescovo",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/30116",
+              "source_name": "Palazzo del Marchese di Mancera",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/5149",
+              "source_name": "Ospedale degli Onorevoli Vecchi di El Salvador",
+              "resolution": "localized_name"
+            }
+          ],
           "unresolved_poi_names": []
         },
         {
@@ -695,6 +1486,28 @@
             "poi/30108",
             "poi/30109"
           ],
+          "poi_resolutions": [
+            {
+              "poi_id": "poi/35831",
+              "source_name": "Piazza 1º Maggio",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/5157",
+              "source_name": "Chiesa di San Paolo",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/30108",
+              "source_name": "Antichi Palazzi del Municipio",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/30109",
+              "source_name": "Antico Convento di San Andrea",
+              "resolution": "localized_name"
+            }
+          ],
           "unresolved_poi_names": []
         },
         {
@@ -704,6 +1517,18 @@
             "poi/5154",
             "poi/5156"
           ],
+          "poi_resolutions": [
+            {
+              "poi_id": "poi/5154",
+              "source_name": "Palazzo Vázquez de Molina",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/5156",
+              "source_name": "Palazzo Vela de los Cobos",
+              "resolution": "localized_name"
+            }
+          ],
           "unresolved_poi_names": []
         },
         {
@@ -712,6 +1537,18 @@
           "poi_ids": [
             "poi/5152",
             "poi/5141"
+          ],
+          "poi_resolutions": [
+            {
+              "poi_id": "poi/5152",
+              "source_name": "Ospedale di Santiago",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/5141",
+              "source_name": "Chiesa di San Lorenzo",
+              "resolution": "localized_name"
+            }
           ],
           "unresolved_poi_names": []
         },
@@ -724,6 +1561,33 @@
             "poi/6740",
             "poi/5161",
             "poi/30115"
+          ],
+          "poi_resolutions": [
+            {
+              "poi_id": "poi/5142",
+              "source_name": "Casa delle Torri",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/30122",
+              "source_name": "Chiesa di San Isidoro",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/6740",
+              "source_name": "Museo Archeologico - Casa Mudéjar",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/5161",
+              "source_name": "Chiesa di San Nicola",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/30115",
+              "source_name": "Ristorante Hotel Palazzo di Úbeda G.L. \"El Ábside\"",
+              "resolution": "localized_name"
+            }
           ],
           "unresolved_poi_names": []
         }
@@ -742,12 +1606,14 @@
           "position": 1,
           "title": "VENDITA DI OLIO",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 2,
           "title": "Centro di Interpretazione dell'Oliveto e dell'Olio",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
@@ -760,6 +1626,38 @@
             "poi/36692",
             "poi/36693",
             "poi/35903"
+          ],
+          "poi_resolutions": [
+            {
+              "poi_id": "poi/35910",
+              "source_name": "PUNTO VENDITA ALMAZARA V. DE GUADALUPE",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/35905",
+              "source_name": "Baltasar Lara e Cía. Vendita di olio e vino di produzione propria.",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/36694",
+              "source_name": "ALMAZARA BALTASAR LARA E CÍA.",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/36692",
+              "source_name": "ALMAZARA LA UNIÓN",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/36693",
+              "source_name": "ALMAZARA VIRGEN DE GUADALUPE",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/35903",
+              "source_name": "ALMAZARA. Fabbrica e vendita di olio d'oliva.",
+              "resolution": "localized_name"
+            }
           ],
           "unresolved_poi_names": []
         }
@@ -783,6 +1681,28 @@
             "poi/35447",
             "poi/36583"
           ],
+          "poi_resolutions": [
+            {
+              "poi_id": "poi/35449",
+              "source_name": "Croce Rossa",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/35445",
+              "source_name": "Centro di salute",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/35447",
+              "source_name": "Ospedale Comarcale San Juan de la Cruz",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/36583",
+              "source_name": "CENTRO SALUTE-UBEDA EST",
+              "resolution": "localized_name"
+            }
+          ],
           "unresolved_poi_names": []
         },
         {
@@ -802,6 +1722,68 @@
             "poi/35383",
             "poi/35396"
           ],
+          "poi_resolutions": [
+            {
+              "poi_id": "poi/35377",
+              "source_name": "Farmacia Almagro Uceda",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/35361",
+              "source_name": "Farmacia Rastro",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/35505",
+              "source_name": "Farmacia Reale",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/35390",
+              "source_name": "Farmacia La Corredera",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/35399",
+              "source_name": "Farmacia Sanchez Ruiz, R y E",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/35392",
+              "source_name": "Farmacia Martínez de Dios",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/35391",
+              "source_name": "Farmacia Liñán-Monedero",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/35393",
+              "source_name": "Farmacia Alfonsa Mesa Padilla",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/35386",
+              "source_name": "Farmacia Cruz Rodríguez",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/35381",
+              "source_name": "Farmacia Baras de La Torre",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/35383",
+              "source_name": "Farmacia Cruz García",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/35396",
+              "source_name": "Farmacia Obra Salido",
+              "resolution": "localized_name"
+            }
+          ],
           "unresolved_poi_names": []
         }
       ]
@@ -819,18 +1801,21 @@
           "position": 1,
           "title": "ATTIVITÀ IN PLAZA DE TOROS",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 2,
           "title": "Chiesa di Santo Domingo",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 3,
           "title": "Campi sportivi comunali",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         }
       ]
@@ -848,6 +1833,7 @@
           "position": 1,
           "title": "1. Cosa non perdere",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": [
             "1.1 Piazza Vázquez de Molina",
             "1.2 Piazza Primo Maggio",
@@ -873,6 +1859,13 @@
           "poi_ids": [
             "poi/35504"
           ],
+          "poi_resolutions": [
+            {
+              "poi_id": "poi/35504",
+              "source_name": "Laboratorio di scultura e restauro",
+              "resolution": "localized_name"
+            }
+          ],
           "unresolved_poi_names": []
         },
         {
@@ -880,6 +1873,13 @@
           "title": "SPARTO",
           "poi_ids": [
             "poi/35506"
+          ],
+          "poi_resolutions": [
+            {
+              "poi_id": "poi/35506",
+              "source_name": "UBEDÍES artigianato, laboratorio di sparto.",
+              "resolution": "localized_name"
+            }
           ],
           "unresolved_poi_names": []
         },
@@ -889,6 +1889,13 @@
           "poi_ids": [
             "poi/35519"
           ],
+          "poi_resolutions": [
+            {
+              "poi_id": "poi/35519",
+              "source_name": "Gioielleria Ferrandidz",
+              "resolution": "localized_name"
+            }
+          ],
           "unresolved_poi_names": []
         },
         {
@@ -896,6 +1903,13 @@
           "title": "SOFFITTI MUDÉJAR",
           "poi_ids": [
             "poi/35499"
+          ],
+          "poi_resolutions": [
+            {
+              "poi_id": "poi/35499",
+              "source_name": "Intarsi mudéjar",
+              "resolution": "localized_name"
+            }
           ],
           "unresolved_poi_names": []
         },
@@ -906,6 +1920,23 @@
             "poi/35515",
             "poi/35518",
             "poi/35511"
+          ],
+          "poi_resolutions": [
+            {
+              "poi_id": "poi/35515",
+              "source_name": "Officina di fabbro Tiznajo",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/35518",
+              "source_name": "Officina di fabbro a Úbeda.",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/35511",
+              "source_name": "Officina e negozio di fabbro ARTESUR",
+              "resolution": "localized_name"
+            }
           ],
           "unresolved_poi_names": []
         },
@@ -922,6 +1953,53 @@
             "poi/30169",
             "poi/30537",
             "poi/30707"
+          ],
+          "poi_resolutions": [
+            {
+              "poi_id": "poi/35493",
+              "source_name": "Alfar Alfonso Góngora",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/35495",
+              "source_name": "Alfarería Melchor Tito",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/35494",
+              "source_name": "Alfabetizzazione Pedro Góngora",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/35491",
+              "source_name": "Alfarería Almarza",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/35492",
+              "source_name": "Alfarería Fco. Expósito Tito",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/30170",
+              "source_name": "Museo della Ceramica \"Paco Tito\"",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/30169",
+              "source_name": "Via Valencia",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/30537",
+              "source_name": "Piazza degli Olleros",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/30707",
+              "source_name": "Alfarería Juan Tito",
+              "resolution": "localized_name"
+            }
           ],
           "unresolved_poi_names": []
         }
@@ -940,90 +2018,105 @@
           "position": 1,
           "title": "Cattedrale di Santiago de Compostela",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 2,
           "title": "Convento e Chiesa di San Francesco",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 3,
           "title": "Monastero di San Martín Pinario",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 4,
           "title": "Pazo de Fonseca",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 5,
           "title": "Piazza del Obradoiro",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 6,
           "title": "Chiesa di Santo Domingo",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 7,
           "title": "Città della Cultura di Galizia",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 8,
           "title": "Chiesa di Santa María la Real del Sar",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 9,
           "title": "Palazzo Arcivescovile di Santiago di Compostela",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 10,
           "title": "Pazo de Raxoi",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 11,
           "title": "Centro Galego de Arte Contemporáneo - CGAC",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 12,
           "title": "Parco Alameda",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 13,
           "title": "Piazza delle Argenterie",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 14,
           "title": "Piazza de Quintana",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 15,
           "title": "Piazza Cervantes",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         }
       ]
@@ -1041,12 +2134,14 @@
           "position": 1,
           "title": "Palazzo del Decano Ortega. Parador de Turismo",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 2,
           "title": "Úbeda - Città Patrimonio",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
@@ -1064,6 +2159,58 @@
             "poi/30124",
             "poi/30538"
           ],
+          "poi_resolutions": [
+            {
+              "poi_id": "poi/5148",
+              "source_name": "Sacra Cappella del Salvatore",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/5144",
+              "source_name": "Basilica di Santa Maria dei Reali Alcazari",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/5157",
+              "source_name": "Chiesa di San Paolo",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/30110",
+              "source_name": "Torre dell'orologio",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/5156",
+              "source_name": "Palazzo Vela de los Cobos",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/5147",
+              "source_name": "Antico Pósito",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/5152",
+              "source_name": "Ospedale di Santiago",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/5154",
+              "source_name": "Palazzo Vázquez de Molina",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/30124",
+              "source_name": "Centro di Interpretazione dell'Oliveto e dell'Olio",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/30538",
+              "source_name": "Piazza di Andalusia",
+              "resolution": "localized_name"
+            }
+          ],
           "unresolved_poi_names": []
         },
         {
@@ -1073,6 +2220,23 @@
             "poi/36024",
             "poi/36026",
             "poi/35500"
+          ],
+          "poi_resolutions": [
+            {
+              "poi_id": "poi/36024",
+              "source_name": "Santuario di Nostra Signora di Guadalupe",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/36026",
+              "source_name": "Puente Ariza",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/35500",
+              "source_name": "Dolmen di Úbeda",
+              "resolution": "localized_name"
+            }
           ],
           "unresolved_poi_names": [
             "Baeza - città patrimonio dell'Umanità",
@@ -1100,6 +2264,23 @@
             "poi/36360",
             "poi/35511"
           ],
+          "poi_resolutions": [
+            {
+              "poi_id": "poi/30138",
+              "source_name": "Hotel Palazzo del Marchese de la Rambla",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/36360",
+              "source_name": "Via Rastro",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/35511",
+              "source_name": "Officina e negozio di fabbro ARTESUR",
+              "resolution": "localized_name"
+            }
+          ],
           "unresolved_poi_names": []
         },
         {
@@ -1110,6 +2291,28 @@
             "poi/36950",
             "poi/35684",
             "poi/30139"
+          ],
+          "poi_resolutions": [
+            {
+              "poi_id": "poi/35955",
+              "source_name": "Piazza San Pietro",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/36950",
+              "source_name": "CHURRERIA-CAFFETTERIA ALMINDEZ",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/35684",
+              "source_name": "Sala Escaperoom",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/30139",
+              "source_name": "Centro di Interpretazione \"Le Mura di Úbeda: Torrione di Portillo del Santo Cristo\"",
+              "resolution": "localized_name"
+            }
           ],
           "unresolved_poi_names": []
         }
@@ -1128,6 +2331,7 @@
           "position": 1,
           "title": "1. Cosa non perderti",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": [
             "1.1 Piazza Vázquez de Molina",
             "1.2 Piazza Primo Maggio",
@@ -1151,6 +2355,7 @@
           "position": 1,
           "title": "1. Cosa non perdere",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": [
             "1.1 Piazza Vázquez de Molina",
             "1.2 Piazza Primo Maggio",
@@ -1184,264 +2389,308 @@
           "position": 1,
           "title": "Parco Nord",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 2,
           "title": "Chiesa di San Giovanni Battista",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 3,
           "title": "Ospedale di Santiago",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 4,
           "title": "Plaza de Toros de Úbeda",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 5,
           "title": "Strade Mesones e Obispo Cobos",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 6,
           "title": "Antico Convento della Vittoria",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 7,
           "title": "Chiesa di San Isidoro",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 8,
           "title": "Portada Plateresca calle Gradas",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 9,
           "title": "Piazza di Andalusia",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 10,
           "title": "Torre dell'orologio",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 11,
           "title": "Antiche Macellerie",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 12,
           "title": "Via Rastro",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 13,
           "title": "Centro di Interpretazione \"Le Mura di Úbeda: Torrione di Portillo del Santo Cristo\"",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 14,
           "title": "Antico Convento di San Francesco",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 15,
           "title": "Giardini della Cava e parco giochi",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 16,
           "title": "Belvedere e monumento dell'Alfiere Rojas Navarrete",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 17,
           "title": "Belvedere di San Lorenzo",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 18,
           "title": "Chiesa di San Lorenzo",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 19,
           "title": "Piazza di San Lorenzo",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 20,
           "title": "Casa delle Torri",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 21,
           "title": "Porta di Granada",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 22,
           "title": "Basilica di Santa Maria dei Reali Alcazari",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 23,
           "title": "Piazza Vázquez de Molina",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 24,
           "title": "Palazzo Vázquez de Molina",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 25,
           "title": "Fonte Rinascimentale",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 26,
           "title": "Prigione del Vescovo",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 27,
           "title": "Palazzo del Marchese di Mancera",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 28,
           "title": "Antico Pósito",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 29,
           "title": "Sacra Cappella del Salvatore",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 30,
           "title": "Antichi Palazzi del Municipio",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 31,
           "title": "Piazza 1º Maggio",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 32,
           "title": "Chiesa di San Paolo",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 33,
           "title": "Antico Convento di San Andrea",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 34,
           "title": "Palazzo dei Torrente",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 35,
           "title": "Convento della Concezione",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 36,
           "title": "Mercato di approvvigionamento",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 37,
           "title": "Palazzo Don Luis de la Cueva",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 38,
           "title": "Torre Ottogonale",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 39,
           "title": "Centro di Interpretazione dell'Oliveto e dell'Olio",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 40,
           "title": "Chiesa e Convento della Santissima Trinità",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 41,
           "title": "Edificio delle Poste e dei Telegrafi",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 42,
           "title": "Palazzo dei Bussianos",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 43,
           "title": "Via Trinidad",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 44,
           "title": "Parco Nord",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         }
       ]
@@ -1489,6 +2738,53 @@
             "poi/30116",
             "poi/5149"
           ],
+          "poi_resolutions": [
+            {
+              "poi_id": "poi/30536",
+              "source_name": "Piazza Vázquez de Molina",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/5148",
+              "source_name": "Sacra Cappella del Salvatore",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/5144",
+              "source_name": "Basilica di Santa Maria dei Reali Alcazari",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/30117",
+              "source_name": "Palazzo del Decano Ortega. Parador de Turismo",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/30151",
+              "source_name": "Fonte Rinascimentale",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/5147",
+              "source_name": "Antico Pósito",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/5145",
+              "source_name": "Prigione del Vescovo",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/30116",
+              "source_name": "Palazzo del Marchese di Mancera",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/5149",
+              "source_name": "Ospedale degli Onorevoli Vecchi di El Salvador",
+              "resolution": "localized_name"
+            }
+          ],
           "unresolved_poi_names": []
         },
         {
@@ -1500,6 +2796,28 @@
             "poi/30108",
             "poi/30109"
           ],
+          "poi_resolutions": [
+            {
+              "poi_id": "poi/35831",
+              "source_name": "Piazza 1º Maggio",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/5157",
+              "source_name": "Chiesa di San Paolo",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/30108",
+              "source_name": "Antichi Palazzi del Municipio",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/30109",
+              "source_name": "Antico Convento di San Andrea",
+              "resolution": "localized_name"
+            }
+          ],
           "unresolved_poi_names": []
         },
         {
@@ -1509,6 +2827,18 @@
             "poi/5154",
             "poi/5156"
           ],
+          "poi_resolutions": [
+            {
+              "poi_id": "poi/5154",
+              "source_name": "Palazzo Vázquez de Molina",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/5156",
+              "source_name": "Palazzo Vela de los Cobos",
+              "resolution": "localized_name"
+            }
+          ],
           "unresolved_poi_names": []
         },
         {
@@ -1517,6 +2847,18 @@
           "poi_ids": [
             "poi/5152",
             "poi/5141"
+          ],
+          "poi_resolutions": [
+            {
+              "poi_id": "poi/5152",
+              "source_name": "Ospedale di Santiago",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/5141",
+              "source_name": "Chiesa di San Lorenzo",
+              "resolution": "localized_name"
+            }
           ],
           "unresolved_poi_names": []
         },
@@ -1529,6 +2871,33 @@
             "poi/6740",
             "poi/5161",
             "poi/30115"
+          ],
+          "poi_resolutions": [
+            {
+              "poi_id": "poi/5142",
+              "source_name": "Casa delle Torri",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/30122",
+              "source_name": "Chiesa di San Isidoro",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/6740",
+              "source_name": "Museo Archeologico - Casa Mudéjar",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/5161",
+              "source_name": "Chiesa di San Nicola",
+              "resolution": "localized_name"
+            },
+            {
+              "poi_id": "poi/30115",
+              "source_name": "Ristorante Hotel Palazzo di Úbeda G.L. \"El Ábside\"",
+              "resolution": "localized_name"
+            }
           ],
           "unresolved_poi_names": []
         }
@@ -1547,90 +2916,105 @@
           "position": 1,
           "title": "Antiche Macellerie",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 2,
           "title": "Ruta de los Barrios Tradicionales",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 3,
           "title": "Palazzo Anguis de Medinilla",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 4,
           "title": "Reale Monastero di Santa Chiara",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 5,
           "title": "Casa Museo Arte Andalusí",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 6,
           "title": "Chiesa di Santo Domingo",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 7,
           "title": "Porta di Granada",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 8,
           "title": "Chiesa di San Lorenzo",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 9,
           "title": "Casa delle Torri",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 10,
           "title": "Palazzo dei Medinilla",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 11,
           "title": "Centro di Interpretazione \"Le Mura di Úbeda: Torrione di Portillo del Santo Cristo\"",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 12,
           "title": "Hotel Palazzo del Marchese de la Rambla",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 13,
           "title": "Palazzo degli Orozco",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 14,
           "title": "Chiesa di San Pietro",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 15,
           "title": "Ristorante Hotel Palazzo di Úbeda G.L. \"El Ábside\"",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         }
       ]
@@ -1648,102 +3032,119 @@
           "position": 1,
           "title": "Antiche Macellerie",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 2,
           "title": "Rotta delle Tre Culture",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 3,
           "title": "Chiesa di San Michele",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 4,
           "title": "Convento e Museo di San Giovanni della Croce",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 5,
           "title": "Mura e Porta del Losal",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 6,
           "title": "Palazzo dei Torrente",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 7,
           "title": "Convento della Concezione",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 8,
           "title": "Palazzo Don Luis de la Cueva",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 9,
           "title": "Museo Archeologico - Casa Mudéjar",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 10,
           "title": "Sinagoga dell'Acqua",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 11,
           "title": "Centro di Interpretazione dell'Oliveto e dell'Olio",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 12,
           "title": "Torre Ottogonale",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 13,
           "title": "Chiesa e Convento della Santissima Trinità",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 14,
           "title": "Torre dell'orologio",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 15,
           "title": "Chiesa di San Isidoro",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 16,
           "title": "Chiesa di San Nicola",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 17,
           "title": "Piazzetta della Giudecca",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         }
       ]
@@ -1761,96 +3162,112 @@
           "position": 1,
           "title": "Rotta Rinascimento del Sud",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 2,
           "title": "Piazza Vázquez de Molina",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 3,
           "title": "Fonte Rinascimentale",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 4,
           "title": "Palazzo del Decano Ortega. Parador de Turismo",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 5,
           "title": "Sacra Cappella del Salvatore",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 6,
           "title": "Ospedale degli Onorevoli Vecchi di El Salvador",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 7,
           "title": "Porta di Santa Lucia",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 8,
           "title": "Antico Pósito",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 9,
           "title": "Palazzo del Marchese di Mancera",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 10,
           "title": "Prigione del Vescovo",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 11,
           "title": "Basilica di Santa Maria dei Reali Alcazari",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 12,
           "title": "Palazzo Vela de los Cobos",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 13,
           "title": "Antichi Palazzi del Municipio",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 14,
           "title": "Chiesa di San Paolo",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 15,
           "title": "Antiche Macellerie",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         },
         {
           "position": 16,
           "title": "Ospedale di Santiago",
           "poi_ids": [],
+          "poi_resolutions": [],
           "unresolved_poi_names": []
         }
       ]

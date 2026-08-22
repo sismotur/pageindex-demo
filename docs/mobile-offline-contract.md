@@ -48,14 +48,15 @@ deployment target; expect ≥ the 70% rubric thresholds on EN/ES/IT.
 
 ## 2. The index file (`indexes/{dest}_{lang}.json`)
 
-One JSON object, `meta.schema_version == 4`. Sizes: ~0.7–1.1 MB per pair
+One JSON object, `meta.schema_version == 5`. Sizes: ~0.7–1.3 MB per pair
 (367 POIs, Úbeda). Parse it fully into memory at session start.
 
 Schema v2 adds the optional `sections[].groups` field. Schema v3 adds
 `facets.search_terms`, the deterministic full-text evidence index used by
-`search_pois`. Schema v4 adds resolved `trips[]` and `paths[]`. Older
-readers can ignore these additions — `sections[].poi_ids` and POI records
-remain complete.
+`search_pois`. Schema v4 adds resolved `trips[]` and `paths[]`. Schema v5
+adds source-id/cross-language itinerary stop resolution. Older readers can
+ignore these additions — `sections[].poi_ids` and POI records remain
+complete.
 
 ```jsonc
 {
@@ -66,7 +67,7 @@ remain complete.
     "generated_at": "2026-08-16T05:13:09Z",
     "poi_count": 367,
     "section_count": 18,
-    "schema_version": 4
+    "schema_version": 5
   },
   "destination_overview": "…multi-line string, embedded in the system prompt…",
   "trips": [
@@ -385,7 +386,28 @@ The app may later make trip/path tags tappable, but this reference
 implementation does not claim an Android navigation contract for them
 yet. POI stops retain the existing `<poi id=… type=…>…</poi>` contract.
 
-### 3.9 Route-intent loop safety
+### 3.9 Schema v5: stable source ids and localization safety
+
+Itinerary source stop resolution follows this strict order:
+
+1. A stable identifier supplied by the `/trips` or `/paths` item.
+2. Exact name in the requested-language POI index.
+3. A unique name alias from another downloaded language snapshot, mapped
+   through the same stable POI identifier.
+4. Unresolved source metadata only.
+
+Only cases 1–3 render a `<poi>` tag, using the localized POI name from
+the current index. Case 4 is retained in `unresolved_poi_names` and
+`poi_resolutions` for QA but **must not be displayed** in tourist-facing
+chat. This prevents a stale or foreign-language name from appearing as
+an app-openable location.
+
+The current Spanish `trip/4444` source illustrates the behavior:
+English source name `Yit El Postigo Hotel` resolves to
+`<poi id=30459 type=Hotel>Hotel Yit El Postigo</poi>`; missing source
+stop `CR La Casería de Tito` has no current POI record and is omitted.
+
+### 3.10 Route-intent loop safety
 
 The runtime applies a deterministic multilingual route-intent guard before
 accepting an answer to walking/cycling/trail questions:
@@ -406,7 +428,7 @@ languages and rejects short-token prefix matches. This avoids false
 classification of ordinary text such as Spanish `se` as a Croatian route
 word (`setnja`).
 
-### 3.10 Strict current-turn grounding
+### 3.11 Strict current-turn grounding
 
 Tourist answers use a fail-closed source rule:
 

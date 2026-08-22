@@ -153,6 +153,45 @@ def get_list_text(field: Any) -> list[str]:
     return [str(x) for x in field if x]
 
 
+def build_alias_name_index(destination: str) -> dict[str, str]:
+    """Return unique normalized POI name aliases across local languages.
+
+    Every raw POI language snapshot carries the same stable `identifier`
+    with a localized `name`. A Spanish itinerary that contains an English
+    waypoint can therefore resolve to its Spanish POI id without fuzzy
+    translation. Aliases with multiple POI ids are discarded deliberately.
+    """
+    aliases: dict[str, set[str]] = {}
+    pattern = f"{destination}_pois_raw_*.json"
+    for poi_file in PROJECT_ROOT.joinpath("data").glob(pattern):
+        try:
+            with open(poi_file, encoding="utf-8") as fh:
+                raw_pois = json.load(fh)
+        except (OSError, json.JSONDecodeError):
+            continue
+        if not isinstance(raw_pois, list):
+            continue
+        for raw in raw_pois:
+            if not isinstance(raw, dict):
+                continue
+            poi_id = raw.get("identifier") or ""
+            if not poi_id:
+                continue
+            for item in raw.get("name") or []:
+                if isinstance(item, dict):
+                    name = item.get("value") or item.get("value_text") or ""
+                else:
+                    name = str(item)
+                normalized = normalize_text(name)
+                if normalized:
+                    aliases.setdefault(normalized, set()).add(str(poi_id))
+    return {
+        name: next(iter(ids))
+        for name, ids in aliases.items()
+        if len(ids) == 1
+    }
+
+
 # ── Section assignment ─────────────────────────────────────────────────────
 
 def _section_id_for(title: str) -> str:
@@ -515,8 +554,24 @@ def build_destination_overview(dest_data: dict | None,
     return "\n\n".join(parts).strip()
 
 
-def _resolve_itinerary_steps(raw_steps: list[dict],
-                             name_index: dict[str, str]) -> list[dict]:
+def _canonical_poi_id(value: Any, valid_poi_ids: set[str]) -> str:
+    """Normalize an API itinerary id and validate it against current POIs."""
+    raw = str(value or "").strip()
+    candidates = [raw]
+    if raw.isdigit():
+        candidates.append(f"poi/{raw}")
+    match = re.search(r"poi/(\d+)", raw)
+    if match:
+        candidates.append(f"poi/{match.group(1)}")
+    for candidate in candidates:
+        if candidate in valid_poi_ids:
+            return candidate
+    return ""
+
+
+def _resolve_itinerary_steps(raw_steps: list[dict], name_index: dict[str, str],
+                             alias_name_index: dict[str, str],
+                             valid_poi_ids: set[str]) -> list[dict]:
     """Resolve ordered localized waypoint names to POI ids when exact.
 
     Never discard an unresolved name: catalogues can contain itinerary
@@ -525,26 +580,48 @@ def _resolve_itinerary_steps(raw_steps: list[dict],
     """
     steps = []
     for position, raw_step in enumerate(raw_steps, 1):
-        names = list(raw_step.get("pois") or [])
+        raw_pois = list(raw_step.get("pois") or [])
         poi_ids: list[str] = []
         unresolved: list[str] = []
-        for name in names:
-            poi_id = name_index.get(normalize_text(name))
+        resolutions: list[dict] = []
+        for raw_poi in raw_pois:
+            if isinstance(raw_poi, dict):
+                name = str(raw_poi.get("name") or "")
+                source_id = raw_poi.get("poi_id")
+            else:
+                name = str(raw_poi)
+                source_id = None
+            normalized_name = normalize_text(name)
+            poi_id = _canonical_poi_id(source_id, valid_poi_ids)
+            resolution = "source_id" if poi_id else ""
+            if not poi_id:
+                poi_id = name_index.get(normalized_name, "")
+                resolution = "localized_name" if poi_id else ""
+            if not poi_id:
+                poi_id = alias_name_index.get(normalized_name, "")
+                resolution = "cross_language_alias" if poi_id else ""
             if poi_id:
                 poi_ids.append(poi_id)
+                resolutions.append({
+                    "poi_id": poi_id,
+                    "source_name": name,
+                    "resolution": resolution,
+                })
             else:
                 unresolved.append(name)
         steps.append({
             "position":             position,
             "title":                raw_step.get("step") or "",
             "poi_ids":              poi_ids,
+            "poi_resolutions":      resolutions,
             "unresolved_poi_names": unresolved,
         })
     return steps
 
 
-def build_itineraries(dest_data: dict | None,
-                      name_index: dict[str, str]) -> tuple[list[dict], list[dict]]:
+def build_itineraries(dest_data: dict | None, name_index: dict[str, str],
+                      alias_name_index: dict[str, str],
+                      valid_poi_ids: set[str]) -> tuple[list[dict], list[dict]]:
     """Return curated trips and paths in the shared schema-v4 shape."""
     if not dest_data:
         return [], []
@@ -569,7 +646,9 @@ def build_itineraries(dest_data: dict | None,
             "name":         raw_trip.get("name") or "",
             "description":  raw_trip.get("description") or "",
             "url":          raw_trip.get("url") or "",
-            "steps":        _resolve_itinerary_steps(raw_steps, name_index),
+            "steps":        _resolve_itinerary_steps(
+                raw_steps, name_index, alias_name_index, valid_poi_ids
+            ),
         })
 
     paths = []
@@ -591,7 +670,9 @@ def build_itineraries(dest_data: dict | None,
             "name":         raw_path.get("name") or "",
             "description":  raw_path.get("description") or "",
             "url":          raw_path.get("url") or "",
-            "steps":        _resolve_itinerary_steps(raw_steps, name_index),
+            "steps":        _resolve_itinerary_steps(
+                raw_steps, name_index, alias_name_index, valid_poi_ids
+            ),
         })
 
     return trips, paths
@@ -600,7 +681,8 @@ def build_itineraries(dest_data: dict | None,
 # ── Top-level builder ──────────────────────────────────────────────────────
 
 def build_index(raw_pois: list[dict], dest_data: dict | None,
-                lang: str, destination: str) -> dict:
+                lang: str, destination: str,
+                alias_name_index: dict[str, str] | None = None) -> dict:
     """Assemble the complete index dict (no I/O)."""
     if not raw_pois:
         raise ValueError("POI list is empty")
@@ -645,7 +727,9 @@ def build_index(raw_pois: list[dict], dest_data: dict | None,
     facets = build_facets(normalised, sections)
     # Curated itinerary records resolve waypoint names against this
     # language's exact name index.
-    trips, paths = build_itineraries(dest_data, name_index)
+    trips, paths = build_itineraries(
+        dest_data, name_index, alias_name_index or {}, set(pois_by_id)
+    )
 
     destination_display = ""
     if dest_data and dest_data.get("destination", {}).get("name"):
@@ -661,9 +745,9 @@ def build_index(raw_pois: list[dict], dest_data: dict | None,
             "generated_at":        datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
             "poi_count":           len(normalised),
             "section_count":       len(sections),
-            # v4: schema-v3 evidence search plus resolved curated trips
-            # and paths. Older readers can ignore the additions.
-            "schema_version":      4,
+            # v5: schema-v4 curated trips/paths resolve stops through
+            # stable source ids and unique cross-language aliases.
+            "schema_version":      5,
         },
         "destination_overview": build_destination_overview(dest_data, tourist_type_display),
         "trips":                trips,
@@ -722,7 +806,12 @@ def main() -> None:
     print(f"[INFO] Destination: {args.destination}  Language: {args.lang}")
     print(f"[INFO] Loaded {len(raw_pois)} POIs from {pois_file.name}")
 
-    index = build_index(raw_pois, dest_data, lang=args.lang, destination=args.destination)
+    alias_name_index = build_alias_name_index(args.destination)
+    print(f"[INFO] Loaded {len(alias_name_index)} unique cross-language POI aliases")
+    index = build_index(
+        raw_pois, dest_data, lang=args.lang, destination=args.destination,
+        alias_name_index=alias_name_index,
+    )
 
     output = Path(args.output) if args.output \
              else PROJECT_ROOT / "indexes" / f"{args.destination}_{args.lang}.json"

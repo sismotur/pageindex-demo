@@ -148,7 +148,7 @@ destinations by proximity.
 
 ---
 
-## 4. The index file (schema v4)
+## 4. The index file (schema v5)
 
 One JSON object per file. Reference size: ~0.75 MB (Úbeda, 367 POIs).
 Parse it fully into memory at session start — everything is then
@@ -173,14 +173,15 @@ dict/map lookups.
 ```json
 { "destination": "ubeda", "destination_display": "Úbeda", "lang": "en",
   "generated_at": "2026-08-16T05:13:09Z", "poi_count": 367,
-  "section_count": 18, "schema_version": 4 }
+  "section_count": 18, "schema_version": 5 }
 ```
 
 **Versioning rule:** additive changes bump `schema_version`; readers
 must ignore unknown keys. v2 added `sections[].groups`; v3 adds
 `facets.search_terms` for deterministic evidence search; v4 adds
-resolved `trips[]` and `paths[]`. Older readers still work because
-`sections[].poi_ids` and POI records remain complete.
+resolved `trips[]` and `paths[]`; v5 adds stable source-id and
+cross-language itinerary-stop resolution. Older readers still work
+because `sections[].poi_ids` and POI records remain complete.
 
 ### 4.3 `trips[]` and `paths[]`
 
@@ -342,6 +343,9 @@ Schema v4 adds `trips[]` and `paths[]`, both with ordered step records:
   day, or multi-day visit. A trip is **not** a physical route.
 - `paths[]` comes only from `/v120/paths`: walking, cycling, trail, or
   route candidates. A path must never be substituted with a trip.
+- Waypoints resolve by source id, current-language exact name, then a
+  unique cross-language alias. Only resolved POIs are rendered/tagged;
+  unknown or foreign-language source labels remain internal QA metadata.
 - Current Úbeda en/es/it snapshots have `paths: []`; this is valid. The
   app should state that no published physical route is available instead
   of inventing or reclassifying a trip.
@@ -419,7 +423,7 @@ The LLM layer on top of this (tools, prompt, loop) is specified in
 
 | Metric | Value |
 |---|---|
-| Index file size | 1.1 MB / 135 KB gzip (schema v4, English) |
+| Index file size | 1.1 MB / 130 KB gzip (schema v5, English) |
 | POIs / sections | 367 / 18 (4 sections carry `groups`) |
 | Parse time on desktop | < 10 ms |
 | Assistant quality gate (E2B) | grounding 75.0% / content-fetch 95% — both pass |

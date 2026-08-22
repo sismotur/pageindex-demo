@@ -65,18 +65,32 @@ def fetch(session: requests.Session, url: str, extra: dict | None = None) -> lis
 
 def get_localized(entries: list[dict], lang: str, key: str = "value") -> str:
     """Return the value matching `lang` from a multilingual list.
-
-    Falls back to the first available entry if the requested language is
-    not present (e.g. when `strip_nulls=true` already filtered out the
-    other languages and only one entry survives).
+    Visitor-facing trip/path data must never fall back to a foreign
+    language. If the requested translation is absent, return an empty
+    string so the build can omit it from tourist output while retaining
+    any stable source identifier for QA/resolution.
     """
     if not entries:
         return ""
     for e in entries:
         if e.get("language") == lang or e.get("id_language") == lang:
             return e.get(key, "") or e.get("value_text", "")
-    first = entries[0]
-    return first.get(key, "") or first.get("value_text", "")
+    return ""
+
+
+def get_item_poi_id(item: dict) -> str:
+    """Return a stable POI identifier carried by an itinerary item, if any.
+
+    API versions/place types have used `identifier`, `item`, and
+    `id_object`.  Preserve a valid value rather than inferring an id from
+    a translated name; the index builder will validate it against the
+    destination POI map.
+    """
+    for key in ("identifier", "item", "id_object", "poi_id"):
+        value = item.get(key)
+        if value not in (None, ""):
+            return str(value)
+    return ""
 
 
 # ── Fetchers ───────────────────────────────────────────────────────────────────
@@ -117,8 +131,12 @@ def fetch_trips(session, base_url: str, destination: str, lang: str) -> list:
             pois = []
             for item in step.get("itemListElement", []):
                 poi_name = get_localized(item.get("name", []), lang)
-                if poi_name:
-                    pois.append(poi_name)
+                poi_id = get_item_poi_id(item)
+                if poi_name or poi_id:
+                    poi = {"name": poi_name}
+                    if poi_id:
+                        poi["poi_id"] = poi_id
+                    pois.append(poi)
             if step_name or pois:
                 itinerary.append({"step": step_name, "pois": pois})
         trips.append({
@@ -151,9 +169,13 @@ def fetch_paths(session, base_url: str, route_ids: list, lang: str) -> list:
                 step_waypoints = []
                 for item in step.get("itemListElement", []):
                     wp = get_localized(item.get("name", []), lang)
-                    if wp:
-                        waypoints.append(wp)
-                        step_waypoints.append(wp)
+                    poi_id = get_item_poi_id(item)
+                    if wp or poi_id:
+                        waypoint = {"name": wp}
+                        if poi_id:
+                            waypoint["poi_id"] = poi_id
+                        waypoints.append(waypoint)
+                        step_waypoints.append(waypoint)
                 if step_name or step_waypoints:
                     itinerary.append({
                         "step": step_name,
