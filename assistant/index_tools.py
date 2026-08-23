@@ -1027,6 +1027,9 @@ def resolve_trip_query(question: str, index: dict) -> dict | None:
     }
 
 
+_BARE_ID_TOKEN_RE = re.compile(r"^\d{3,6}$")
+
+
 def resolve_history_selection(question: str, messages: list[dict],
                               index: dict) -> dict | None:
     """Resolve a concise follow-up against validated prior assistant tags.
@@ -1036,9 +1039,10 @@ def resolve_history_selection(question: str, messages: list[dict],
     say “Secundaria 2”. This returns a validated source selection:
     `{kind: "trip", id: "trip/4453", label: "…"}`.
 
-    Matching is deliberately conservative: a unique normalized substring
-    or all-token match is required. Ambiguous references return None so
-    the grounding gate asks the model to retrieve rather than guessing.
+    Matching is deliberately conservative: a unique normalized substring,
+    an all-token match against a shown label, or a bare numeric id token
+    that matches a shown tag id. Ambiguous references return None so the
+    grounding gate asks the model to retrieve rather than guessing.
     """
     query = normalize_text(question)
     query_tokens = set(query.split())
@@ -1074,8 +1078,26 @@ def resolve_history_selection(question: str, messages: list[dict],
                     "label": match.group(2).strip() or item.get("name", ""),
                 })
 
-    # Keep one candidate per source id, then score the user reference.
+    # Keep one candidate per source id.
     unique = {(item["kind"], item["id"]): item for item in candidates}
+    if not unique:
+        return None
+
+    # Bare-id follow-up: a numeric token uniquely matching a shown tag id
+    # opens that record deterministically (e.g. user types "4457").
+    id_matches: list[dict] = []
+    for token in query_tokens:
+        if not _BARE_ID_TOKEN_RE.match(token):
+            continue
+        for item in unique.values():
+            item_bare = str(item["id"]).split("/", 1)[-1]
+            if item_bare == token and item not in id_matches:
+                id_matches.append(item)
+    if len(id_matches) == 1:
+        return id_matches[0]
+    if len(id_matches) > 1:
+        return None
+
     scored: list[tuple[int, dict]] = []
     for item in unique.values():
         label = normalize_text(item["label"])
@@ -1127,6 +1149,87 @@ def format_search_trips(index: dict, query: str, limit: int = 10) -> str:
 def format_search_paths(index: dict, query: str, limit: int = 10) -> str:
     """Render physical walking/biking routes from /v120/paths only."""
     return _format_curated_search(index, query, "paths", "Routes", limit)
+
+
+# Localized wrappers for the multi-trip choice offer. The offer is
+# rendered deterministically by the runtime when the visitor asks for a
+# plan/itinerary and several curated trips could match. English is used
+# as the safe fallback for languages not explicitly listed.
+_TRIP_CHOICE_MESSAGES: dict[str, dict[str, str]] = {
+    "en": {
+        "lead":       "Here are a few curated trips that could match your request:",
+        "highlights": "Highlights",
+        "outro":      "Tell me the name or number of the trip you would like to see.",
+    },
+    "es": {
+        "lead":       "He encontrado varias sugerencias que podrían encajar con tu petición:",
+        "highlights": "Destacan",
+        "outro":      "Dime el nombre o el número del viaje que prefieras.",
+    },
+    "it": {
+        "lead":       "Ho trovato alcune proposte curate che potrebbero corrispondere:",
+        "highlights": "In evidenza",
+        "outro":      "Dimmi il nome o il numero del viaggio che preferisci.",
+    },
+}
+
+
+def _headline_trip_pois(item: dict, index: dict, count: int = 3) -> list[str]:
+    """Return the first `count` resolved POI names in trip reading order.
+
+    Walks the flat `steps[].poi_ids` projection (which is populated in
+    reading order even for nested schema-v6 items) so the caller sees the
+    same headline POIs a visitor would encounter first.
+    """
+    if count <= 0:
+        return []
+    names: list[str] = []
+    seen: set[str] = set()
+    for step in item.get("steps") or []:
+        for pid in step.get("poi_ids") or []:
+            if pid in seen:
+                continue
+            poi = get_poi(index, pid)
+            if poi and poi.get("name"):
+                names.append(poi["name"])
+                seen.add(pid)
+                if len(names) >= count:
+                    return names
+    return names
+
+
+def format_trip_choice_offer(index: dict, matches: list[dict]) -> str:
+    """Deterministic multi-trip choice offer with headline POIs.
+
+    Emits one `<trip id=...>` tag per candidate, a short description, and
+    up to three headline POIs so the visitor can compare options without
+    the runtime committing to a single trip.  The follow-up selection
+    resolves via `resolve_history_selection` (unique substring or bare
+    numeric id).
+    """
+    if not matches:
+        return ""
+    lang = (index.get("meta") or {}).get("lang") or "en"
+    msgs = _TRIP_CHOICE_MESSAGES.get(lang, _TRIP_CHOICE_MESSAGES["en"])
+    lines = [msgs["lead"], ""]
+    for item in matches:
+        tag = _trip_tag(item)
+        parts: list[str] = []
+        preview = _curated_preview(item, max_chars=140)
+        if preview:
+            # `_curated_preview` may already trim with a trailing "…";
+            # avoid "…." by only adding a period on complete sentences.
+            if preview.endswith((".", "…", "!", "?")):
+                parts.append(preview)
+            else:
+                parts.append(preview + ".")
+        headline = _headline_trip_pois(item, index, count=3)
+        if headline:
+            parts.append(f"{msgs['highlights']}: {', '.join(headline)}.")
+        summary = " ".join(parts).strip()
+        lines.append(f"  - {tag}{f' — {summary}' if summary else ''}")
+    lines.extend(["", msgs["outro"]])
+    return "\n".join(lines)
 
 
 def _render_curated_items(items: list[dict], index: dict,

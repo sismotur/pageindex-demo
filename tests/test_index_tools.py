@@ -33,12 +33,14 @@ from index_tools import (
     format_section,
     format_sections_overview,
     format_trip,
+    format_trip_choice_offer,
     format_path,
     get_poi,
     get_pois,
     get_trip,
     get_path,
     poi_uri,
+    resolve_history_selection,
     resolve_trip_query,
     search_pois,
     search_trips,
@@ -610,6 +612,65 @@ class TestNestedItems:
         assert "   - 1.1 Plaza Vázquez de Molina" in rendered
         assert "<poi id=30459 type=Hotel>Hotel Yit El Postigo</poi>" in rendered
         assert "CR La Casería de Tito" not in rendered
+
+
+class TestTripChoiceOffer:
+    """Broad plan requests fan out to a 2–3 curated trip choice, not one auto-pick."""
+
+    def test_offer_lists_up_to_three_tagged_candidates(self, spanish_index):
+        matches = search_trips(spanish_index, "plan dos días", limit=3)
+        assert len(matches) >= 2
+        offer = format_trip_choice_offer(spanish_index, matches[:3])
+        # Localized lead line for Spanish
+        assert offer.startswith(
+            "He encontrado varias sugerencias que podrían encajar"
+        )
+        # Each candidate rendered as a validated <trip> tag
+        import re
+        ids = re.findall(r"<trip id=(\d+)>", offer)
+        assert len(ids) == len(matches[:3]) >= 2
+        # Headline POI names come from resolved child POIs
+        assert "Destacan:" in offer
+        assert "Dime el nombre o el número" in offer
+
+    def test_offer_falls_back_to_english_for_unknown_lang(self, spanish_index):
+        # Clone the index and pretend the runtime is set to Japanese.
+        idx = dict(spanish_index)
+        idx["meta"] = dict(spanish_index["meta"], lang="ja")
+        matches = search_trips(spanish_index, "plan dos días", limit=2)
+        offer = format_trip_choice_offer(idx, matches[:2])
+        assert offer.startswith("Here are a few curated trips")
+        assert "Highlights:" in offer
+
+    def test_offer_omits_period_after_ellipsis(self, spanish_index):
+        matches = search_trips(spanish_index, "plan dos días", limit=3)
+        offer = format_trip_choice_offer(spanish_index, matches[:3])
+        # Never render "…." (period immediately after ellipsis).
+        assert "…." not in offer
+
+    def test_bare_numeric_id_selects_previously_shown_trip(self, spanish_index):
+        history = [{
+            "role": "assistant",
+            "content": (
+                'Opciones:\n'
+                '  - <trip id=4444>BIENVENIDO A ÚBEDA - Tarjeta NFC</trip>\n'
+                '  - <trip id=4457>Qué No Perderte</trip>'
+            ),
+        }]
+        selection = resolve_history_selection("4457", history, spanish_index)
+        assert selection == {
+            "kind": "trip",
+            "id": "trip/4457",
+            "label": "Qué No Perderte",
+        }
+
+    def test_bare_numeric_id_matching_nothing_falls_through(self, spanish_index):
+        history = [{
+            "role": "assistant",
+            "content": '<trip id=4457>Qué No Perderte</trip>',
+        }]
+        # A number that does not match any shown tag id.
+        assert resolve_history_selection("99999", history, spanish_index) is None
 
 
 # ── POI tags in answers (app deep links) ─────────────────────────────────────

@@ -65,6 +65,7 @@ from index_tools import (   # noqa: E402
     format_sections_overview,
     format_section,
     extract_poi_tags,
+    format_trip_choice_offer,
     resolve_history_selection,
     resolve_trip_query,
     search_trips,
@@ -232,6 +233,30 @@ def run_turn(question: str, messages: list[dict],
             "role": "user",
             "content": selected_source_context(selection, result),
         })
+    elif trip_detail_required:
+        # No deterministic selection but the visitor asked for a plan.
+        # Present up to three curated trips deterministically so they
+        # can choose, instead of letting the model pick one silently.
+        offer_candidates = search_trips(index, question, limit=3)
+        if len(offer_candidates) >= 2:
+            offer_text = format_trip_choice_offer(index, offer_candidates[:3])
+            tool_calls_made.append({
+                "tool": "search_trips",
+                "args": {"query": question, "limit": 3},
+                "result_preview": offer_text[:250],
+                "cache_hit": False,
+                "automatic": True,
+            })
+            grounded = True
+            grounding_tools.append("search_trips")
+            automatic_source_calls.append({
+                "tool": "search_trips",
+                "args": {"query": question, "limit": 3},
+            })
+            trip_search_started = True
+            trip_search_has_results = True
+            trip_search_default = offer_candidates[0]
+            source_detail_answer = offer_text
     def use_default_trip_detail() -> bool:
         """Fetch the top source trip when E2B ignores get_trip once."""
         nonlocal grounded, cache_hits, source_detail_answer, trip_detail_started

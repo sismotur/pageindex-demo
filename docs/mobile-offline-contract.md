@@ -476,9 +476,14 @@ Tourist answers use a fail-closed source rule:
    before rendering a day-by-day or ordered-stop answer. The runtime
    renders the retrieved source steps directly; it does not let the model
    invent named option headings or merge stops from several trips.
-   If the model ignores one `get_trip` instruction, the runtime retrieves
-   the highest-ranked trip returned by `search_trips` and renders that
-   source record instead of failing a valid plan request.
+6. When a plan-shaped question has no deterministic selection and
+   `search_trips` returns ≥2 candidates, the runtime emits a
+   deterministic **choice offer**: up to three `<trip id=…>` tags with a
+   short description and 2–3 headline POI names. Visitors then pick a
+   trip by name (unique substring against a shown label) or by bare
+   numeric id (e.g. typing `4457` opens `<trip id=4457>`). If exactly
+   one trip matches, the runtime opens it directly; if none match, the
+   loop proceeds normally so the model can answer from other tools.
 
 Grounding means the answer is based on the current downloaded index. It
 does not promise verbatim wording: the model may paraphrase retrieved
