@@ -346,6 +346,9 @@ Schema v4 adds `trips[]` and `paths[]`, both with ordered step records:
 - Waypoints resolve by source id, current-language exact name, then a
   unique cross-language alias. Only resolved POIs are rendered/tagged;
   unknown or foreign-language source labels remain internal QA metadata.
+- Numbered labels such as `1.1 Plaza Vázquez de Molina` are structural
+  itinerary subfolders. They remain visible as nested text but do not
+  receive POI tags.
 - Current Úbeda en/es/it snapshots have `paths: []`; this is valid. The
   app should state that no published physical route is available instead
   of inventing or reclassifying a trip.

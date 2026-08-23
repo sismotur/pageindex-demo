@@ -3,7 +3,7 @@
     "destination": "ubeda",
     "destination_display": "Úbeda",
     "lang": "it",
-    "generated_at": "2026-08-22T03:54:48Z",
+    "generated_at": "2026-08-23T01:16:06Z",
     "poi_count": 367,
     "section_count": 18,
     "schema_version": 5
@@ -122,6 +122,7 @@
               "resolution": "localized_name"
             }
           ],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -161,6 +162,7 @@
               "resolution": "localized_name"
             }
           ],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -212,6 +214,7 @@
               "resolution": "localized_name"
             }
           ],
+          "subfolders": [],
           "unresolved_poi_names": []
         }
       ]
@@ -230,6 +233,7 @@
           "title": "Appartamenti turistici \"El Losal\"",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -237,6 +241,7 @@
           "title": "Hotel Las Casas del Cónsul",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -244,6 +249,7 @@
           "title": "Hotel Las Casas del Cónsul",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -251,6 +257,7 @@
           "title": "Ostello Santa María di Úbeda",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -258,6 +265,7 @@
           "title": "Hotel Afán de Rivera",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -265,6 +273,7 @@
           "title": "Hotel María De Molina",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -272,6 +281,7 @@
           "title": "Hotel Nove Leggende",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -279,6 +289,7 @@
           "title": "Hotel Yit El Postigo",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -286,6 +297,7 @@
           "title": "Appartamenti Turistici \"Palacio del Agua\"",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -293,6 +305,7 @@
           "title": "Hotel Ordoñez Sandoval",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -300,6 +313,7 @@
           "title": "Hotel Palazzo del Marchese de la Rambla",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -307,6 +321,7 @@
           "title": "Hotel Ciudad de Úbeda",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -314,6 +329,7 @@
           "title": "Hotel La Pace",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -321,6 +337,7 @@
           "title": "Hotel Don Juan Boutique",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -328,6 +345,7 @@
           "title": "Appartamenti Turistici \"Fuente Redonda\"",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -335,6 +353,7 @@
           "title": "Appartamenti turistici \"Quotidianum\"",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -342,6 +361,7 @@
           "title": "Hotel Álvar Fáñez",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -349,6 +369,7 @@
           "title": "Hotel Álvaro de Torres",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -356,6 +377,7 @@
           "title": "Appartamenti Turistici \"Sol Real\"",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -363,6 +385,7 @@
           "title": "Appartamenti Turistici \"Architettura\"",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -370,6 +393,7 @@
           "title": "Ospizio Yamaríes",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -377,6 +401,7 @@
           "title": "Hotel Rosaleda Di Don Pedro",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -384,6 +409,7 @@
           "title": "Palazzo del Decano Ortega. Parador de Turismo",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -391,6 +417,7 @@
           "title": "Ristorante Hotel Palazzo di Úbeda G.L. \"El Ábside\"",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         }
       ]
@@ -409,6 +436,7 @@
           "title": "Visitaubedaybaeza.com",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -416,6 +444,7 @@
           "title": "Vandelvira Turismo",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -423,6 +452,7 @@
           "title": "Turismo di Semer",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -430,6 +460,7 @@
           "title": "Scopri Úbeda",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -437,6 +468,7 @@
           "title": "Atlante",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -444,6 +476,7 @@
           "title": "Scusi",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -451,6 +484,7 @@
           "title": "Artigiani",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -458,6 +492,7 @@
           "title": "A.P.I.T. Associazione Professionale Guide Turistiche.",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -465,6 +500,7 @@
           "title": "Fenice",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -472,6 +508,7 @@
           "title": "Terra della lince iberica",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         }
       ]
@@ -528,6 +565,7 @@
               "resolution": "localized_name"
             }
           ],
+          "subfolders": [],
           "unresolved_poi_names": [
             "Opzione A",
             "Opzione B"
@@ -582,6 +620,7 @@
               "resolution": "localized_name"
             }
           ],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -627,6 +666,7 @@
               "resolution": "localized_name"
             }
           ],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -714,6 +754,7 @@
               "resolution": "localized_name"
             }
           ],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -789,6 +830,7 @@
               "resolution": "localized_name"
             }
           ],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -870,6 +912,7 @@
               "resolution": "localized_name"
             }
           ],
+          "subfolders": [],
           "unresolved_poi_names": []
         }
       ]
@@ -888,6 +931,7 @@
           "title": "Totem Calle Real",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -895,6 +939,7 @@
           "title": "Via Trinidad",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -902,6 +947,7 @@
           "title": "Strade Mesones e Obispo Cobos",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -909,6 +955,7 @@
           "title": "Via Ciudad de Linares",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -916,6 +963,7 @@
           "title": "Avenida Ramón y Cajal",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -923,6 +971,7 @@
           "title": "Via della Libertà",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -998,6 +1047,7 @@
               "resolution": "localized_name"
             }
           ],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -1005,6 +1055,7 @@
           "title": "Prodotti locali: artigianato e souvenir",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         }
       ]
@@ -1031,6 +1082,7 @@
               "resolution": "localized_name"
             }
           ],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -1046,6 +1098,7 @@
               "resolution": "localized_name"
             }
           ],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -1061,6 +1114,7 @@
               "resolution": "localized_name"
             }
           ],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -1076,6 +1130,7 @@
               "resolution": "localized_name"
             }
           ],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -1103,6 +1158,7 @@
               "resolution": "localized_name"
             }
           ],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -1166,6 +1222,7 @@
               "resolution": "localized_name"
             }
           ],
+          "subfolders": [],
           "unresolved_poi_names": []
         }
       ]
@@ -1192,6 +1249,7 @@
               "resolution": "localized_name"
             }
           ],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -1213,6 +1271,7 @@
               "resolution": "localized_name"
             }
           ],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -1270,6 +1329,7 @@
               "resolution": "localized_name"
             }
           ],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -1285,6 +1345,7 @@
               "resolution": "localized_name"
             }
           ],
+          "subfolders": [],
           "unresolved_poi_names": []
         }
       ]
@@ -1321,6 +1382,7 @@
               "resolution": "localized_name"
             }
           ],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -1336,6 +1398,7 @@
               "resolution": "localized_name"
             }
           ],
+          "subfolders": [],
           "unresolved_poi_names": [
             "POSTEGGI PER TAXI",
             "STAZIONE DEGLI AUTOBUS"
@@ -1354,6 +1417,7 @@
               "resolution": "localized_name"
             }
           ],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -1399,6 +1463,7 @@
               "resolution": "localized_name"
             }
           ],
+          "subfolders": [],
           "unresolved_poi_names": [
             "PUNTI DI RICARICA PER VEICOLI ELETTRICI"
           ]
@@ -1475,6 +1540,7 @@
               "resolution": "localized_name"
             }
           ],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -1508,6 +1574,7 @@
               "resolution": "localized_name"
             }
           ],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -1529,6 +1596,7 @@
               "resolution": "localized_name"
             }
           ],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -1550,6 +1618,7 @@
               "resolution": "localized_name"
             }
           ],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -1589,6 +1658,7 @@
               "resolution": "localized_name"
             }
           ],
+          "subfolders": [],
           "unresolved_poi_names": []
         }
       ]
@@ -1607,6 +1677,7 @@
           "title": "VENDITA DI OLIO",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -1614,6 +1685,7 @@
           "title": "Centro di Interpretazione dell'Oliveto e dell'Olio",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -1659,6 +1731,7 @@
               "resolution": "localized_name"
             }
           ],
+          "subfolders": [],
           "unresolved_poi_names": []
         }
       ]
@@ -1703,6 +1776,7 @@
               "resolution": "localized_name"
             }
           ],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -1784,6 +1858,7 @@
               "resolution": "localized_name"
             }
           ],
+          "subfolders": [],
           "unresolved_poi_names": []
         }
       ]
@@ -1802,6 +1877,7 @@
           "title": "ATTIVITÀ IN PLAZA DE TOROS",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -1809,6 +1885,7 @@
           "title": "Chiesa di Santo Domingo",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -1816,6 +1893,7 @@
           "title": "Campi sportivi comunali",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         }
       ]
@@ -1834,13 +1912,14 @@
           "title": "1. Cosa non perdere",
           "poi_ids": [],
           "poi_resolutions": [],
-          "unresolved_poi_names": [
+          "subfolders": [
             "1.1 Piazza Vázquez de Molina",
             "1.2 Piazza Primo Maggio",
             "1.3 Piazza del Municipio",
             "1.5 Centri Culturali",
             "1.6 Altri must"
-          ]
+          ],
+          "unresolved_poi_names": []
         }
       ]
     },
@@ -1866,6 +1945,7 @@
               "resolution": "localized_name"
             }
           ],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -1881,6 +1961,7 @@
               "resolution": "localized_name"
             }
           ],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -1896,6 +1977,7 @@
               "resolution": "localized_name"
             }
           ],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -1911,6 +1993,7 @@
               "resolution": "localized_name"
             }
           ],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -1938,6 +2021,7 @@
               "resolution": "localized_name"
             }
           ],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -2001,6 +2085,7 @@
               "resolution": "localized_name"
             }
           ],
+          "subfolders": [],
           "unresolved_poi_names": []
         }
       ]
@@ -2019,6 +2104,7 @@
           "title": "Cattedrale di Santiago de Compostela",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -2026,6 +2112,7 @@
           "title": "Convento e Chiesa di San Francesco",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -2033,6 +2120,7 @@
           "title": "Monastero di San Martín Pinario",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -2040,6 +2128,7 @@
           "title": "Pazo de Fonseca",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -2047,6 +2136,7 @@
           "title": "Piazza del Obradoiro",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -2054,6 +2144,7 @@
           "title": "Chiesa di Santo Domingo",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -2061,6 +2152,7 @@
           "title": "Città della Cultura di Galizia",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -2068,6 +2160,7 @@
           "title": "Chiesa di Santa María la Real del Sar",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -2075,6 +2168,7 @@
           "title": "Palazzo Arcivescovile di Santiago di Compostela",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -2082,6 +2176,7 @@
           "title": "Pazo de Raxoi",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -2089,6 +2184,7 @@
           "title": "Centro Galego de Arte Contemporáneo - CGAC",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -2096,6 +2192,7 @@
           "title": "Parco Alameda",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -2103,6 +2200,7 @@
           "title": "Piazza delle Argenterie",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -2110,6 +2208,7 @@
           "title": "Piazza de Quintana",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -2117,6 +2216,7 @@
           "title": "Piazza Cervantes",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         }
       ]
@@ -2135,6 +2235,7 @@
           "title": "Palazzo del Decano Ortega. Parador de Turismo",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -2142,6 +2243,7 @@
           "title": "Úbeda - Città Patrimonio",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -2211,6 +2313,7 @@
               "resolution": "localized_name"
             }
           ],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -2238,6 +2341,7 @@
               "resolution": "localized_name"
             }
           ],
+          "subfolders": [],
           "unresolved_poi_names": [
             "Baeza - città patrimonio dell'Umanità",
             "Conjunto Storico di Sabiote",
@@ -2281,6 +2385,7 @@
               "resolution": "localized_name"
             }
           ],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -2314,6 +2419,7 @@
               "resolution": "localized_name"
             }
           ],
+          "subfolders": [],
           "unresolved_poi_names": []
         }
       ]
@@ -2332,13 +2438,14 @@
           "title": "1. Cosa non perderti",
           "poi_ids": [],
           "poi_resolutions": [],
-          "unresolved_poi_names": [
+          "subfolders": [
             "1.1 Piazza Vázquez de Molina",
             "1.2 Piazza Primo Maggio",
             "1.3 Piazza del Municipio",
             "1.5 Centri Culturali",
             "1.6 Altri indispensabili"
-          ]
+          ],
+          "unresolved_poi_names": []
         }
       ]
     },
@@ -2356,13 +2463,14 @@
           "title": "1. Cosa non perdere",
           "poi_ids": [],
           "poi_resolutions": [],
-          "unresolved_poi_names": [
+          "subfolders": [
             "1.1 Piazza Vázquez de Molina",
             "1.2 Piazza Primo Maggio",
             "1.3 Piazza del Municipio",
             "1.5 Centri Culturali",
             "1.6 Altri indispensabili"
-          ]
+          ],
+          "unresolved_poi_names": []
         }
       ]
     },
@@ -2390,6 +2498,7 @@
           "title": "Parco Nord",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -2397,6 +2506,7 @@
           "title": "Chiesa di San Giovanni Battista",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -2404,6 +2514,7 @@
           "title": "Ospedale di Santiago",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -2411,6 +2522,7 @@
           "title": "Plaza de Toros de Úbeda",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -2418,6 +2530,7 @@
           "title": "Strade Mesones e Obispo Cobos",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -2425,6 +2538,7 @@
           "title": "Antico Convento della Vittoria",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -2432,6 +2546,7 @@
           "title": "Chiesa di San Isidoro",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -2439,6 +2554,7 @@
           "title": "Portada Plateresca calle Gradas",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -2446,6 +2562,7 @@
           "title": "Piazza di Andalusia",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -2453,6 +2570,7 @@
           "title": "Torre dell'orologio",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -2460,6 +2578,7 @@
           "title": "Antiche Macellerie",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -2467,6 +2586,7 @@
           "title": "Via Rastro",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -2474,6 +2594,7 @@
           "title": "Centro di Interpretazione \"Le Mura di Úbeda: Torrione di Portillo del Santo Cristo\"",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -2481,6 +2602,7 @@
           "title": "Antico Convento di San Francesco",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -2488,6 +2610,7 @@
           "title": "Giardini della Cava e parco giochi",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -2495,6 +2618,7 @@
           "title": "Belvedere e monumento dell'Alfiere Rojas Navarrete",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -2502,6 +2626,7 @@
           "title": "Belvedere di San Lorenzo",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -2509,6 +2634,7 @@
           "title": "Chiesa di San Lorenzo",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -2516,6 +2642,7 @@
           "title": "Piazza di San Lorenzo",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -2523,6 +2650,7 @@
           "title": "Casa delle Torri",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -2530,6 +2658,7 @@
           "title": "Porta di Granada",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -2537,6 +2666,7 @@
           "title": "Basilica di Santa Maria dei Reali Alcazari",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -2544,6 +2674,7 @@
           "title": "Piazza Vázquez de Molina",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -2551,6 +2682,7 @@
           "title": "Palazzo Vázquez de Molina",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -2558,6 +2690,7 @@
           "title": "Fonte Rinascimentale",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -2565,6 +2698,7 @@
           "title": "Prigione del Vescovo",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -2572,6 +2706,7 @@
           "title": "Palazzo del Marchese di Mancera",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -2579,6 +2714,7 @@
           "title": "Antico Pósito",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -2586,6 +2722,7 @@
           "title": "Sacra Cappella del Salvatore",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -2593,6 +2730,7 @@
           "title": "Antichi Palazzi del Municipio",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -2600,6 +2738,7 @@
           "title": "Piazza 1º Maggio",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -2607,6 +2746,7 @@
           "title": "Chiesa di San Paolo",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -2614,6 +2754,7 @@
           "title": "Antico Convento di San Andrea",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -2621,6 +2762,7 @@
           "title": "Palazzo dei Torrente",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -2628,6 +2770,7 @@
           "title": "Convento della Concezione",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -2635,6 +2778,7 @@
           "title": "Mercato di approvvigionamento",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -2642,6 +2786,7 @@
           "title": "Palazzo Don Luis de la Cueva",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -2649,6 +2794,7 @@
           "title": "Torre Ottogonale",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -2656,6 +2802,7 @@
           "title": "Centro di Interpretazione dell'Oliveto e dell'Olio",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -2663,6 +2810,7 @@
           "title": "Chiesa e Convento della Santissima Trinità",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -2670,6 +2818,7 @@
           "title": "Edificio delle Poste e dei Telegrafi",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -2677,6 +2826,7 @@
           "title": "Palazzo dei Bussianos",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -2684,6 +2834,7 @@
           "title": "Via Trinidad",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -2691,6 +2842,7 @@
           "title": "Parco Nord",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         }
       ]
@@ -2785,6 +2937,7 @@
               "resolution": "localized_name"
             }
           ],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -2818,6 +2971,7 @@
               "resolution": "localized_name"
             }
           ],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -2839,6 +2993,7 @@
               "resolution": "localized_name"
             }
           ],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -2860,6 +3015,7 @@
               "resolution": "localized_name"
             }
           ],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -2899,6 +3055,7 @@
               "resolution": "localized_name"
             }
           ],
+          "subfolders": [],
           "unresolved_poi_names": []
         }
       ]
@@ -2917,6 +3074,7 @@
           "title": "Antiche Macellerie",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -2924,6 +3082,7 @@
           "title": "Ruta de los Barrios Tradicionales",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -2931,6 +3090,7 @@
           "title": "Palazzo Anguis de Medinilla",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -2938,6 +3098,7 @@
           "title": "Reale Monastero di Santa Chiara",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -2945,6 +3106,7 @@
           "title": "Casa Museo Arte Andalusí",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -2952,6 +3114,7 @@
           "title": "Chiesa di Santo Domingo",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -2959,6 +3122,7 @@
           "title": "Porta di Granada",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -2966,6 +3130,7 @@
           "title": "Chiesa di San Lorenzo",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -2973,6 +3138,7 @@
           "title": "Casa delle Torri",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -2980,6 +3146,7 @@
           "title": "Palazzo dei Medinilla",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -2987,6 +3154,7 @@
           "title": "Centro di Interpretazione \"Le Mura di Úbeda: Torrione di Portillo del Santo Cristo\"",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -2994,6 +3162,7 @@
           "title": "Hotel Palazzo del Marchese de la Rambla",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -3001,6 +3170,7 @@
           "title": "Palazzo degli Orozco",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -3008,6 +3178,7 @@
           "title": "Chiesa di San Pietro",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -3015,6 +3186,7 @@
           "title": "Ristorante Hotel Palazzo di Úbeda G.L. \"El Ábside\"",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         }
       ]
@@ -3033,6 +3205,7 @@
           "title": "Antiche Macellerie",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -3040,6 +3213,7 @@
           "title": "Rotta delle Tre Culture",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -3047,6 +3221,7 @@
           "title": "Chiesa di San Michele",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -3054,6 +3229,7 @@
           "title": "Convento e Museo di San Giovanni della Croce",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -3061,6 +3237,7 @@
           "title": "Mura e Porta del Losal",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -3068,6 +3245,7 @@
           "title": "Palazzo dei Torrente",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -3075,6 +3253,7 @@
           "title": "Convento della Concezione",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -3082,6 +3261,7 @@
           "title": "Palazzo Don Luis de la Cueva",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -3089,6 +3269,7 @@
           "title": "Museo Archeologico - Casa Mudéjar",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -3096,6 +3277,7 @@
           "title": "Sinagoga dell'Acqua",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -3103,6 +3285,7 @@
           "title": "Centro di Interpretazione dell'Oliveto e dell'Olio",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -3110,6 +3293,7 @@
           "title": "Torre Ottogonale",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -3117,6 +3301,7 @@
           "title": "Chiesa e Convento della Santissima Trinità",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -3124,6 +3309,7 @@
           "title": "Torre dell'orologio",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -3131,6 +3317,7 @@
           "title": "Chiesa di San Isidoro",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -3138,6 +3325,7 @@
           "title": "Chiesa di San Nicola",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -3145,6 +3333,7 @@
           "title": "Piazzetta della Giudecca",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         }
       ]
@@ -3163,6 +3352,7 @@
           "title": "Rotta Rinascimento del Sud",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -3170,6 +3360,7 @@
           "title": "Piazza Vázquez de Molina",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -3177,6 +3368,7 @@
           "title": "Fonte Rinascimentale",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -3184,6 +3376,7 @@
           "title": "Palazzo del Decano Ortega. Parador de Turismo",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -3191,6 +3384,7 @@
           "title": "Sacra Cappella del Salvatore",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -3198,6 +3392,7 @@
           "title": "Ospedale degli Onorevoli Vecchi di El Salvador",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -3205,6 +3400,7 @@
           "title": "Porta di Santa Lucia",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -3212,6 +3408,7 @@
           "title": "Antico Pósito",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -3219,6 +3416,7 @@
           "title": "Palazzo del Marchese di Mancera",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -3226,6 +3424,7 @@
           "title": "Prigione del Vescovo",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -3233,6 +3432,7 @@
           "title": "Basilica di Santa Maria dei Reali Alcazari",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -3240,6 +3440,7 @@
           "title": "Palazzo Vela de los Cobos",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -3247,6 +3448,7 @@
           "title": "Antichi Palazzi del Municipio",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -3254,6 +3456,7 @@
           "title": "Chiesa di San Paolo",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -3261,6 +3464,7 @@
           "title": "Antiche Macellerie",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         },
         {
@@ -3268,6 +3472,7 @@
           "title": "Ospedale di Santiago",
           "poi_ids": [],
           "poi_resolutions": [],
+          "subfolders": [],
           "unresolved_poi_names": []
         }
       ]

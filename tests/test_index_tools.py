@@ -500,6 +500,8 @@ class TestCuratedItineraries:
 
     def test_spanish_trip_aliases_link_but_absent_stop_stays_hidden(self, spanish_index):
         trip = get_trip(spanish_index, "trip/4444")
+        first_step = trip["steps"][0]
+        assert "1.1 Plaza Vázquez de Molina" in first_step["subfolders"]
         lodging = next(step for step in trip["steps"] if step["title"].startswith("4."))
         resolved = {item["source_name"]: item for item in lodging["poi_resolutions"]}
         assert resolved["Yit El Postigo Hotel"]["poi_id"] == "poi/30459"
@@ -507,6 +509,7 @@ class TestCuratedItineraries:
         assert "CR La Casería de Tito" in lodging["unresolved_poi_names"]
 
         rendered = format_trip(spanish_index, "trip/4444")
+        assert "   - 1.1 Plaza Vázquez de Molina" in rendered
         assert "<poi id=30459 type=Hotel>Hotel Yit El Postigo</poi>" in rendered
         assert "CR La Casería de Tito" not in rendered
 

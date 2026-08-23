@@ -569,6 +569,9 @@ def _canonical_poi_id(value: Any, valid_poi_ids: set[str]) -> str:
     return ""
 
 
+_ITINERARY_SUBFOLDER_RE = re.compile(r"^\d+(?:\.\d+)+\s+\S")
+
+
 def _resolve_itinerary_steps(raw_steps: list[dict], name_index: dict[str, str],
                              alias_name_index: dict[str, str],
                              valid_poi_ids: set[str]) -> list[dict]:
@@ -584,6 +587,7 @@ def _resolve_itinerary_steps(raw_steps: list[dict], name_index: dict[str, str],
         poi_ids: list[str] = []
         unresolved: list[str] = []
         resolutions: list[dict] = []
+        subfolders: list[str] = []
         for raw_poi in raw_pois:
             if isinstance(raw_poi, dict):
                 name = str(raw_poi.get("name") or "")
@@ -591,6 +595,11 @@ def _resolve_itinerary_steps(raw_steps: list[dict], name_index: dict[str, str],
             else:
                 name = str(raw_poi)
                 source_id = None
+            # Nested source folders (e.g. "1.1 Plaza Vázquez de Molina")
+            # are visitor-visible structure, never POI candidates.
+            if _ITINERARY_SUBFOLDER_RE.match(name):
+                subfolders.append(name)
+                continue
             normalized_name = normalize_text(name)
             poi_id = _canonical_poi_id(source_id, valid_poi_ids)
             resolution = "source_id" if poi_id else ""
@@ -614,6 +623,7 @@ def _resolve_itinerary_steps(raw_steps: list[dict], name_index: dict[str, str],
             "title":                raw_step.get("step") or "",
             "poi_ids":              poi_ids,
             "poi_resolutions":      resolutions,
+            "subfolders":           subfolders,
             "unresolved_poi_names": unresolved,
         })
     return steps

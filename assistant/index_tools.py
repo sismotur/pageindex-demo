@@ -1148,6 +1148,8 @@ def _format_curated_detail(index: dict, itinerary_id: str, collection: str,
         position = step.get("position") or "?"
         title = step.get("title") or f"Stop {position}"
         lines.append(f"{position}. {title}")
+        for subfolder in step.get("subfolders") or []:
+            lines.append(f"   - {subfolder}")
         for poi_id in step.get("poi_ids") or []:
             poi = get_poi(index, poi_id)
             if poi:

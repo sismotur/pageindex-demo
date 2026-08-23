@@ -401,6 +401,11 @@ the current index. Case 4 is retained in `unresolved_poi_names` and
 `poi_resolutions` for QA but **must not be displayed** in tourist-facing
 chat. This prevents a stale or foreign-language name from appearing as
 an app-openable location.
+Numbered source labels such as `1.1 Plaza Vázquez de Molina` are
+itinerary **subfolders**, not POIs. They are preserved in
+`steps[].subfolders` and rendered as nested text beneath their parent
+step, with no `<poi>` tag. This keeps the editorial trip hierarchy
+visible without inventing a navigable location.
 
 The current Spanish `trip/4444` source illustrates the behavior:
 English source name `Yit El Postigo Hotel` resolves to
