@@ -76,6 +76,7 @@ from index_tools import (
     find_section,
     get_poi as ix_get_poi,
     extract_poi_tags,
+    format_history_followup,
     format_trip_choice_offer,
     resolve_history_selection,
     resolve_trip_query,
@@ -148,6 +149,25 @@ SOCIAL_ONLY_MESSAGES = frozenset({
     "hola", "hello", "hi", "hey", "gracias", "thanks", "thank you",
     "adios", "adiós", "bye", "bonjour", "ciao", "hallo", "ola",
 })
+# Localized preamble used when the runtime deterministically answers a
+# follow-up question from the POIs already shown in the recent history
+# (safety net for small models that decline to call tools on broad
+# follow-ups).
+HISTORY_FOLLOWUP_LEADS: dict[str, str] = {
+    "en": "Based on the places I already mentioned, these match your question:",
+    "es": "De los lugares que ya te he mencionado, estos encajan con tu pregunta:",
+    "it": "Fra i luoghi che ho già menzionato, questi corrispondono alla tua richiesta:",
+    "fr": "Parmi les lieux déjà mentionnés, voici ceux qui correspondent à votre demande :",
+    "de": "Von den bereits genannten Orten passen diese zu Ihrer Frage:",
+    "pt": "Entre os locais já mencionados, estes correspondem à sua pergunta:",
+}
+
+
+def history_followup_lead(index: dict) -> str:
+    lang = (index.get("meta") or {}).get("lang") or "en"
+    return HISTORY_FOLLOWUP_LEADS.get(lang, HISTORY_FOLLOWUP_LEADS["en"])
+
+
 GROUNDING_FAILURE_MESSAGES = {
     "ca": "No he pogut recuperar informació turística verificada de les dades descarregades.",
     "de": "Ich konnte keine verifizierten touristischen Informationen aus den heruntergeladenen Daten abrufen.",
@@ -221,6 +241,19 @@ def grounding_failure_message(index: dict) -> str:
     """Return a localized safe failure instead of ungrounded tourism prose."""
     lang = (index.get("meta") or {}).get("lang") or "en"
     return GROUNDING_FAILURE_MESSAGES.get(lang, GROUNDING_FAILURE_MESSAGES["en"])
+
+
+def history_followup_answer(question: str, messages: list[dict],
+                            index: dict, limit: int = 6) -> str:
+    """Build a deterministic follow-up answer, or empty string on miss.
+
+    Uses only POIs already tagged in the most recent assistant turn so
+    the safety net never surfaces new places the visitor has not seen.
+    """
+    body = format_history_followup(index, question, messages, limit=limit)
+    if not body:
+        return ""
+    return f"{history_followup_lead(index)}\n\n{body}"
 
 
 def selected_source_context(selection: dict, result: str) -> str:
@@ -1120,6 +1153,22 @@ def run_agentic_loop(question: str, system_prompt: str,
                         "content": GROUNDING_REQUIRED_INSTRUCTION,
                     })
                     continue
+                fallback = history_followup_answer(question, messages, index)
+                if fallback:
+                    tool_calls_made.append({
+                        "tool": "history_followup",
+                        "args": {"query": question},
+                        "result_preview": fallback[:300],
+                        "cache_hit": False,
+                        "automatic": True,
+                    })
+                    automatic_source_calls.append({
+                        "tool": "history_followup",
+                        "args": {"query": question},
+                    })
+                    answer = sanitize_tourist_answer(fallback, index)
+                    assistant_msg["content"] = answer
+                    break
                 answer = grounding_failure_message(index)
                 break
             answer = sanitize_tourist_answer((message.content or "").strip(), index)

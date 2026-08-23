@@ -26,6 +26,7 @@ from index_tools import (
     extract_poi_tags,
     format_find_poi_by_name,
     format_filter_pois,
+    format_history_followup,
     format_poi,
     format_search_pois,
     format_search_trips,
@@ -671,6 +672,59 @@ class TestTripChoiceOffer:
         }]
         # A number that does not match any shown tag id.
         assert resolve_history_selection("99999", history, spanish_index) is None
+
+
+class TestHistoryFollowup:
+    """When the model refuses to call tools on a broad follow-up, the
+    runtime filters previously shown POIs by the visitor's topic words
+    and answers directly instead of returning a safe failure.
+    """
+
+    @pytest.fixture
+    def trip_history(self, spanish_index):
+        # Simulate the trip detail we would have just shown.
+        return [{"role": "assistant",
+                  "content": format_trip(spanish_index, "trip/4444")}]
+
+    def test_tapas_followup_surfaces_tapas_zone(self, spanish_index, trip_history):
+        out = format_history_followup(
+            spanish_index, "entonces cuál tiene tapas", trip_history
+        )
+        assert out, "expected at least one match for a 'tapas' follow-up"
+        # The tapas zones in the trip are BarOrPub; at least one should
+        # appear in the fallback answer.
+        assert "<poi id=35708" in out or "<poi id=35695" in out \
+            or "<poi id=35702" in out
+        # The fallback never invents POIs that were not in history.
+        import re
+        offered_ids = set(re.findall(r"<poi id=(\d+)", trip_history[0]["content"]))
+        answered_ids = set(re.findall(r"<poi id=(\d+)", out))
+        assert answered_ids <= offered_ids
+
+    def test_restaurantes_followup_surfaces_restaurant_pois(self, spanish_index, trip_history):
+        out = format_history_followup(
+            spanish_index, "dame más información sobre los restaurantes",
+            trip_history,
+        )
+        assert out, "expected at least one match for a restaurantes follow-up"
+        # There should be at least three Restaurant/BarOrPub picks.
+        import re
+        assert len(re.findall(r"<poi id=", out)) >= 3
+
+    def test_no_history_returns_empty(self, spanish_index):
+        # A conversation with only a system prompt has no shown POIs.
+        history = [{"role": "system", "content": "seed"}]
+        assert format_history_followup(
+            spanish_index, "tapas", history
+        ) == ""
+
+    def test_off_topic_followup_returns_empty(self, spanish_index, trip_history):
+        # No POI in trip/4444 matches an unrelated 3+ char token like
+        # "submarino"; the fallback is empty so the runtime falls back
+        # to the localized safe failure.
+        assert format_history_followup(
+            spanish_index, "submarino", trip_history
+        ) == ""
 
 
 # ── POI tags in answers (app deep links) ─────────────────────────────────────

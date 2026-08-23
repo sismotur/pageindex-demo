@@ -56,6 +56,7 @@ from run_eval import (   # noqa: E402
     GROUNDING_REQUIRED_INSTRUCTION,
     requires_current_turn_grounding,
     grounding_failure_message,
+    history_followup_answer,
     selected_source_context,
     requires_trip_detail,
     TRIP_DETAIL_REQUIRED_INSTRUCTION,
@@ -426,6 +427,24 @@ def run_turn(question: str, messages: list[dict],
                             "content": GROUNDING_REQUIRED_INSTRUCTION,
                         })
                         continue
+                    fallback = history_followup_answer(
+                        question, messages, index
+                    )
+                    if fallback:
+                        tool_calls_made.append({
+                            "tool": "history_followup",
+                            "args": {"query": question},
+                            "result_preview": fallback[:250],
+                            "cache_hit": False,
+                            "automatic": True,
+                        })
+                        automatic_source_calls.append({
+                            "tool": "history_followup",
+                            "args": {"query": question},
+                        })
+                        answer = sanitize_tourist_answer(fallback, index)
+                        assistant_msg["content"] = answer
+                        break
                     answer = grounding_failure_message(index)
                     assistant_msg["content"] = answer
                     break
@@ -544,6 +563,24 @@ def run_turn(question: str, messages: list[dict],
                             "content": GROUNDING_REQUIRED_INSTRUCTION,
                         })
                         continue
+                    fallback = history_followup_answer(
+                        question, messages, index
+                    )
+                    if fallback:
+                        tool_calls_made.append({
+                            "tool": "history_followup",
+                            "args": {"query": question},
+                            "result_preview": fallback[:250],
+                            "cache_hit": False,
+                            "automatic": True,
+                        })
+                        automatic_source_calls.append({
+                            "tool": "history_followup",
+                            "args": {"query": question},
+                        })
+                        answer = sanitize_tourist_answer(fallback, index)
+                        assistant_msg["content"] = answer
+                        break
                     answer = grounding_failure_message(index)
                     break
                 answer = sanitize_tourist_answer((message.content or "").strip(), index)

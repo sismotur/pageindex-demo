@@ -894,6 +894,136 @@ def format_search_pois(index: dict, query: str, section_id: str | None = None,
         else:
             lines.append(f"  {_poi_tag(poi)}")
     return "\n".join(lines)
+
+
+def _recent_history_poi_ids(messages: list[dict],
+                            index: dict) -> list[str]:
+    """Return validated POI ids from the most recent assistant turn.
+
+    Walks history from newest to oldest and stops at the first assistant
+    turn that contains at least one known `<poi id=...>` tag, preserving
+    the reading order of that turn.  Deduplicates by id.
+    """
+    for msg in reversed(messages or []):
+        if msg.get("role") != "assistant":
+            continue
+        content = msg.get("content") or ""
+        ids: list[str] = []
+        seen: set[str] = set()
+        for ref in extract_poi_tags(content, index):
+            pid = ref.get("poi_id")
+            if ref.get("known") and pid and pid not in seen:
+                ids.append(pid)
+                seen.add(pid)
+        if ids:
+            return ids
+    return []
+
+
+def _topical_terms(query: str, index: dict) -> list[str]:
+    """Keep only visitor terms that carry topical signal for scoring.
+
+    Rejects tokens shorter than three characters and tokens that appear
+    in a large fraction of POI records (e.g. “entonces”, “tiene”,
+    “about”).  This is a corpus-driven proxy for stopword filtering that
+    works across the sixteen supported languages without a hand-curated
+    list.
+    """
+    raw = [term for term in tokenize(query) if len(term) >= 3]
+    if not raw:
+        return []
+    total_pois = max(1, len(index.get("pois") or {}))
+    common_threshold = max(1, total_pois // 3)
+    kept: list[str] = []
+    fallback: list[tuple[int, str]] = []
+    for term in raw:
+        postings = _search_postings(index, term)
+        hits = len(postings)
+        if hits == 0:
+            continue
+        if hits < common_threshold:
+            kept.append(term)
+        else:
+            fallback.append((hits, term))
+    if kept:
+        return kept
+    # Everything is either unseen or too common: keep the rarest single
+    # term so the fallback still has some signal.
+    if fallback:
+        fallback.sort()
+        return [fallback[0][1]]
+    return []
+
+
+def _score_history_pois(question: str,
+                        poi_ids: list[str],
+                        index: dict) -> list[tuple[float, dict]]:
+    """Score history POIs, weighting rare topical terms higher than common ones.
+
+    A POI matching a rare term (e.g. “tapas” present in 2 records) gets a
+    much higher score than one matching a common connective verb (e.g.
+    “tiene” present in dozens of descriptions), even though both are
+    below the corpus-frequency stopword cutoff.
+    """
+    terms = _topical_terms(question, index)
+    if not terms or not poi_ids:
+        return []
+    weights: dict[str, float] = {}
+    for term in terms:
+        hits = len(_search_postings(index, term))
+        weights[term] = 1.0 / max(1, hits)
+    pois = index.get("pois") or {}
+    scored: list[tuple[float, dict]] = []
+    for pid in poi_ids:
+        poi = pois.get(pid)
+        if not poi:
+            continue
+        hay = set(tokenize(_searchable_text(poi)))
+        score = 0.0
+        for term, weight in weights.items():
+            if _term_variants(term) & hay:
+                score += weight
+        if score > 0:
+            scored.append((score, poi))
+    scored.sort(key=lambda pair: (
+        -pair[0],
+        pair[1].get("interest_level") or 99,
+        pair[1].get("zoom_level") or 99,
+        normalize_text(pair[1].get("name") or ""),
+    ))
+    return scored
+
+
+def format_history_followup(index: dict, question: str,
+                            messages: list[dict],
+                            limit: int = 6) -> str:
+    """Best-effort deterministic answer for a follow-up on shown POIs.
+
+    Restricts candidates to POI ids that appeared as validated `<poi>`
+    tags in the most recent assistant turn, then keeps those whose
+    name/description/type overlaps with the visitor's content words.
+    Returns an empty string when no candidate scores or when the recent
+    turn does not contain any known POI tag — the runtime should then
+    fall back to the localized safe failure.
+    """
+    if limit <= 0:
+        return ""
+    ids = _recent_history_poi_ids(messages, index)
+    if not ids:
+        return ""
+    scored = _score_history_pois(question, ids, index)
+    if not scored:
+        return ""
+    matches = [poi for _, poi in scored[:limit]]
+    terms = _topical_terms(question, index)
+    lines = []
+    for poi in matches:
+        evidence = _evidence_snippet(poi, terms)
+        if evidence:
+            lines.append(f"  - {_poi_tag(poi)} — {evidence}")
+        else:
+            lines.append(f"  - {_poi_tag(poi)}")
+    return "\n".join(lines)
 # ── Curated trips and physical paths ────────────────────────────────────────
 
 def _trip_tag(trip: dict) -> str:
