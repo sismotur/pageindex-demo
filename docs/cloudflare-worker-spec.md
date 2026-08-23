@@ -150,12 +150,15 @@ A TypeScript port of the Python pipeline. For a pair `(dest, lang)`:
      by_interest_level / by_zoom_bucket / indispensable, plus schema-v3
      `search_terms`: normalized word → sorted POI ids over visitor-facing
      name/description/category/tourism/locality fields
-   - `buildItineraries()` — schema-v5 stable waypoint resolution:
+   - `buildItineraries()` — schema-v6 recursive itinerary tree:
      `/trips` records become editorial trip suggestions; `/paths` records
      become physical route candidates. Each ordered step resolves source
-     id → current-language name → unique cross-language alias and
-     preserves unresolved names for QA only; never substitute a trip for
-     a path or display an unlinked foreign-language stop.
+     id → current-language name → unique cross-language alias, preserves
+     unresolved names for QA only, and stores the nested
+     `steps[].items[]` (folder | poi | unresolved) plus the legacy flat
+     projections (`poi_ids`, `subfolders`, `unresolved_poi_names`).
+     Never substitute a trip for a path or display an unlinked
+     foreign-language stop.
    - `name_index` — **critical:** keyed by `normalizeText(name)` where
      `normalizeText` is the exact port of `common/textnorm.py`
      (NFKD → strip combining marks → non-word runs to single space →
@@ -165,7 +168,7 @@ A TypeScript port of the Python pipeline. For a pair `(dest, lang)`:
 
 The Python pipeline remains the **reference implementation**. The contract
 test in §4.4 keeps the port honest. The index schema version
-(`meta.schema_version`, currently **5**) must match between the two
+(`meta.schema_version`, currently **6**) must match between the two
 implementations — bumping it is a coordinated change.
 
 ### 4.3 manifest.json

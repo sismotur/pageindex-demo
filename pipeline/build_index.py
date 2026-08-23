@@ -572,6 +572,89 @@ def _canonical_poi_id(value: Any, valid_poi_ids: set[str]) -> str:
 _ITINERARY_SUBFOLDER_RE = re.compile(r"^\d+(?:\.\d+)+\s+\S")
 
 
+def _resolve_items(raw_items: list,
+                   *,
+                   name_index: dict[str, str],
+                   alias_name_index: dict[str, str],
+                   valid_poi_ids: set[str],
+                   flat_poi_ids: list[str],
+                   flat_resolutions: list[dict],
+                   flat_subfolders: list[str],
+                   flat_unresolved: list[str]) -> list[dict]:
+    """Recursively resolve one itinerary branch, preserving folder structure.
+
+    Each resolved entry is one of:
+      * folder     — {kind, name, items} : structural label (may hold POIs)
+      * poi        — {kind, poi_id, source_name, resolution}
+      * unresolved — {kind, name} : source label that no current POI matches
+
+    The `flat_*` accumulators collect the same information in reading order
+    so existing tools (`format_trip`, tests) keep working without walking
+    the tree.
+    """
+    resolved: list[dict] = []
+    for raw in (raw_items or []):
+        if isinstance(raw, dict):
+            name      = str(raw.get("name") or "")
+            source_id = raw.get("poi_id")
+            child_raw = raw.get("items") or []
+        else:
+            name      = str(raw)
+            source_id = None
+            child_raw = []
+        # A folder either has explicit children or looks like a numbered
+        # subfolder label ("1.1 Plaza Vázquez de Molina"). Folders never
+        # carry a POI id themselves; only their leaves do.
+        is_folder = bool(child_raw) or bool(_ITINERARY_SUBFOLDER_RE.match(name))
+        if is_folder:
+            child_items = _resolve_items(
+                child_raw,
+                name_index=name_index,
+                alias_name_index=alias_name_index,
+                valid_poi_ids=valid_poi_ids,
+                flat_poi_ids=flat_poi_ids,
+                flat_resolutions=flat_resolutions,
+                flat_subfolders=flat_subfolders,
+                flat_unresolved=flat_unresolved,
+            )
+            if name:
+                flat_subfolders.append(name)
+            resolved.append({
+                "kind":  "folder",
+                "name":  name,
+                "items": child_items,
+            })
+            continue
+        # POI resolution: stable source id first, then localized name, then
+        # a unique cross-language alias.
+        normalized_name = normalize_text(name)
+        poi_id = _canonical_poi_id(source_id, valid_poi_ids)
+        resolution = "source_id" if poi_id else ""
+        if not poi_id:
+            poi_id = name_index.get(normalized_name, "")
+            resolution = "localized_name" if poi_id else ""
+        if not poi_id:
+            poi_id = alias_name_index.get(normalized_name, "")
+            resolution = "cross_language_alias" if poi_id else ""
+        if poi_id:
+            flat_poi_ids.append(poi_id)
+            flat_resolutions.append({
+                "poi_id":      poi_id,
+                "source_name": name,
+                "resolution":  resolution,
+            })
+            resolved.append({
+                "kind":        "poi",
+                "poi_id":      poi_id,
+                "source_name": name,
+                "resolution":  resolution,
+            })
+        else:
+            flat_unresolved.append(name)
+            resolved.append({"kind": "unresolved", "name": name})
+    return resolved
+
+
 def _resolve_itinerary_steps(raw_steps: list[dict], name_index: dict[str, str],
                              alias_name_index: dict[str, str],
                              valid_poi_ids: set[str]) -> list[dict]:
@@ -580,51 +663,38 @@ def _resolve_itinerary_steps(raw_steps: list[dict], name_index: dict[str, str],
     Never discard an unresolved name: catalogues can contain itinerary
     stops that are not represented by an individual POI record, or whose
     translation does not exactly match the POI title.
+
+    Schema v6 stores nested `items` (folders / POIs / unresolved). Older
+    snapshots that still carry a flat `pois` list are accepted verbatim
+    so a rebuild without re-extraction stays correct.
     """
     steps = []
     for position, raw_step in enumerate(raw_steps, 1):
-        raw_pois = list(raw_step.get("pois") or [])
-        poi_ids: list[str] = []
-        unresolved: list[str] = []
-        resolutions: list[dict] = []
-        subfolders: list[str] = []
-        for raw_poi in raw_pois:
-            if isinstance(raw_poi, dict):
-                name = str(raw_poi.get("name") or "")
-                source_id = raw_poi.get("poi_id")
-            else:
-                name = str(raw_poi)
-                source_id = None
-            # Nested source folders (e.g. "1.1 Plaza Vázquez de Molina")
-            # are visitor-visible structure, never POI candidates.
-            if _ITINERARY_SUBFOLDER_RE.match(name):
-                subfolders.append(name)
-                continue
-            normalized_name = normalize_text(name)
-            poi_id = _canonical_poi_id(source_id, valid_poi_ids)
-            resolution = "source_id" if poi_id else ""
-            if not poi_id:
-                poi_id = name_index.get(normalized_name, "")
-                resolution = "localized_name" if poi_id else ""
-            if not poi_id:
-                poi_id = alias_name_index.get(normalized_name, "")
-                resolution = "cross_language_alias" if poi_id else ""
-            if poi_id:
-                poi_ids.append(poi_id)
-                resolutions.append({
-                    "poi_id": poi_id,
-                    "source_name": name,
-                    "resolution": resolution,
-                })
-            else:
-                unresolved.append(name)
+        flat_poi_ids: list[str] = []
+        flat_resolutions: list[dict] = []
+        flat_subfolders: list[str] = []
+        flat_unresolved: list[str] = []
+        raw_items = raw_step.get("items")
+        if raw_items is None:
+            raw_items = raw_step.get("pois") or []
+        items = _resolve_items(
+            raw_items,
+            name_index=name_index,
+            alias_name_index=alias_name_index,
+            valid_poi_ids=valid_poi_ids,
+            flat_poi_ids=flat_poi_ids,
+            flat_resolutions=flat_resolutions,
+            flat_subfolders=flat_subfolders,
+            flat_unresolved=flat_unresolved,
+        )
         steps.append({
             "position":             position,
             "title":                raw_step.get("step") or "",
-            "poi_ids":              poi_ids,
-            "poi_resolutions":      resolutions,
-            "subfolders":           subfolders,
-            "unresolved_poi_names": unresolved,
+            "items":                items,
+            "poi_ids":              flat_poi_ids,
+            "poi_resolutions":      flat_resolutions,
+            "subfolders":           flat_subfolders,
+            "unresolved_poi_names": flat_unresolved,
         })
     return steps
 
@@ -755,9 +825,9 @@ def build_index(raw_pois: list[dict], dest_data: dict | None,
             "generated_at":        datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
             "poi_count":           len(normalised),
             "section_count":       len(sections),
-            # v5: schema-v4 curated trips/paths resolve stops through
-            # stable source ids and unique cross-language aliases.
-            "schema_version":      5,
+            # v6: schema-v5 plus recursive itinerary items (folders and
+            # POIs) so subfolder POIs are preserved instead of flattened.
+            "schema_version":      6,
         },
         "destination_overview": build_destination_overview(dest_data, tourist_type_display),
         "trips":                trips,

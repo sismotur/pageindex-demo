@@ -1,13 +1,13 @@
 {
   "destination": {
     "name": "Úbeda",
-    "description": "Importante e popolosa città situata sui Colli che portano il suo nome, nel centro geografico della provincia, in un paesaggio ricco di ulivi e campi di cereali.\n\nÙbeda è una città artistica e monumentale, ovunque si guardi, ed una delle località più signorili e gloriose dell'Andalusia. Castigliana e rinascimentale da ogni punto di vista, racchiude così tanti monumenti, chiese, palazzi e case signorili che è meglio passeggiare per le sue strade e trasportarsi virtualmente al tempo del suo splendore storico: la Cappella del Salvador, situata nell'incomparabile piazza del Municipio, la Chiesa di S. Paolo, la Chiesa di Santa Maria dei Reali Alcázares, la Chiesa della Trinità, l'Oratorio di San Giovanni della Croce, il Monastero di Santa Clara, il Palazzo Vela de los Cobos, il Palazzo de las Cadenas, la Casa de las Torres, l'Ospedale di Santiago, l'Ospedale dei Vecchi Onorati del Salvador, la Torre dell'Orologio, le Mura della Cava, il Museo della Ceramica e il Parador Nazionale del Turismo, sono alcune delle meraviglie che contiene questa sorprendente città.\n\nOltre a questi attrattivi, si consiglia una visita alle mura e alla splendida vista che si ottiene da lì; e ai suoi ceramisti, specialmente alla casa-museo di Paco Titos.",
+    "description": "Importante e popolosa città situata sui Colli che portano il suo nome, nel centro geografico della provincia, in un paesaggio popolato di ulivi e campi di cereali.\n\nÚbeda è una città artistica e monumentale, da qualunque parte la si guardi, ed è una delle località più signorili e gloriose dell''Andalusia. Rinascimentale sotto ogni aspetto, racchiude talmente tanti monumenti, chiese, palazzi e case signorili che il modo migliore per apprezzarla è passeggiare attraverso di essa e trasportarsi virtualmente al tempo del suo splendore storico: La Sacra Cappella del Salvador, situata nella incomparabile piazza Vázquez de Molina, la Chiesa di San Paolo, la Basilica Minore di Santa Maria dei Reali Alcazari, la Chiesa della Trinità, l''Oratorio di San Giovanni della Croce, il Real Monastero di Santa Chiara, il Monastero della Concezione, il Palazzo Vela de los Cobos, il Palazzo delle Catene, la Casa delle Torri, l''Ospedale di Santiago, l''Ospedale degli Onorati Anziani del Salvador, la Torre dell''Orologio, le Mura della Cava, il Museo di Ceramica e il Palazzo del Decano Ortega, attuale Parador Nazionale del Turismo, sono alcune delle meraviglie contenute in questa sorprendente città.\n\nOltre a questi attrattivi, si suggerisce una visita alle mura e la splendida vista che da lì si ottiene; e ai suoi ceramisti, specialmente alla casa-museo di Paco Tito.",
     "official_url": "https://www.turismodeubeda.com/index.php/es/",
     "tourist_types": [
       "HERITAGE TOURISM",
       "ARCHITECTURE TOURISM",
-      "SHORT BREAK TOURISM",
-      "OLIVE OIL TOURISM"
+      "OLIVE OIL TOURISM",
+      "CULTURAL TOURISM"
     ],
     "tourist_networks": [
       "WORLD HERITAGE CITIES"
@@ -15,6 +15,7 @@
     "latitude": 38.0108,
     "longitude": -3.3717,
     "trip_ids": [
+      8379,
       4457,
       4407,
       4419,
@@ -24,7 +25,6 @@
       4434,
       4422,
       4436,
-      4435,
       4413,
       4540,
       4544
@@ -40,158 +40,276 @@
   "trips": [
     {
       "id": "trip/4407",
-      "name": "GUSTA ÚBEDA",
+      "name": "Assapora Úbeda",
       "description": "Goditi la nostra gastronomia nella grande varietà di ristoranti e bar di tapas della provincia, con prodotti locali che non lasceranno indifferenti i commensali.",
       "type": "TouristTrip",
       "url": "https://inventrip.com/ubeda/trip/4407",
       "itinerary": [
         {
           "step": "Ristoranti",
-          "pois": [
-            "Ristorante \"Asador de Santiago\"",
-            "Ristorante \"Quattro Stagioni\"",
-            "Ristorante Asador \"Al-Andalus\"",
-            "Ristorante Asador \"El Trujal\"",
-            "Ristorante \"Antique\"",
-            "Ristorante \"La Stampa\"",
-            "Ristorante \"Cantina La Estación\"",
-            "Ristorante \"Casa Luciano\"",
-            "Ristorante \"Rosaleda de don Pedro\"",
-            "Ristorante \"Salón Condestable\"",
-            "Ristorante Mesón \"Gabino\"",
-            "Ristorante Pizzeria D'Angelo",
-            "Ristorante Pizzeria \"Venecia\"",
-            "Ristorante \"El Zaguán\"",
-            "Ristorante Ermita Madre de Dios",
-            "Palazzo del Decano Ortega. Parador de Turismo"
+          "items": [
+            {
+              "name": "Ristorante Hotel Palazzo di Úbeda G.L. \"El Ábside\"",
+              "poi_id": "poi/30115"
+            },
+            {
+              "name": "Ristorante Ermita Madre de Dios",
+              "poi_id": "poi/35426"
+            },
+            {
+              "name": "",
+              "poi_id": "poi/66565"
+            },
+            {
+              "name": "Palazzo del Decano Ortega. Parador de Turismo",
+              "poi_id": "poi/30117"
+            },
+            {
+              "name": "Ristorante \"Rosaleda de don Pedro\"",
+              "poi_id": "poi/35430"
+            },
+            {
+              "name": "Ristorante \"Antique\"",
+              "poi_id": "poi/35395"
+            },
+            {
+              "name": "Ristorante Mesón \"Gabino\"",
+              "poi_id": "poi/35409"
+            },
+            {
+              "name": "Ristorante \"Casa Luciano\"",
+              "poi_id": "poi/35424"
+            },
+            {
+              "name": "Ristorante Pizzeria D'Angelo",
+              "poi_id": "poi/35427"
+            },
+            {
+              "name": "Ristorante Pizzeria \"Venecia\"",
+              "poi_id": "poi/35428"
+            },
+            {
+              "name": "Ristorante \"Salón Condestable\"",
+              "poi_id": "poi/35431"
+            },
+            {
+              "name": "Ristorante \"El Zaguán\"",
+              "poi_id": "poi/35432"
+            },
+            {
+              "name": "Ristorante Asador \"El Trujal\"",
+              "poi_id": "poi/35400"
+            },
+            {
+              "name": "Ristorante \"Quattro Stagioni\"",
+              "poi_id": "poi/35403"
+            },
+            {
+              "name": "Ristorante \"La Stampa\"",
+              "poi_id": "poi/35407"
+            },
+            {
+              "name": "Ristorante Munay",
+              "poi_id": "poi/65817"
+            },
+            {
+              "name": "Ristorante \"La Culturale di Úbeda\"",
+              "poi_id": "poi/65816"
+            },
+            {
+              "name": "",
+              "poi_id": "poi/65815"
+            },
+            {
+              "name": "Ristorante Asador \"Al-Andalus\"",
+              "poi_id": "poi/35397"
+            },
+            {
+              "name": "Ristorante \"Asador de Santiago\"",
+              "poi_id": "poi/35398"
+            },
+            {
+              "name": "Ristorante \"Cantina La Estación\"",
+              "poi_id": "poi/35402"
+            }
           ]
         },
         {
           "step": "Area dei bar per tapas",
-          "pois": [
-            "Totem Calle Real",
-            "Zona delle tapas Piazza 1º maggio",
-            "Zona delle taverne Piazza del Municipio",
-            "Zona dei bar per tapas in Calle Baja del Salvador",
-            "Zona dei bar e ristoranti in Avenida Cristo Rey"
+          "items": [
+            {
+              "name": "Zona di taverne Calle Real",
+              "poi_id": "poi/35695"
+            },
+            {
+              "name": "Zona dei bar per tapas in Calle Baja del Salvador",
+              "poi_id": "poi/35704"
+            },
+            {
+              "name": "Zona delle tapas Piazza 1º maggio",
+              "poi_id": "poi/35702"
+            },
+            {
+              "name": "Zona delle taverne Piazza del Municipio",
+              "poi_id": "poi/35703"
+            },
+            {
+              "name": "Zona dei bar e ristoranti in Avenida Cristo Rey",
+              "poi_id": "poi/35708"
+            }
           ]
         },
         {
           "step": "Acquistare prodotti locali",
-          "pois": [
-            "Pasticceria Úbeda",
-            "Torroneria Los Baezanos",
-            "Caffetteria Alejo & Doña Rosita",
-            "Pasticceria El Buen Pan",
-            "Pasticceria Caffetteria Los Portalillos",
-            "Pasticceria Vandelvira",
-            "Panetteria Paniaceite"
+          "items": [
+            {
+              "name": "Pasticceria Úbeda",
+              "poi_id": "poi/36163"
+            },
+            {
+              "name": "Torroneria Los Baezanos",
+              "poi_id": "poi/36165"
+            },
+            {
+              "name": "Caffetteria Alejo & Doña Rosita",
+              "poi_id": "poi/36167"
+            },
+            {
+              "name": "Pasticceria El Buen Pan",
+              "poi_id": "poi/36168"
+            },
+            {
+              "name": "Pasticceria Caffetteria Los Portalillos",
+              "poi_id": "poi/36169"
+            },
+            {
+              "name": "Pasticceria Vandelvira",
+              "poi_id": "poi/36170"
+            },
+            {
+              "name": "Panetteria Paniaceite",
+              "poi_id": "poi/36179"
+            },
+            {
+              "name": "Pasticceria e cioccolateria Palacios",
+              "poi_id": "poi/36534"
+            }
           ]
         }
       ]
     },
     {
       "id": "trip/4413",
-      "name": "PER RIPOSARE...",
+      "name": "Per Riposarsi...",
       "description": "Diversi alloggi per pernottare e riposare durante la vostra visita; dai più moderni con tutte le loro attrezzature, alle accoglienti camere in splendidi palazzi rinascimentali.",
       "type": "TouristTrip",
       "url": "https://inventrip.com/ubeda/trip/4413",
       "itinerary": [
         {
-          "step": "Appartamenti turistici \"El Losal\"",
-          "pois": []
+          "step": "Hotel",
+          "items": [
+            {
+              "name": "Hotel Las Casas del Cónsul",
+              "poi_id": "poi/30156"
+            },
+            {
+              "name": "Hotel Las Casas del Cónsul",
+              "poi_id": "poi/30156"
+            },
+            {
+              "name": "Ostello Santa María di Úbeda",
+              "poi_id": "poi/30462"
+            },
+            {
+              "name": "Hotel Afán de Rivera",
+              "poi_id": "poi/30460"
+            },
+            {
+              "name": "Hotel María De Molina",
+              "poi_id": "poi/6437"
+            },
+            {
+              "name": "Hotel Nove Leggende",
+              "poi_id": "poi/6438"
+            },
+            {
+              "name": "Hotel Yit El Postigo",
+              "poi_id": "poi/30459"
+            },
+            {
+              "name": "Hotel Ordoñez Sandoval",
+              "poi_id": "poi/30157"
+            },
+            {
+              "name": "Hotel Palazzo del Marchese de la Rambla",
+              "poi_id": "poi/30138"
+            },
+            {
+              "name": "Hotel Ciudad de Úbeda",
+              "poi_id": "poi/6441"
+            },
+            {
+              "name": "Hotel La Pace",
+              "poi_id": "poi/6434"
+            },
+            {
+              "name": "Hotel Don Juan Boutique",
+              "poi_id": "poi/30457"
+            },
+            {
+              "name": "Hotel Álvar Fáñez",
+              "poi_id": "poi/6436"
+            },
+            {
+              "name": "Hotel Álvaro de Torres",
+              "poi_id": "poi/30461"
+            },
+            {
+              "name": "Ospizio Yamaríes",
+              "poi_id": "poi/35355"
+            },
+            {
+              "name": "Hotel Rosaleda Di Don Pedro",
+              "poi_id": "poi/6439"
+            },
+            {
+              "name": "Palazzo del Decano Ortega. Parador de Turismo",
+              "poi_id": "poi/30117"
+            },
+            {
+              "name": "Ristorante Hotel Palazzo di Úbeda G.L. \"El Ábside\"",
+              "poi_id": "poi/30115"
+            }
+          ]
         },
         {
-          "step": "Hotel Las Casas del Cónsul",
-          "pois": []
-        },
-        {
-          "step": "Hotel Las Casas del Cónsul",
-          "pois": []
-        },
-        {
-          "step": "Ostello Santa María di Úbeda",
-          "pois": []
-        },
-        {
-          "step": "Hotel Afán de Rivera",
-          "pois": []
-        },
-        {
-          "step": "Hotel María De Molina",
-          "pois": []
-        },
-        {
-          "step": "Hotel Nove Leggende",
-          "pois": []
-        },
-        {
-          "step": "Hotel Yit El Postigo",
-          "pois": []
-        },
-        {
-          "step": "Appartamenti Turistici \"Palacio del Agua\"",
-          "pois": []
-        },
-        {
-          "step": "Hotel Ordoñez Sandoval",
-          "pois": []
-        },
-        {
-          "step": "Hotel Palazzo del Marchese de la Rambla",
-          "pois": []
-        },
-        {
-          "step": "Hotel Ciudad de Úbeda",
-          "pois": []
-        },
-        {
-          "step": "Hotel La Pace",
-          "pois": []
-        },
-        {
-          "step": "Hotel Don Juan Boutique",
-          "pois": []
-        },
-        {
-          "step": "Appartamenti Turistici \"Fuente Redonda\"",
-          "pois": []
-        },
-        {
-          "step": "Appartamenti turistici \"Quotidianum\"",
-          "pois": []
-        },
-        {
-          "step": "Hotel Álvar Fáñez",
-          "pois": []
-        },
-        {
-          "step": "Hotel Álvaro de Torres",
-          "pois": []
-        },
-        {
-          "step": "Appartamenti Turistici \"Sol Real\"",
-          "pois": []
-        },
-        {
-          "step": "Appartamenti Turistici \"Architettura\"",
-          "pois": []
-        },
-        {
-          "step": "Ospizio Yamaríes",
-          "pois": []
-        },
-        {
-          "step": "Hotel Rosaleda Di Don Pedro",
-          "pois": []
-        },
-        {
-          "step": "Palazzo del Decano Ortega. Parador de Turismo",
-          "pois": []
-        },
-        {
-          "step": "Ristorante Hotel Palazzo di Úbeda G.L. \"El Ábside\"",
-          "pois": []
+          "step": "Appartamenti",
+          "items": [
+            {
+              "name": "Appartamenti Turistici \"Palacio del Agua\"",
+              "poi_id": "poi/35367"
+            },
+            {
+              "name": "Appartamenti Turistici \"Fuente Redonda\"",
+              "poi_id": "poi/35384"
+            },
+            {
+              "name": "Appartamenti turistici \"El Losal\"",
+              "poi_id": "poi/35364"
+            },
+            {
+              "name": "Appartamenti turistici \"Quotidianum\"",
+              "poi_id": "poi/35448"
+            },
+            {
+              "name": "Appartamenti Turistici \"Sol Real\"",
+              "poi_id": "poi/35371"
+            },
+            {
+              "name": "Appartamenti Turistici \"Architettura\"",
+              "poi_id": "poi/35375"
+            }
+          ]
         }
       ]
     },
@@ -204,139 +322,84 @@
       "itinerary": [
         {
           "step": "Visitaubedaybaeza.com",
-          "pois": []
+          "items": []
         },
         {
           "step": "Vandelvira Turismo",
-          "pois": []
+          "items": []
         },
         {
           "step": "Turismo di Semer",
-          "pois": []
+          "items": []
         },
         {
           "step": "Scopri Úbeda",
-          "pois": []
+          "items": []
         },
         {
           "step": "Atlante",
-          "pois": []
+          "items": []
         },
         {
           "step": "Scusi",
-          "pois": []
+          "items": []
         },
         {
           "step": "Artigiani",
-          "pois": []
+          "items": []
         },
         {
           "step": "A.P.I.T. Associazione Professionale Guide Turistiche.",
-          "pois": []
+          "items": []
         },
         {
           "step": "Fenice",
-          "pois": []
+          "items": []
         },
         {
           "step": "Terra della lince iberica",
-          "pois": []
+          "items": []
+        },
+        {
+          "step": "Agorà",
+          "items": []
+        },
+        {
+          "step": "Esplora Úbeda Tour",
+          "items": []
         }
       ]
     },
     {
       "id": "trip/4421",
-      "name": "UBEDA IN FAMIGLIA",
+      "name": "Úbeda in Famiglia",
       "description": "Percorsi alternativi per scoprire la Città Monumentale in tutto il suo splendore, mentre troviamo luoghi di svago e relax per rilassarsi in famiglia e con i più piccoli.",
       "type": "TouristTrip",
       "url": "https://inventrip.com/ubeda/trip/4421",
       "itinerary": [
         {
-          "step": "Percorso del Patrimonio",
-          "pois": [
-            "Antiche Macellerie",
-            "Torre dell'orologio",
-            "Portada Plateresca calle Gradas",
-            "Chiesa di San Isidoro",
-            "Piccolo parco giochi",
-            "Ospedale di Santiago",
-            "Opzione A",
-            "Opzione B"
-          ]
+          "step": "Itinerario Patrimoniale. Úbeda in Famiglia",
+          "items": []
         },
         {
-          "step": "Percorso 1",
-          "pois": [
-            "Torre dell'orologio",
-            "Portada Plateresca calle Gradas",
-            "Chiesa di San Isidoro",
-            "Piccolo parco giochi",
-            "Plaza de Toros de Úbeda",
-            "Ospedale di Santiago",
-            "Parco Nord"
-          ]
+          "step": "Itinerario 1. Úbeda in Famiglia",
+          "items": []
         },
         {
-          "step": "Percorso 2",
-          "pois": [
-            "Chiesa e Convento della Santissima Trinità",
-            "Palazzo dei Bussianos",
-            "Copertina del Cavallerizzo Ortega",
-            "Chiesa di San Nicola",
-            "Parco giochi del Gallo Rosso",
-            "Parco Vandelvira"
-          ]
+          "step": "Itinerario 2. Úbeda in Famiglia",
+          "items": []
         },
         {
-          "step": "Rotta 3",
-          "pois": [
-            "Centro di Interpretazione dell'Oliveto e dell'Olio",
-            "Sala giochi e ludoteca Cocolet",
-            "Torre Ottogonale",
-            "Palazzo Don Luis de la Cueva",
-            "Convento della Concezione",
-            "Chiesa di San Paolo",
-            "Museo Archeologico - Casa Mudéjar",
-            "Sinagoga dell'Acqua",
-            "Casa dei Granada Venegas",
-            "Convento e Museo di San Giovanni della Croce",
-            "Mura e Porta del Losal",
-            "Chiesa di San Millán",
-            "Museo della Ceramica \"Paco Tito\""
-          ]
+          "step": "Itinerario 3. Úbeda in Famiglia",
+          "items": []
         },
         {
-          "step": "Percorso 4",
-          "pois": [
-            "Hotel Palazzo del Marchese de la Rambla",
-            "Chiesa di San Pietro",
-            "Ristorante Hotel Palazzo di Úbeda G.L. \"El Ábside\"",
-            "Palazzo Anguis de Medinilla",
-            "Reale Monastero di Santa Chiara",
-            "Teatro Ideal Cinema",
-            "Palazzo Vela de los Cobos",
-            "Palazzo Vázquez de Molina",
-            "Chiesa di Santo Domingo",
-            "Casa Museo Arte Andalusí",
-            "Sala Escaperoom"
-          ]
+          "step": "Percorso 4. Úbeda in Famiglia",
+          "items": []
         },
         {
-          "step": "Rotta 5",
-          "pois": [
-            "Centro di Interpretazione \"Le Mura di Úbeda: Torrione di Portillo del Santo Cristo\"",
-            "Giardini della Cava e parco giochi",
-            "Belvedere e monumento dell'Alfiere Rojas Navarrete",
-            "Belvedere di San Lorenzo",
-            "Chiesa di San Lorenzo",
-            "Casa delle Torri",
-            "Officina di fabbro Tiznajo",
-            "Porta di Granada",
-            "Piazza Vázquez de Molina",
-            "Belvedere di Santa Lucia",
-            "Parco giochi Huerto del Carmen",
-            "Parco giochi Ronda Antonio Muñoz Molina"
-          ]
+          "step": "Itinerario 5. Úbeda in Famiglia",
+          "items": []
         }
       ]
     },
@@ -348,102 +411,183 @@
       "url": "https://inventrip.com/ubeda/trip/4422",
       "itinerary": [
         {
-          "step": "Totem Calle Real",
-          "pois": []
+          "step": "Zona di taverne Calle Real",
+          "items": []
         },
         {
           "step": "Via Trinidad",
-          "pois": []
+          "items": []
         },
         {
           "step": "Strade Mesones e Obispo Cobos",
-          "pois": []
+          "items": []
         },
         {
           "step": "Via Ciudad de Linares",
-          "pois": []
+          "items": []
         },
         {
           "step": "Avenida Ramón y Cajal",
-          "pois": []
+          "items": []
         },
         {
           "step": "Via della Libertà",
-          "pois": []
+          "items": []
         },
         {
           "step": "Prodotti locali: alimentari",
-          "pois": [
-            "Mercato di approvvigionamento",
-            "Convento della Concezione",
-            "Reale Monastero di Santa Chiara",
-            "Totem Calle Real",
-            "Pasticceria Vandelvira",
-            "Panetteria Paniaceite",
-            "Pasticceria Caffetteria Los Portalillos",
-            "Pasticceria Úbeda",
-            "Pasticceria El Buen Pan",
-            "Torroneria Los Baezanos",
-            "Caffetteria Alejo & Doña Rosita"
+          "items": [
+            {
+              "name": "Mercato di approvvigionamento",
+              "poi_id": "poi/30161"
+            },
+            {
+              "name": "Convento di Nostra Signora della Concezione Immacolata",
+              "poi_id": "poi/5160"
+            },
+            {
+              "name": "Reale Monastero di Santa Chiara",
+              "poi_id": "poi/30119"
+            },
+            {
+              "name": "Zona di taverne Calle Real",
+              "poi_id": "poi/35695"
+            },
+            {
+              "name": "Pasticceria Vandelvira",
+              "poi_id": "poi/36170"
+            },
+            {
+              "name": "Panetteria Paniaceite",
+              "poi_id": "poi/36179"
+            },
+            {
+              "name": "Pasticceria Caffetteria Los Portalillos",
+              "poi_id": "poi/36169"
+            },
+            {
+              "name": "Pasticceria Úbeda",
+              "poi_id": "poi/36163"
+            },
+            {
+              "name": "Pasticceria El Buen Pan",
+              "poi_id": "poi/36168"
+            },
+            {
+              "name": "Torroneria Los Baezanos",
+              "poi_id": "poi/36165"
+            },
+            {
+              "name": "Caffetteria Alejo & Doña Rosita",
+              "poi_id": "poi/36167"
+            }
           ]
         },
         {
           "step": "Prodotti locali: artigianato e souvenir",
-          "pois": []
+          "items": []
         }
       ]
     },
     {
       "id": "trip/4433",
-      "name": "ARTIGIANATO",
+      "name": "Artigianato",
       "description": "Laboratori di ceramica, sparto, ferro battuto, pietra da taglio...",
       "type": "TouristTrip",
       "url": "https://inventrip.com/ubeda/trip/4433",
       "itinerary": [
         {
           "step": "SCULTURA E RESTAURO",
-          "pois": [
-            "Laboratorio di scultura e restauro"
+          "items": [
+            {
+              "name": "Laboratorio di scultura e restauro",
+              "poi_id": "poi/35504"
+            }
           ]
         },
         {
           "step": "SPARTO",
-          "pois": [
-            "UBEDÍES artigianato, laboratorio di sparto."
+          "items": [
+            {
+              "name": "UBEDÍES artigianato, laboratorio di sparto.",
+              "poi_id": "poi/35506"
+            }
           ]
         },
         {
           "step": "ORFEBRERIA E GIOIELLERIA",
-          "pois": [
-            "Gioielleria Ferrandidz"
+          "items": [
+            {
+              "name": "Gioielleria Ferrandidz",
+              "poi_id": "poi/35519"
+            }
           ]
         },
         {
           "step": "SOFFITTI MUDÉJAR",
-          "pois": [
-            "Intarsi mudéjar"
+          "items": [
+            {
+              "name": "Intarsi mudéjar",
+              "poi_id": "poi/35499"
+            }
           ]
         },
         {
           "step": "LABORATORI DI FORGIATURA",
-          "pois": [
-            "Officina di fabbro Tiznajo",
-            "Officina di fabbro a Úbeda.",
-            "Officina e negozio di fabbro ARTESUR"
+          "items": [
+            {
+              "name": "Officina di fabbro Tiznajo",
+              "poi_id": "poi/35515"
+            },
+            {
+              "name": "Officina di fabbro a Úbeda.",
+              "poi_id": "poi/35518"
+            },
+            {
+              "name": "Officina e negozio di fabbro ARTESUR",
+              "poi_id": "poi/35511"
+            }
           ]
         },
         {
           "step": "CERAMICA",
-          "pois": [
-            "Alfar Alfonso Góngora",
-            "Alfarería Melchor Tito",
-            "Alfabetizzazione Pedro Góngora",
-            "Alfarería Almarza",
-            "Alfarería Fco. Expósito Tito",
-            "Museo della Ceramica \"Paco Tito\"",
-            "Via Valencia",
-            "Piazza degli Olleros",
-            "Alfarería Juan Tito"
+          "items": [
+            {
+              "name": "Alfar Alfonso Góngora",
+              "poi_id": "poi/35493"
+            },
+            {
+              "name": "Alfarería Melchor Tito",
+              "poi_id": "poi/35495"
+            },
+            {
+              "name": "Alfabetizzazione Pedro Góngora",
+              "poi_id": "poi/35494"
+            },
+            {
+              "name": "Alfarería Almarza",
+              "poi_id": "poi/35491"
+            },
+            {
+              "name": "Alfarería Fco. Expósito Tito",
+              "poi_id": "poi/35492"
+            },
+            {
+              "name": "Museo della Ceramica \"Paco Tito\"",
+              "poi_id": "poi/30170"
+            },
+            {
+              "name": "Via Valencia",
+              "poi_id": "poi/30169"
+            },
+            {
+              "name": "Piazza degli Olleros",
+              "poi_id": "poi/30537"
+            },
+            {
+              "name": "Alfarería Juan Tito",
+              "poi_id": "poi/30707"
+            }
           ]
         }
       ]
@@ -457,34 +601,70 @@
       "itinerary": [
         {
           "step": "ATTIVITÀ NEI PROSSIMI GIORNI",
-          "pois": [
-            "ATTIVITÀ IN PLAZA DE TOROS"
+          "items": [
+            {
+              "name": "ATTIVITÀ IN PLAZA DE TOROS",
+              "poi_id": "poi/39144"
+            }
           ]
         },
         {
           "step": "EDIFICI PER LA CULTURA E IL TEMPO LIBERO",
-          "pois": [
-            "Teatro Ideal Cinema",
-            "AUDITORIO DEL H. DE SANTIAGO"
+          "items": [
+            {
+              "name": "Teatro Ideal Cinema",
+              "poi_id": "poi/35680"
+            },
+            {
+              "name": "AUDITORIO DEL H. DE SANTIAGO",
+              "poi_id": "poi/39145"
+            }
           ]
         },
         {
           "step": "IMPIANTI SPORTIVI",
-          "pois": [
-            "PALESTRA UBEDA SPORT",
-            "POLIVALENTE COMUNALE \"IL VECCHIO\"",
-            "Parco Nord",
-            "Piscine pubbliche",
-            "Campi sportivi comunali",
-            "AQUASPORT",
-            "PALESTRA FACTORY-SPA",
-            "Parco Vandelvira"
+          "items": [
+            {
+              "name": "PALESTRA UBEDA SPORT",
+              "poi_id": "poi/36552"
+            },
+            {
+              "name": "POLIVALENTE COMUNALE \"IL VECCHIO\"",
+              "poi_id": "poi/35477"
+            },
+            {
+              "name": "Parco Nord",
+              "poi_id": "poi/7804"
+            },
+            {
+              "name": "Piscine pubbliche",
+              "poi_id": "poi/35478"
+            },
+            {
+              "name": "Campi sportivi comunali",
+              "poi_id": "poi/35898"
+            },
+            {
+              "name": "AQUASPORT",
+              "poi_id": "poi/35716"
+            },
+            {
+              "name": "PALESTRA FACTORY-SPA",
+              "poi_id": "poi/36554"
+            },
+            {
+              "name": "Parco Vandelvira",
+              "poi_id": "poi/35683"
+            }
           ]
         },
         {
           "step": "ALTRO",
-          "pois": [
-            "Sala Escaperoom"
+          "items": [
+            {
+              "name": "Sala Escaperoom",
+              "poi_id": "poi/35684"
+            }
           ]
         }
       ]
@@ -499,160 +679,400 @@
     },
     {
       "id": "trip/4436",
-      "name": "ALTRI SERVIZI",
+      "name": "Altri Servizi",
       "description": "Sono inclusi distributori di benzina, polizia, supermercati, vigili del fuoco...",
       "type": "TouristTrip",
       "url": "https://inventrip.com/ubeda/trip/4436",
       "itinerary": [
         {
           "step": "PROTEZIONE CIVILE",
-          "pois": [
-            "Protezione Civile"
+          "items": [
+            {
+              "name": "Protezione Civile",
+              "poi_id": "poi/35454"
+            }
           ]
         },
         {
-          "step": "VIGILI DEL FUOCO",
-          "pois": [
-            "Vigili del fuoco",
-            "POSTEGGI PER TAXI",
-            "STAZIONE DEGLI AUTOBUS"
+          "step": "STAZIONE DEGLI AUTOBUS",
+          "items": [
+            {
+              "name": "Stazione degli autobus di Úbeda",
+              "poi_id": "poi/7019"
+            }
           ]
         },
         {
           "step": "POLIZIA",
-          "pois": [
-            "Antico Pósito"
+          "items": [
+            {
+              "name": "Antico Pósito",
+              "poi_id": "poi/5147"
+            }
           ]
         },
         {
           "step": "DISTRIBUTORI DI BENZINA",
-          "pois": [
-            "Stazione di servizio RED AZUL",
-            "Distributore di benzina Carrefour",
-            "Distributore di benzina.",
-            "Distributore di benzina",
-            "Distributore di benzina San Miguel",
-            "Stazione di servizio El Polígono",
-            "PUNTI DI RICARICA PER VEICOLI ELETTRICI"
+          "items": [
+            {
+              "name": "Stazione di servizio RED AZUL",
+              "poi_id": "poi/35416"
+            },
+            {
+              "name": "Distributore di benzina Carrefour",
+              "poi_id": "poi/35418"
+            },
+            {
+              "name": "Distributore di benzina.",
+              "poi_id": "poi/35419"
+            },
+            {
+              "name": "Distributore di benzina",
+              "poi_id": "poi/35422"
+            },
+            {
+              "name": "Distributore di benzina San Miguel",
+              "poi_id": "poi/35417"
+            },
+            {
+              "name": "Stazione di servizio El Polígono",
+              "poi_id": "poi/35425"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "trip/4447",
+      "name": "Piazza di Santa Lucia",
+      "description": "Straordinaria piazza situata all''ingresso posteriore del Palazzo di Francisco de los Cobos, con una meravigliosa vista sul mare di ulivi che abbelliscono la città di Úbeda. Al centro della sua graziosa spianata si erge un lampione in ferro battuto e una semplice fontana con due beccucci.",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/4447",
+      "itinerary": [
+        {
+          "step": "Cerca",
+          "items": [
+            {
+              "name": "Piazza di Santa Lucia",
+              "poi_id": "poi/36015"
+            },
+            {
+              "name": "Porta di Santa Lucia",
+              "poi_id": "poi/30154"
+            },
+            {
+              "name": "Belvedere di Santa Lucia",
+              "poi_id": "poi/30148"
+            },
+            {
+              "name": "Complesso Archeologico Rovine di Santo Tomas",
+              "poi_id": "poi/30134"
+            },
+            {
+              "name": "Case ebraiche in calle Gradeta de Santo Tomás",
+              "poi_id": "poi/30155"
+            },
+            {
+              "name": "Palazzo Francisco de los Cobos",
+              "poi_id": "poi/30130"
+            },
+            {
+              "name": "Ospedale degli Onorevoli Vecchi di El Salvador",
+              "poi_id": "poi/5149"
+            }
+          ]
+        },
+        {
+          "step": "Intorno",
+          "items": [
+            {
+              "name": "Sacra Cappella del Salvatore",
+              "poi_id": "poi/5148"
+            },
+            {
+              "name": "Piazza Vázquez de Molina",
+              "poi_id": "poi/30536"
+            },
+            {
+              "name": "Antico Pósito",
+              "poi_id": "poi/5147"
+            },
+            {
+              "name": "Palazzo del Marchese di Mancera",
+              "poi_id": "poi/30116"
+            },
+            {
+              "name": "Prigione del Vescovo",
+              "poi_id": "poi/5145"
+            },
+            {
+              "name": "Basilica Minore di Santa Maria dei Reali Alcazari",
+              "poi_id": "poi/5144"
+            },
+            {
+              "name": "Palazzo di Juan Vázquez de Molina",
+              "poi_id": "poi/5154"
+            },
+            {
+              "name": "Palazzo dei Manueles",
+              "poi_id": "poi/30153"
+            }
           ]
         }
       ]
     },
     {
       "id": "trip/4457",
-      "name": "COSA NON PERDERTI",
+      "name": "Cosa Non Perderti",
       "description": "Úbeda è una città monumentale per eccellenza, massimo esponente del Rinascimento andaluso. Zona di Interesse Artigianale dell'Andalusia e terra della gastronomia. È il maggior produttore mondiale di olio d'oliva. Di cultura vivace, è la destinazione perfetta per gli amanti dell'autenticità.",
       "type": "TouristTrip",
       "url": "https://inventrip.com/ubeda/trip/4457",
       "itinerary": [
         {
           "step": "Piazza Vázquez de Molina",
-          "pois": [
-            "Piazza Vázquez de Molina",
-            "Sacra Cappella del Salvatore",
-            "Basilica di Santa Maria dei Reali Alcazari",
-            "Palazzo del Decano Ortega. Parador de Turismo",
-            "Fonte Rinascimentale",
-            "Antico Pósito",
-            "Prigione del Vescovo",
-            "Palazzo del Marchese di Mancera",
-            "Ospedale degli Onorevoli Vecchi di El Salvador"
+          "items": [
+            {
+              "name": "Piazza Vázquez de Molina",
+              "poi_id": "poi/30536"
+            },
+            {
+              "name": "Sacra Cappella del Salvatore",
+              "poi_id": "poi/5148"
+            },
+            {
+              "name": "Basilica Minore di Santa Maria dei Reali Alcazari",
+              "poi_id": "poi/5144"
+            },
+            {
+              "name": "Palazzo del Decano Ortega. Parador de Turismo",
+              "poi_id": "poi/30117"
+            },
+            {
+              "name": "Fonte Rinascimentale",
+              "poi_id": "poi/30151"
+            },
+            {
+              "name": "Antico Pósito",
+              "poi_id": "poi/5147"
+            },
+            {
+              "name": "Prigione del Vescovo",
+              "poi_id": "poi/5145"
+            },
+            {
+              "name": "Palazzo del Marchese di Mancera",
+              "poi_id": "poi/30116"
+            },
+            {
+              "name": "Ospedale degli Onorevoli Vecchi di El Salvador",
+              "poi_id": "poi/5149"
+            }
           ]
         },
         {
           "step": "Piazza Primo Maggio",
-          "pois": [
-            "Piazza 1º Maggio",
-            "Chiesa di San Paolo",
-            "Antichi Palazzi del Municipio",
-            "Antico Convento di San Andrea"
+          "items": [
+            {
+              "name": "Piazza 1º Maggio",
+              "poi_id": "poi/35831"
+            },
+            {
+              "name": "Chiesa di San Paolo",
+              "poi_id": "poi/5157"
+            },
+            {
+              "name": "Antichi Palazzi del Municipio",
+              "poi_id": "poi/30108"
+            },
+            {
+              "name": "Antico Convento di San Andrea",
+              "poi_id": "poi/30109"
+            }
           ]
         },
         {
           "step": "Piazza del Municipio",
-          "pois": [
-            "Palazzo Vázquez de Molina",
-            "Palazzo Vela de los Cobos"
+          "items": [
+            {
+              "name": "Palazzo di Juan Vázquez de Molina",
+              "poi_id": "poi/5154"
+            },
+            {
+              "name": "Palazzo Vela de los Cobos",
+              "poi_id": "poi/5156"
+            }
           ]
         },
         {
           "step": "Centri Culturali",
-          "pois": [
-            "Ospedale di Santiago",
-            "Chiesa di San Lorenzo"
+          "items": [
+            {
+              "name": "Ospedale di Santiago",
+              "poi_id": "poi/5152"
+            },
+            {
+              "name": "Chiesa di San Lorenzo",
+              "poi_id": "poi/5141"
+            }
           ]
         },
         {
           "step": "Altri indispensabili",
-          "pois": [
-            "Casa delle Torri",
-            "Chiesa di San Isidoro",
-            "Museo Archeologico - Casa Mudéjar",
-            "Chiesa di San Nicola",
-            "Ristorante Hotel Palazzo di Úbeda G.L. \"El Ábside\""
+          "items": [
+            {
+              "name": "Casa delle Torri",
+              "poi_id": "poi/5142"
+            },
+            {
+              "name": "Chiesa di San Isidoro",
+              "poi_id": "poi/30122"
+            },
+            {
+              "name": "Museo Archeologico - Casa Mudéjar",
+              "poi_id": "poi/6740"
+            },
+            {
+              "name": "Chiesa di San Nicola di Bari",
+              "poi_id": "poi/5161"
+            },
+            {
+              "name": "Ristorante Hotel Palazzo di Úbeda G.L. \"El Ábside\"",
+              "poi_id": "poi/30115"
+            }
           ]
         }
       ]
     },
     {
       "id": "trip/4476",
-      "name": "OLEOTURISMO",
+      "name": "Oleoturismo",
       "description": "Vieni nella capitale della principale regione olivicola della provincia di Jaén, il principale produttore mondiale, e scopri in modo interattivo e pratico questa millenaria cultura dell'Olio Extra Vergine di Oliva.",
       "type": "TouristTrip",
       "url": "https://inventrip.com/ubeda/trip/4476",
       "itinerary": [
         {
-          "step": "VENDITA DI OLIO",
-          "pois": []
-        },
-        {
-          "step": "Centro di Interpretazione dell'Oliveto e dell'Olio",
-          "pois": []
+          "step": "Casa de la Tercia (Centro di Interpretazione Olivo e Olio)",
+          "items": []
         },
         {
           "step": "FRANTOI, PUNTI VENDITA",
-          "pois": [
-            "PUNTO VENDITA ALMAZARA V. DE GUADALUPE",
-            "Baltasar Lara e Cía. Vendita di olio e vino di produzione propria.",
-            "ALMAZARA BALTASAR LARA E CÍA.",
-            "ALMAZARA LA UNIÓN",
-            "ALMAZARA VIRGEN DE GUADALUPE",
-            "ALMAZARA. Fabbrica e vendita di olio d'oliva."
+          "items": [
+            {
+              "name": "ALMAZARA BALTASAR LARA E CÍA.",
+              "poi_id": "poi/36694"
+            },
+            {
+              "name": "ALMAZARA LA UNIÓN",
+              "poi_id": "poi/36692"
+            },
+            {
+              "name": "ALMAZARA VIRGEN DE GUADALUPE",
+              "poi_id": "poi/36693"
+            },
+            {
+              "name": "CATAS",
+              "poi_id": "poi/41136"
+            },
+            {
+              "name": "Cooperativa Del Campo La Carrera",
+              "poi_id": "poi/66486"
+            },
+            {
+              "name": "Baltasar Lara e Cía. Vendita di olio e vino di produzione propria.",
+              "poi_id": "poi/35905"
+            }
+          ]
+        },
+        {
+          "step": "VENDITA DI OLIO",
+          "items": [
+            {
+              "name": "PUNTO VENDITA ALMAZARA V. DE GUADALUPE",
+              "poi_id": "poi/35910"
+            }
           ]
         }
       ]
     },
     {
       "id": "trip/4540",
-      "name": "SANITÀ, COVID-19",
+      "name": "SANITÀ: Centri di assistenza primaria e farmacie",
       "description": "Centri di assistenza sanitaria (centri di assistenza primaria, farmacie, ospedali, Croce Rossa...)",
       "type": "TouristTrip",
       "url": "https://inventrip.com/ubeda/trip/4540",
       "itinerary": [
         {
           "step": "CENTRI SANITARI E OSPEDALI",
-          "pois": [
-            "Croce Rossa",
-            "Centro di salute",
-            "Ospedale Comarcale San Juan de la Cruz",
-            "CENTRO SALUTE-UBEDA EST"
+          "items": [
+            {
+              "name": "Croce Rossa",
+              "poi_id": "poi/35449"
+            },
+            {
+              "name": "Centro di salute",
+              "poi_id": "poi/35445"
+            },
+            {
+              "name": "Ospedale Comarcale San Juan de la Cruz",
+              "poi_id": "poi/35447"
+            },
+            {
+              "name": "CENTRO SALUTE-UBEDA EST",
+              "poi_id": "poi/36583"
+            }
           ]
         },
         {
           "step": "FARMACIE",
-          "pois": [
-            "Farmacia Almagro Uceda",
-            "Farmacia Rastro",
-            "Farmacia Reale",
-            "Farmacia La Corredera",
-            "Farmacia Sanchez Ruiz, R y E",
-            "Farmacia Martínez de Dios",
-            "Farmacia Liñán-Monedero",
-            "Farmacia Alfonsa Mesa Padilla",
-            "Farmacia Cruz Rodríguez",
-            "Farmacia Baras de La Torre",
-            "Farmacia Cruz García",
-            "Farmacia Obra Salido"
+          "items": [
+            {
+              "name": "Farmacia Almagro Uceda",
+              "poi_id": "poi/35377"
+            },
+            {
+              "name": "Farmacia Rastro",
+              "poi_id": "poi/35361"
+            },
+            {
+              "name": "Farmacia Reale",
+              "poi_id": "poi/35505"
+            },
+            {
+              "name": "Farmacia La Corredera",
+              "poi_id": "poi/35390"
+            },
+            {
+              "name": "Farmacia Sanchez Ruiz, R y E",
+              "poi_id": "poi/35399"
+            },
+            {
+              "name": "Farmacia Martínez de Dios",
+              "poi_id": "poi/35392"
+            },
+            {
+              "name": "Farmacia Liñán-Monedero",
+              "poi_id": "poi/35391"
+            },
+            {
+              "name": "Farmacia Alfonsa Mesa Padilla",
+              "poi_id": "poi/35393"
+            },
+            {
+              "name": "Farmacia Cruz Rodríguez",
+              "poi_id": "poi/35386"
+            },
+            {
+              "name": "Farmacia Baras de La Torre",
+              "poi_id": "poi/35381"
+            },
+            {
+              "name": "Farmacia Cruz García",
+              "poi_id": "poi/35383"
+            },
+            {
+              "name": "Farmacia Obra Salido",
+              "poi_id": "poi/35396"
+            }
           ]
         }
       ]
@@ -666,15 +1086,15 @@
       "itinerary": [
         {
           "step": "ATTIVITÀ IN PLAZA DE TOROS",
-          "pois": []
+          "items": []
         },
         {
           "step": "Chiesa di Santo Domingo",
-          "pois": []
+          "items": []
         },
         {
           "step": "Campi sportivi comunali",
-          "pois": []
+          "items": []
         }
       ]
     },
@@ -687,12 +1107,120 @@
       "itinerary": [
         {
           "step": "1. Cosa non perdere",
-          "pois": [
-            "1.1 Piazza Vázquez de Molina",
-            "1.2 Piazza Primo Maggio",
-            "1.3 Piazza del Municipio",
-            "1.5 Centri Culturali",
-            "1.6 Altri must"
+          "items": [
+            {
+              "name": "1.1 Piazza Vázquez de Molina",
+              "items": [
+                {
+                  "name": "Piazza Vázquez de Molina",
+                  "poi_id": "poi/30536"
+                },
+                {
+                  "name": "Sacra Cappella del Salvatore",
+                  "poi_id": "poi/5148"
+                },
+                {
+                  "name": "Basilica Minore di Santa Maria dei Reali Alcazari",
+                  "poi_id": "poi/5144"
+                },
+                {
+                  "name": "Palazzo del Decano Ortega. Parador de Turismo",
+                  "poi_id": "poi/30117"
+                },
+                {
+                  "name": "Fonte Rinascimentale",
+                  "poi_id": "poi/30151"
+                },
+                {
+                  "name": "Antico Pósito",
+                  "poi_id": "poi/5147"
+                },
+                {
+                  "name": "Prigione del Vescovo",
+                  "poi_id": "poi/5145"
+                },
+                {
+                  "name": "Palazzo del Marchese di Mancera",
+                  "poi_id": "poi/30116"
+                },
+                {
+                  "name": "Ospedale degli Onorevoli Vecchi di El Salvador",
+                  "poi_id": "poi/5149"
+                }
+              ]
+            },
+            {
+              "name": "1.2 Piazza Primo Maggio",
+              "items": [
+                {
+                  "name": "Piazza 1º Maggio",
+                  "poi_id": "poi/35831"
+                },
+                {
+                  "name": "Chiesa di San Paolo",
+                  "poi_id": "poi/5157"
+                },
+                {
+                  "name": "Antichi Palazzi del Municipio",
+                  "poi_id": "poi/30108"
+                },
+                {
+                  "name": "Antico Convento di San Andrea",
+                  "poi_id": "poi/30109"
+                }
+              ]
+            },
+            {
+              "name": "1.3 Piazza del Municipio",
+              "items": [
+                {
+                  "name": "Palazzo di Juan Vázquez de Molina",
+                  "poi_id": "poi/5154"
+                },
+                {
+                  "name": "Palazzo Vela de los Cobos",
+                  "poi_id": "poi/5156"
+                }
+              ]
+            },
+            {
+              "name": "1.5 Centri Culturali",
+              "items": [
+                {
+                  "name": "Ospedale di Santiago",
+                  "poi_id": "poi/5152"
+                },
+                {
+                  "name": "Chiesa di San Lorenzo",
+                  "poi_id": "poi/5141"
+                }
+              ]
+            },
+            {
+              "name": "1.6 Altri must",
+              "items": [
+                {
+                  "name": "Casa delle Torri",
+                  "poi_id": "poi/5142"
+                },
+                {
+                  "name": "Chiesa di San Isidoro",
+                  "poi_id": "poi/30122"
+                },
+                {
+                  "name": "Museo Archeologico - Casa Mudéjar",
+                  "poi_id": "poi/6740"
+                },
+                {
+                  "name": "Chiesa di San Nicola di Bari",
+                  "poi_id": "poi/5161"
+                },
+                {
+                  "name": "Ristorante Hotel Palazzo di Úbeda G.L. \"El Ábside\"",
+                  "poi_id": "poi/30115"
+                }
+              ]
+            }
           ]
         }
       ]
@@ -706,48 +1234,96 @@
       "itinerary": [
         {
           "step": "SCULTURA E RESTAURO",
-          "pois": [
-            "Laboratorio di scultura e restauro"
+          "items": [
+            {
+              "name": "Laboratorio di scultura e restauro",
+              "poi_id": "poi/35504"
+            }
           ]
         },
         {
           "step": "SPARTO",
-          "pois": [
-            "UBEDÍES artigianato, laboratorio di sparto."
+          "items": [
+            {
+              "name": "UBEDÍES artigianato, laboratorio di sparto.",
+              "poi_id": "poi/35506"
+            }
           ]
         },
         {
           "step": "ORFEBRERIA E GIOIELLERIA",
-          "pois": [
-            "Gioielleria Ferrandidz"
+          "items": [
+            {
+              "name": "Gioielleria Ferrandidz",
+              "poi_id": "poi/35519"
+            }
           ]
         },
         {
           "step": "SOFFITTI MUDÉJAR",
-          "pois": [
-            "Intarsi mudéjar"
+          "items": [
+            {
+              "name": "Intarsi mudéjar",
+              "poi_id": "poi/35499"
+            }
           ]
         },
         {
           "step": "LABORATORI DI FORGIATURA",
-          "pois": [
-            "Officina di fabbro Tiznajo",
-            "Officina di fabbro a Úbeda.",
-            "Officina e negozio di fabbro ARTESUR"
+          "items": [
+            {
+              "name": "Officina di fabbro Tiznajo",
+              "poi_id": "poi/35515"
+            },
+            {
+              "name": "Officina di fabbro a Úbeda.",
+              "poi_id": "poi/35518"
+            },
+            {
+              "name": "Officina e negozio di fabbro ARTESUR",
+              "poi_id": "poi/35511"
+            }
           ]
         },
         {
           "step": "CERAMICA",
-          "pois": [
-            "Alfar Alfonso Góngora",
-            "Alfarería Melchor Tito",
-            "Alfabetizzazione Pedro Góngora",
-            "Alfarería Almarza",
-            "Alfarería Fco. Expósito Tito",
-            "Museo della Ceramica \"Paco Tito\"",
-            "Via Valencia",
-            "Piazza degli Olleros",
-            "Alfarería Juan Tito"
+          "items": [
+            {
+              "name": "Alfar Alfonso Góngora",
+              "poi_id": "poi/35493"
+            },
+            {
+              "name": "Alfarería Melchor Tito",
+              "poi_id": "poi/35495"
+            },
+            {
+              "name": "Alfabetizzazione Pedro Góngora",
+              "poi_id": "poi/35494"
+            },
+            {
+              "name": "Alfarería Almarza",
+              "poi_id": "poi/35491"
+            },
+            {
+              "name": "Alfarería Fco. Expósito Tito",
+              "poi_id": "poi/35492"
+            },
+            {
+              "name": "Museo della Ceramica \"Paco Tito\"",
+              "poi_id": "poi/30170"
+            },
+            {
+              "name": "Via Valencia",
+              "poi_id": "poi/30169"
+            },
+            {
+              "name": "Piazza degli Olleros",
+              "poi_id": "poi/30537"
+            },
+            {
+              "name": "Alfarería Juan Tito",
+              "poi_id": "poi/30707"
+            }
           ]
         }
       ]
@@ -761,63 +1337,63 @@
       "itinerary": [
         {
           "step": "Cattedrale di Santiago de Compostela",
-          "pois": []
+          "items": []
         },
         {
           "step": "Convento e Chiesa di San Francesco",
-          "pois": []
+          "items": []
         },
         {
           "step": "Monastero di San Martín Pinario",
-          "pois": []
+          "items": []
         },
         {
           "step": "Pazo de Fonseca",
-          "pois": []
+          "items": []
         },
         {
           "step": "Piazza del Obradoiro",
-          "pois": []
+          "items": []
         },
         {
           "step": "Chiesa di Santo Domingo",
-          "pois": []
+          "items": []
         },
         {
           "step": "Città della Cultura di Galizia",
-          "pois": []
+          "items": []
         },
         {
           "step": "Chiesa di Santa María la Real del Sar",
-          "pois": []
+          "items": []
         },
         {
           "step": "Palazzo Arcivescovile di Santiago di Compostela",
-          "pois": []
+          "items": []
         },
         {
           "step": "Pazo de Raxoi",
-          "pois": []
+          "items": []
         },
         {
           "step": "Centro Galego de Arte Contemporáneo - CGAC",
-          "pois": []
+          "items": []
         },
         {
           "step": "Parco Alameda",
-          "pois": []
+          "items": []
         },
         {
           "step": "Piazza delle Argenterie",
-          "pois": []
+          "items": []
         },
         {
           "step": "Piazza de Quintana",
-          "pois": []
+          "items": []
         },
         {
           "step": "Piazza Cervantes",
-          "pois": []
+          "items": []
         }
       ]
     },
@@ -830,37 +1406,88 @@
       "itinerary": [
         {
           "step": "Palazzo del Decano Ortega. Parador de Turismo",
-          "pois": []
+          "items": []
         },
         {
           "step": "Úbeda - Città Patrimonio",
-          "pois": []
+          "items": []
         },
         {
           "step": "#TOP10",
-          "pois": [
-            "Sacra Cappella del Salvatore",
-            "Basilica di Santa Maria dei Reali Alcazari",
-            "Chiesa di San Paolo",
-            "Torre dell'orologio",
-            "Palazzo Vela de los Cobos",
-            "Antico Pósito",
-            "Ospedale di Santiago",
-            "Palazzo Vázquez de Molina",
-            "Centro di Interpretazione dell'Oliveto e dell'Olio",
-            "Piazza di Andalusia"
+          "items": [
+            {
+              "name": "Sacra Cappella del Salvatore",
+              "poi_id": "poi/5148"
+            },
+            {
+              "name": "Basilica Minore di Santa Maria dei Reali Alcazari",
+              "poi_id": "poi/5144"
+            },
+            {
+              "name": "Chiesa di San Paolo",
+              "poi_id": "poi/5157"
+            },
+            {
+              "name": "Torre dell'orologio",
+              "poi_id": "poi/30110"
+            },
+            {
+              "name": "Palazzo Vela de los Cobos",
+              "poi_id": "poi/5156"
+            },
+            {
+              "name": "Antico Pósito",
+              "poi_id": "poi/5147"
+            },
+            {
+              "name": "Ospedale di Santiago",
+              "poi_id": "poi/5152"
+            },
+            {
+              "name": "Palazzo di Juan Vázquez de Molina",
+              "poi_id": "poi/5154"
+            },
+            {
+              "name": "Casa de la Tercia (Centro di Interpretazione Olivo e Olio)",
+              "poi_id": "poi/30124"
+            },
+            {
+              "name": "Piazza di Andalusia",
+              "poi_id": "poi/30538"
+            }
           ]
         },
         {
           "step": "Vicino a Úbeda",
-          "pois": [
-            "Baeza - città patrimonio dell'Umanità",
-            "Conjunto Storico di Sabiote",
-            "Conjunto storico di Begíjar",
-            "Linares",
-            "Santuario di Nostra Signora di Guadalupe",
-            "Puente Ariza",
-            "Dolmen di Úbeda"
+          "items": [
+            {
+              "name": "Baeza - città patrimonio dell'Umanità",
+              "poi_id": "poi/5136"
+            },
+            {
+              "name": "Conjunto Storico di Sabiote",
+              "poi_id": "poi/8608"
+            },
+            {
+              "name": "Conjunto storico di Begíjar",
+              "poi_id": "poi/8852"
+            },
+            {
+              "name": "Linares",
+              "poi_id": "poi/28413"
+            },
+            {
+              "name": "Santuario di Nostra Signora di Guadalupe",
+              "poi_id": "poi/36024"
+            },
+            {
+              "name": "Puente Ariza",
+              "poi_id": "poi/36026"
+            },
+            {
+              "name": "Dolmen di Úbeda",
+              "poi_id": "poi/35500"
+            }
           ]
         }
       ]
@@ -874,19 +1501,40 @@
       "itinerary": [
         {
           "step": "Vicino",
-          "pois": [
-            "Hotel Palazzo del Marchese de la Rambla",
-            "Via Rastro",
-            "Officina e negozio di fabbro ARTESUR"
+          "items": [
+            {
+              "name": "Hotel Palazzo del Marchese de la Rambla",
+              "poi_id": "poi/30138"
+            },
+            {
+              "name": "Via Rastro",
+              "poi_id": "poi/36360"
+            },
+            {
+              "name": "Officina e negozio di fabbro ARTESUR",
+              "poi_id": "poi/35511"
+            }
           ]
         },
         {
           "step": "Intorno",
-          "pois": [
-            "Piazza San Pietro",
-            "CHURRERIA-CAFFETTERIA ALMINDEZ",
-            "Sala Escaperoom",
-            "Centro di Interpretazione \"Le Mura di Úbeda: Torrione di Portillo del Santo Cristo\""
+          "items": [
+            {
+              "name": "Piazza San Pietro",
+              "poi_id": "poi/35955"
+            },
+            {
+              "name": "CHURRERIA-CAFFETTERIA ALMINDEZ",
+              "poi_id": "poi/36950"
+            },
+            {
+              "name": "Sala Escaperoom",
+              "poi_id": "poi/35684"
+            },
+            {
+              "name": "Centro di Interpretazione \"Le Mura di Úbeda: Torrione di Portillo del Santo Cristo\"",
+              "poi_id": "poi/30139"
+            }
           ]
         }
       ]
@@ -900,12 +1548,120 @@
       "itinerary": [
         {
           "step": "1. Cosa non perderti",
-          "pois": [
-            "1.1 Piazza Vázquez de Molina",
-            "1.2 Piazza Primo Maggio",
-            "1.3 Piazza del Municipio",
-            "1.5 Centri Culturali",
-            "1.6 Altri indispensabili"
+          "items": [
+            {
+              "name": "1.1 Piazza Vázquez de Molina",
+              "items": [
+                {
+                  "name": "Piazza Vázquez de Molina",
+                  "poi_id": "poi/30536"
+                },
+                {
+                  "name": "Sacra Cappella del Salvatore",
+                  "poi_id": "poi/5148"
+                },
+                {
+                  "name": "Basilica Minore di Santa Maria dei Reali Alcazari",
+                  "poi_id": "poi/5144"
+                },
+                {
+                  "name": "Palazzo del Decano Ortega. Parador de Turismo",
+                  "poi_id": "poi/30117"
+                },
+                {
+                  "name": "Fonte Rinascimentale",
+                  "poi_id": "poi/30151"
+                },
+                {
+                  "name": "Antico Pósito",
+                  "poi_id": "poi/5147"
+                },
+                {
+                  "name": "Prigione del Vescovo",
+                  "poi_id": "poi/5145"
+                },
+                {
+                  "name": "Palazzo del Marchese di Mancera",
+                  "poi_id": "poi/30116"
+                },
+                {
+                  "name": "Ospedale degli Onorevoli Vecchi di El Salvador",
+                  "poi_id": "poi/5149"
+                }
+              ]
+            },
+            {
+              "name": "1.2 Piazza Primo Maggio",
+              "items": [
+                {
+                  "name": "Piazza 1º Maggio",
+                  "poi_id": "poi/35831"
+                },
+                {
+                  "name": "Chiesa di San Paolo",
+                  "poi_id": "poi/5157"
+                },
+                {
+                  "name": "Antichi Palazzi del Municipio",
+                  "poi_id": "poi/30108"
+                },
+                {
+                  "name": "Antico Convento di San Andrea",
+                  "poi_id": "poi/30109"
+                }
+              ]
+            },
+            {
+              "name": "1.3 Piazza del Municipio",
+              "items": [
+                {
+                  "name": "Palazzo di Juan Vázquez de Molina",
+                  "poi_id": "poi/5154"
+                },
+                {
+                  "name": "Palazzo Vela de los Cobos",
+                  "poi_id": "poi/5156"
+                }
+              ]
+            },
+            {
+              "name": "1.5 Centri Culturali",
+              "items": [
+                {
+                  "name": "Ospedale di Santiago",
+                  "poi_id": "poi/5152"
+                },
+                {
+                  "name": "Chiesa di San Lorenzo",
+                  "poi_id": "poi/5141"
+                }
+              ]
+            },
+            {
+              "name": "1.6 Altri indispensabili",
+              "items": [
+                {
+                  "name": "Casa delle Torri",
+                  "poi_id": "poi/5142"
+                },
+                {
+                  "name": "Chiesa di San Isidoro",
+                  "poi_id": "poi/30122"
+                },
+                {
+                  "name": "Museo Archeologico - Casa Mudéjar",
+                  "poi_id": "poi/6740"
+                },
+                {
+                  "name": "Chiesa di San Nicola di Bari",
+                  "poi_id": "poi/5161"
+                },
+                {
+                  "name": "Ristorante Hotel Palazzo di Úbeda G.L. \"El Ábside\"",
+                  "poi_id": "poi/30115"
+                }
+              ]
+            }
           ]
         }
       ]
@@ -919,12 +1675,120 @@
       "itinerary": [
         {
           "step": "1. Cosa non perdere",
-          "pois": [
-            "1.1 Piazza Vázquez de Molina",
-            "1.2 Piazza Primo Maggio",
-            "1.3 Piazza del Municipio",
-            "1.5 Centri Culturali",
-            "1.6 Altri indispensabili"
+          "items": [
+            {
+              "name": "1.1 Piazza Vázquez de Molina",
+              "items": [
+                {
+                  "name": "Piazza Vázquez de Molina",
+                  "poi_id": "poi/30536"
+                },
+                {
+                  "name": "Sacra Cappella del Salvatore",
+                  "poi_id": "poi/5148"
+                },
+                {
+                  "name": "Basilica Minore di Santa Maria dei Reali Alcazari",
+                  "poi_id": "poi/5144"
+                },
+                {
+                  "name": "Palazzo del Decano Ortega. Parador de Turismo",
+                  "poi_id": "poi/30117"
+                },
+                {
+                  "name": "Fonte Rinascimentale",
+                  "poi_id": "poi/30151"
+                },
+                {
+                  "name": "Antico Pósito",
+                  "poi_id": "poi/5147"
+                },
+                {
+                  "name": "Prigione del Vescovo",
+                  "poi_id": "poi/5145"
+                },
+                {
+                  "name": "Palazzo del Marchese di Mancera",
+                  "poi_id": "poi/30116"
+                },
+                {
+                  "name": "Ospedale degli Onorevoli Vecchi di El Salvador",
+                  "poi_id": "poi/5149"
+                }
+              ]
+            },
+            {
+              "name": "1.2 Piazza Primo Maggio",
+              "items": [
+                {
+                  "name": "Piazza 1º Maggio",
+                  "poi_id": "poi/35831"
+                },
+                {
+                  "name": "Chiesa di San Paolo",
+                  "poi_id": "poi/5157"
+                },
+                {
+                  "name": "Antichi Palazzi del Municipio",
+                  "poi_id": "poi/30108"
+                },
+                {
+                  "name": "Antico Convento di San Andrea",
+                  "poi_id": "poi/30109"
+                }
+              ]
+            },
+            {
+              "name": "1.3 Piazza del Municipio",
+              "items": [
+                {
+                  "name": "Palazzo di Juan Vázquez de Molina",
+                  "poi_id": "poi/5154"
+                },
+                {
+                  "name": "Palazzo Vela de los Cobos",
+                  "poi_id": "poi/5156"
+                }
+              ]
+            },
+            {
+              "name": "1.5 Centri Culturali",
+              "items": [
+                {
+                  "name": "Ospedale di Santiago",
+                  "poi_id": "poi/5152"
+                },
+                {
+                  "name": "Chiesa di San Lorenzo",
+                  "poi_id": "poi/5141"
+                }
+              ]
+            },
+            {
+              "name": "1.6 Altri indispensabili",
+              "items": [
+                {
+                  "name": "Casa delle Torri",
+                  "poi_id": "poi/5142"
+                },
+                {
+                  "name": "Chiesa di San Isidoro",
+                  "poi_id": "poi/30122"
+                },
+                {
+                  "name": "Museo Archeologico - Casa Mudéjar",
+                  "poi_id": "poi/6740"
+                },
+                {
+                  "name": "Chiesa di San Nicola di Bari",
+                  "poi_id": "poi/5161"
+                },
+                {
+                  "name": "Ristorante Hotel Palazzo di Úbeda G.L. \"El Ábside\"",
+                  "poi_id": "poi/30115"
+                }
+              ]
+            }
           ]
         }
       ]
@@ -946,179 +1810,179 @@
       "itinerary": [
         {
           "step": "Parco Nord",
-          "pois": []
+          "items": []
         },
         {
           "step": "Chiesa di San Giovanni Battista",
-          "pois": []
+          "items": []
         },
         {
           "step": "Ospedale di Santiago",
-          "pois": []
+          "items": []
         },
         {
           "step": "Plaza de Toros de Úbeda",
-          "pois": []
+          "items": []
         },
         {
           "step": "Strade Mesones e Obispo Cobos",
-          "pois": []
+          "items": []
         },
         {
           "step": "Antico Convento della Vittoria",
-          "pois": []
+          "items": []
         },
         {
           "step": "Chiesa di San Isidoro",
-          "pois": []
+          "items": []
         },
         {
           "step": "Portada Plateresca calle Gradas",
-          "pois": []
+          "items": []
         },
         {
           "step": "Piazza di Andalusia",
-          "pois": []
+          "items": []
         },
         {
           "step": "Torre dell'orologio",
-          "pois": []
+          "items": []
         },
         {
           "step": "Antiche Macellerie",
-          "pois": []
+          "items": []
         },
         {
           "step": "Via Rastro",
-          "pois": []
+          "items": []
         },
         {
           "step": "Centro di Interpretazione \"Le Mura di Úbeda: Torrione di Portillo del Santo Cristo\"",
-          "pois": []
+          "items": []
         },
         {
           "step": "Antico Convento di San Francesco",
-          "pois": []
+          "items": []
         },
         {
           "step": "Giardini della Cava e parco giochi",
-          "pois": []
+          "items": []
         },
         {
           "step": "Belvedere e monumento dell'Alfiere Rojas Navarrete",
-          "pois": []
+          "items": []
         },
         {
           "step": "Belvedere di San Lorenzo",
-          "pois": []
+          "items": []
         },
         {
           "step": "Chiesa di San Lorenzo",
-          "pois": []
+          "items": []
         },
         {
           "step": "Piazza di San Lorenzo",
-          "pois": []
+          "items": []
         },
         {
           "step": "Casa delle Torri",
-          "pois": []
+          "items": []
         },
         {
           "step": "Porta di Granada",
-          "pois": []
+          "items": []
         },
         {
-          "step": "Basilica di Santa Maria dei Reali Alcazari",
-          "pois": []
+          "step": "Basilica Minore di Santa Maria dei Reali Alcazari",
+          "items": []
         },
         {
           "step": "Piazza Vázquez de Molina",
-          "pois": []
+          "items": []
         },
         {
-          "step": "Palazzo Vázquez de Molina",
-          "pois": []
+          "step": "Palazzo di Juan Vázquez de Molina",
+          "items": []
         },
         {
           "step": "Fonte Rinascimentale",
-          "pois": []
+          "items": []
         },
         {
           "step": "Prigione del Vescovo",
-          "pois": []
+          "items": []
         },
         {
           "step": "Palazzo del Marchese di Mancera",
-          "pois": []
+          "items": []
         },
         {
           "step": "Antico Pósito",
-          "pois": []
+          "items": []
         },
         {
           "step": "Sacra Cappella del Salvatore",
-          "pois": []
+          "items": []
         },
         {
           "step": "Antichi Palazzi del Municipio",
-          "pois": []
+          "items": []
         },
         {
           "step": "Piazza 1º Maggio",
-          "pois": []
+          "items": []
         },
         {
           "step": "Chiesa di San Paolo",
-          "pois": []
+          "items": []
         },
         {
           "step": "Antico Convento di San Andrea",
-          "pois": []
+          "items": []
         },
         {
           "step": "Palazzo dei Torrente",
-          "pois": []
+          "items": []
         },
         {
-          "step": "Convento della Concezione",
-          "pois": []
+          "step": "Convento di Nostra Signora della Concezione Immacolata",
+          "items": []
         },
         {
           "step": "Mercato di approvvigionamento",
-          "pois": []
+          "items": []
         },
         {
           "step": "Palazzo Don Luis de la Cueva",
-          "pois": []
+          "items": []
         },
         {
           "step": "Torre Ottogonale",
-          "pois": []
+          "items": []
         },
         {
-          "step": "Centro di Interpretazione dell'Oliveto e dell'Olio",
-          "pois": []
+          "step": "Casa de la Tercia (Centro di Interpretazione Olivo e Olio)",
+          "items": []
         },
         {
-          "step": "Chiesa e Convento della Santissima Trinità",
-          "pois": []
+          "step": "Chiesa della Santissima Trinità",
+          "items": []
         },
         {
           "step": "Edificio delle Poste e dei Telegrafi",
-          "pois": []
+          "items": []
         },
         {
           "step": "Palazzo dei Bussianos",
-          "pois": []
+          "items": []
         },
         {
           "step": "Via Trinidad",
-          "pois": []
+          "items": []
         },
         {
           "step": "Parco Nord",
-          "pois": []
+          "items": []
         }
       ]
     },
@@ -1147,49 +2011,115 @@
       "itinerary": [
         {
           "step": "Piazza Vázquez de Molina",
-          "pois": [
-            "Piazza Vázquez de Molina",
-            "Sacra Cappella del Salvatore",
-            "Basilica di Santa Maria dei Reali Alcazari",
-            "Palazzo del Decano Ortega. Parador de Turismo",
-            "Fonte Rinascimentale",
-            "Antico Pósito",
-            "Prigione del Vescovo",
-            "Palazzo del Marchese di Mancera",
-            "Ospedale degli Onorevoli Vecchi di El Salvador"
+          "items": [
+            {
+              "name": "Piazza Vázquez de Molina",
+              "poi_id": "poi/30536"
+            },
+            {
+              "name": "Sacra Cappella del Salvatore",
+              "poi_id": "poi/5148"
+            },
+            {
+              "name": "Basilica Minore di Santa Maria dei Reali Alcazari",
+              "poi_id": "poi/5144"
+            },
+            {
+              "name": "Palazzo del Decano Ortega. Parador de Turismo",
+              "poi_id": "poi/30117"
+            },
+            {
+              "name": "Fonte Rinascimentale",
+              "poi_id": "poi/30151"
+            },
+            {
+              "name": "Antico Pósito",
+              "poi_id": "poi/5147"
+            },
+            {
+              "name": "Prigione del Vescovo",
+              "poi_id": "poi/5145"
+            },
+            {
+              "name": "Palazzo del Marchese di Mancera",
+              "poi_id": "poi/30116"
+            },
+            {
+              "name": "Ospedale degli Onorevoli Vecchi di El Salvador",
+              "poi_id": "poi/5149"
+            }
           ]
         },
         {
           "step": "Piazza Primo Maggio",
-          "pois": [
-            "Piazza 1º Maggio",
-            "Chiesa di San Paolo",
-            "Antichi Palazzi del Municipio",
-            "Antico Convento di San Andrea"
+          "items": [
+            {
+              "name": "Piazza 1º Maggio",
+              "poi_id": "poi/35831"
+            },
+            {
+              "name": "Chiesa di San Paolo",
+              "poi_id": "poi/5157"
+            },
+            {
+              "name": "Antichi Palazzi del Municipio",
+              "poi_id": "poi/30108"
+            },
+            {
+              "name": "Antico Convento di San Andrea",
+              "poi_id": "poi/30109"
+            }
           ]
         },
         {
           "step": "Piazza del Municipio",
-          "pois": [
-            "Palazzo Vázquez de Molina",
-            "Palazzo Vela de los Cobos"
+          "items": [
+            {
+              "name": "Palazzo di Juan Vázquez de Molina",
+              "poi_id": "poi/5154"
+            },
+            {
+              "name": "Palazzo Vela de los Cobos",
+              "poi_id": "poi/5156"
+            }
           ]
         },
         {
           "step": "Centri Culturali",
-          "pois": [
-            "Ospedale di Santiago",
-            "Chiesa di San Lorenzo"
+          "items": [
+            {
+              "name": "Ospedale di Santiago",
+              "poi_id": "poi/5152"
+            },
+            {
+              "name": "Chiesa di San Lorenzo",
+              "poi_id": "poi/5141"
+            }
           ]
         },
         {
           "step": "Altri indispensabili",
-          "pois": [
-            "Casa delle Torri",
-            "Chiesa di San Isidoro",
-            "Museo Archeologico - Casa Mudéjar",
-            "Chiesa di San Nicola",
-            "Ristorante Hotel Palazzo di Úbeda G.L. \"El Ábside\""
+          "items": [
+            {
+              "name": "Casa delle Torri",
+              "poi_id": "poi/5142"
+            },
+            {
+              "name": "Chiesa di San Isidoro",
+              "poi_id": "poi/30122"
+            },
+            {
+              "name": "Museo Archeologico - Casa Mudéjar",
+              "poi_id": "poi/6740"
+            },
+            {
+              "name": "Chiesa di San Nicola di Bari",
+              "poi_id": "poi/5161"
+            },
+            {
+              "name": "Ristorante Hotel Palazzo di Úbeda G.L. \"El Ábside\"",
+              "poi_id": "poi/30115"
+            }
           ]
         }
       ]
@@ -1203,63 +2133,63 @@
       "itinerary": [
         {
           "step": "Antiche Macellerie",
-          "pois": []
+          "items": []
         },
         {
-          "step": "Ruta de los Barrios Tradicionales",
-          "pois": []
+          "step": "Percorso dei Quartieri Tradizionali",
+          "items": []
         },
         {
           "step": "Palazzo Anguis de Medinilla",
-          "pois": []
+          "items": []
         },
         {
           "step": "Reale Monastero di Santa Chiara",
-          "pois": []
+          "items": []
         },
         {
           "step": "Casa Museo Arte Andalusí",
-          "pois": []
+          "items": []
         },
         {
           "step": "Chiesa di Santo Domingo",
-          "pois": []
+          "items": []
         },
         {
           "step": "Porta di Granada",
-          "pois": []
+          "items": []
         },
         {
           "step": "Chiesa di San Lorenzo",
-          "pois": []
+          "items": []
         },
         {
           "step": "Casa delle Torri",
-          "pois": []
+          "items": []
         },
         {
           "step": "Palazzo dei Medinilla",
-          "pois": []
+          "items": []
         },
         {
           "step": "Centro di Interpretazione \"Le Mura di Úbeda: Torrione di Portillo del Santo Cristo\"",
-          "pois": []
+          "items": []
         },
         {
           "step": "Hotel Palazzo del Marchese de la Rambla",
-          "pois": []
+          "items": []
         },
         {
           "step": "Palazzo degli Orozco",
-          "pois": []
+          "items": []
         },
         {
           "step": "Chiesa di San Pietro",
-          "pois": []
+          "items": []
         },
         {
           "step": "Ristorante Hotel Palazzo di Úbeda G.L. \"El Ábside\"",
-          "pois": []
+          "items": []
         }
       ]
     },
@@ -1272,71 +2202,116 @@
       "itinerary": [
         {
           "step": "Antiche Macellerie",
-          "pois": []
+          "items": []
         },
         {
           "step": "Rotta delle Tre Culture",
-          "pois": []
+          "items": []
         },
         {
           "step": "Chiesa di San Michele",
-          "pois": []
+          "items": []
         },
         {
-          "step": "Convento e Museo di San Giovanni della Croce",
-          "pois": []
+          "step": "Convento di San Michele e Museo San Giovanni della Croce",
+          "items": []
         },
         {
-          "step": "Mura e Porta del Losal",
-          "pois": []
+          "step": "Porta del Losal",
+          "items": []
         },
         {
           "step": "Palazzo dei Torrente",
-          "pois": []
+          "items": []
         },
         {
-          "step": "Convento della Concezione",
-          "pois": []
+          "step": "Convento di Nostra Signora della Concezione Immacolata",
+          "items": []
         },
         {
           "step": "Palazzo Don Luis de la Cueva",
-          "pois": []
+          "items": []
         },
         {
           "step": "Museo Archeologico - Casa Mudéjar",
-          "pois": []
+          "items": []
         },
         {
           "step": "Sinagoga dell'Acqua",
-          "pois": []
+          "items": []
         },
         {
-          "step": "Centro di Interpretazione dell'Oliveto e dell'Olio",
-          "pois": []
+          "step": "Casa de la Tercia (Centro di Interpretazione Olivo e Olio)",
+          "items": []
         },
         {
           "step": "Torre Ottogonale",
-          "pois": []
+          "items": []
         },
         {
-          "step": "Chiesa e Convento della Santissima Trinità",
-          "pois": []
+          "step": "Chiesa della Santissima Trinità",
+          "items": []
         },
         {
           "step": "Torre dell'orologio",
-          "pois": []
+          "items": []
         },
         {
           "step": "Chiesa di San Isidoro",
-          "pois": []
+          "items": []
         },
         {
-          "step": "Chiesa di San Nicola",
-          "pois": []
+          "step": "Chiesa di San Nicola di Bari",
+          "items": []
         },
         {
           "step": "Piazzetta della Giudecca",
-          "pois": []
+          "items": []
+        }
+      ]
+    },
+    {
+      "id": "trip/8110",
+      "name": "Percorso del Quartiere del Vasaio e Santo Tomás",
+      "description": "Nel 2012 Úbeda viene dichiarata \"Zona di Interesse Artigianale dell''Andalusia\". La dichiarazione riconosce la rilevanza e l''unicità artigianale della città, così come la diversità delle professioni esistenti e la qualità artistica dei pezzi, dove si combinano tradizione con nuovi design.\n\nI mestieri artigiani che sopravvivono ci rimandano a una lunga esperienza storica: ceramica, forgiatura artistica, ebanisteria, vetrate artistiche, fibre vegetali e soffitti a cassettoni mudéjar, sono alcuni dei settori in cui gli artigiani si distinguono, esportando la loro produzione ai vari confini della geografia nazionale e internazionale. Ogni loro prodotto gode dell''esclusività e autenticità propria del fatto a mano, frutto della trasformazione di materiali nobili con tecniche tradizionali. Inoltre, vantano importanti riconoscimenti nel mondo artigianale (Maestri Artigiani, Premio Nazionale di Artigianato, Premio Nazionale di Design...).\n\nQualsiasi oggetto uscito dai laboratori di Úbeda, grande o piccolo, semplice o complesso, è oggi un pezzo da museo, degno di essere conservato e ammirato.",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/8110",
+      "itinerary": [
+        {
+          "step": "Antiche Macellerie",
+          "items": []
+        },
+        {
+          "step": "Percorso del Quartiere del Vasaio e Santo Tomás",
+          "items": []
+        },
+        {
+          "step": "Museo della Ceramica \"Paco Tito\"",
+          "items": []
+        },
+        {
+          "step": "Chiesa di San Millán",
+          "items": []
+        },
+        {
+          "step": "Orto del Carmen",
+          "items": []
+        },
+        {
+          "step": "Complesso Archeologico Rovine di Santo Tomas",
+          "items": []
+        },
+        {
+          "step": "Case ebraiche in calle Gradeta de Santo Tomás",
+          "items": []
+        },
+        {
+          "step": "Palazzo Francisco de los Cobos",
+          "items": []
+        },
+        {
+          "step": "Sito archeologico \"Eras del Alcázar\"",
+          "items": []
         }
       ]
     },
@@ -1349,67 +2324,1115 @@
       "itinerary": [
         {
           "step": "Rotta Rinascimento del Sud",
-          "pois": []
+          "items": []
         },
         {
           "step": "Piazza Vázquez de Molina",
-          "pois": []
+          "items": []
         },
         {
           "step": "Fonte Rinascimentale",
-          "pois": []
+          "items": []
         },
         {
           "step": "Palazzo del Decano Ortega. Parador de Turismo",
-          "pois": []
+          "items": []
         },
         {
           "step": "Sacra Cappella del Salvatore",
-          "pois": []
+          "items": []
         },
         {
           "step": "Ospedale degli Onorevoli Vecchi di El Salvador",
-          "pois": []
+          "items": []
         },
         {
           "step": "Porta di Santa Lucia",
-          "pois": []
+          "items": []
         },
         {
           "step": "Antico Pósito",
-          "pois": []
+          "items": []
         },
         {
           "step": "Palazzo del Marchese di Mancera",
-          "pois": []
+          "items": []
         },
         {
           "step": "Prigione del Vescovo",
-          "pois": []
+          "items": []
         },
         {
-          "step": "Basilica di Santa Maria dei Reali Alcazari",
-          "pois": []
+          "step": "Basilica Minore di Santa Maria dei Reali Alcazari",
+          "items": []
         },
         {
           "step": "Palazzo Vela de los Cobos",
-          "pois": []
+          "items": []
         },
         {
           "step": "Antichi Palazzi del Municipio",
-          "pois": []
+          "items": []
         },
         {
           "step": "Chiesa di San Paolo",
-          "pois": []
+          "items": []
         },
         {
           "step": "Antiche Macellerie",
-          "pois": []
+          "items": []
         },
         {
           "step": "Ospedale di Santiago",
-          "pois": []
+          "items": []
+        }
+      ]
+    },
+    {
+      "id": "trip/8375",
+      "name": "Agenzie di Viaggi",
+      "description": "Per organizzare il tuo viaggio puoi contare su diverse Agenzie di viaggi Úbeda, che agiscono come intermediari tra i viaggiatori e i fornitori di servizi (compagnie aeree, hotel, aziende di trasporto, assicurazioni, ecc.). Queste offrono consulenza personalizzata, gestendo prenotazioni a nome del cliente e fornendo supporto durante la pianificazione e lo sviluppo del viaggio.\n\nOltre a commercializzare servizi singoli, queste aziende distribuiscono pacchetti turistici elaborati da grossisti o tour operator, potendo in alcuni casi progettare programmi su misura adattati alle esigenze del viaggiatore.\n\nPianificare una visita a Úbeda può essere tanto semplice quanto completo come ogni viaggiatore desidera. Per coloro che cercano comodità, consulenza professionale e un''esperienza ben organizzata, affidarsi a un''agenzia di viaggi locale è un''ottima opzione. Le agenzie di viaggi a Úbeda conoscono profondamente la destinazione, il suo patrimonio, il suo ritmo e le sue possibilità, e offrono soluzioni adattate a famiglie, coppie e gruppi di amici che desiderano godersi la città senza preoccupazioni.\n\nRicorrere a un''agenzia di viaggi permette di ottimizzare il tempo, accedere a servizi specializzati e scoprire proposte che vanno oltre la visita tradizionale. Dalle fughe culturali fino a esperienze personalizzate, le agenzie locali aiutano a progettare un viaggio su misura.",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/8375",
+      "itinerary": [
+        {
+          "step": "Falcon Viaggi",
+          "items": []
+        },
+        {
+          "step": "MH Viaggi",
+          "items": []
+        },
+        {
+          "step": "Sentieri e Viaggi",
+          "items": []
+        },
+        {
+          "step": "Viaggi Ubadat",
+          "items": []
+        },
+        {
+          "step": "Viaggi Úbeda Bus",
+          "items": []
+        },
+        {
+          "step": "Viaggi Istosol",
+          "items": []
+        },
+        {
+          "step": "Viaggi Stay Positive Tempo Libero",
+          "items": []
+        },
+        {
+          "step": "Viaggi Ubetorre",
+          "items": []
+        }
+      ]
+    },
+    {
+      "id": "trip/8377",
+      "name": "Turismo Religioso",
+      "description": "Se si dovesse definire Úbeda con un solo slogan, questo sarebbe \"Città per lo spirito\", poiché ogni angolo della città invita all''elevazione: poche città sono così propizie all''espressione di una intima religiosità e di un senso della trascendenza. In questo senso è imprescindibile la traccia di San Giovanni della Croce, città che ha eretto il primo tempio del mondo cattolico in suo onore e che oggi custodisce un importante patrimonio culturale legato al santo e poeta.\n\nMolto ricco è il patrimonio religioso conservato in conventi e chiese, e che presto sarà notevolmente arricchito con la restituzione alla Cappella del Salvador della scultura del San Juanito, recentemente restaurata a Firenze e unica opera di Michelangelo in Spagna.\n\nL''espressione popolare della religiosità raggiunge il suo apice, ogni anno, nella SETTIMANA SANTA, un grande evento dal profilo proprio fatto di elementi castigliani e andalusi. Con quasi venti confraternite —molte delle quali secolari—, la Settimana Santa si configura come una celebrazione totale: una impressionante collezione della migliore immagineria del dopoguerra, una gastronomia propria e una serie di tradizioni radicate tra cui spicca la Magna Processione Generale del Venerdì Santo.",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/8377",
+      "itinerary": [
+        {
+          "step": "Basilica Minore di Santa Maria dei Reali Alcazari",
+          "items": []
+        },
+        {
+          "step": "Chiesa di San Isidoro",
+          "items": []
+        },
+        {
+          "step": "Chiesa di San Lorenzo",
+          "items": []
+        },
+        {
+          "step": "Chiesa di San Nicola di Bari",
+          "items": []
+        },
+        {
+          "step": "Chiesa di San Paolo",
+          "items": []
+        },
+        {
+          "step": "Sacra Cappella del Salvatore",
+          "items": []
+        },
+        {
+          "step": "Antico Convento di San Andrea",
+          "items": []
+        },
+        {
+          "step": "Convento di Nostra Signora della Concezione Immacolata",
+          "items": []
+        },
+        {
+          "step": "Chiesa di San Millán",
+          "items": []
+        },
+        {
+          "step": "Chiesa di San Pietro",
+          "items": []
+        },
+        {
+          "step": "Chiesa di Santo Domingo",
+          "items": []
+        },
+        {
+          "step": "Chiesa di San Michele",
+          "items": []
+        },
+        {
+          "step": "Chiesa della Santissima Trinità",
+          "items": []
+        },
+        {
+          "step": "Chiesa di San Giovanni Battista",
+          "items": []
+        },
+        {
+          "step": "Complesso Archeologico Rovine di Santo Tomas",
+          "items": []
+        },
+        {
+          "step": "Rovine del Convento de la Merced",
+          "items": []
+        }
+      ]
+    },
+    {
+      "id": "trip/8379",
+      "name": "Gli Indispensabili",
+      "description": "Scopri Úbeda, un gioiello rinascimentale dichiarato Patrimonio Mondiale dall''UNESCO, dove ogni strada e ogni piazza raccontano secoli di storia. Questo percorso raccoglie alcune delle risorse imprescindibili della città, completate con audioguide per permetterti di conoscere il suo patrimonio in modo comodo, immersivo e al tuo proprio ritmo. Dalle monumentali chiese e palazzi nobiliari fino agli angoli pieni di tradizione, il viaggio ti permetterà di immergerti nello splendore artistico e culturale di Úbeda mentre ascolti racconti, curiosità e dettagli storici che arricchiscono ogni visita. Un''esperienza perfetta per scoprire l''essenza della città e vivere il Rinascimento andaluso in modo vicino e dinamico.",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/8379",
+      "itinerary": [
+        {
+          "step": "Sacra Cappella del Salvatore",
+          "items": []
+        },
+        {
+          "step": "Basilica Minore di Santa Maria dei Reali Alcazari",
+          "items": []
+        },
+        {
+          "step": "Palazzo di Juan Vázquez de Molina",
+          "items": []
+        },
+        {
+          "step": "Palazzo del Decano Ortega. Parador de Turismo",
+          "items": []
+        },
+        {
+          "step": "Palazzo del Marchese di Mancera",
+          "items": []
+        },
+        {
+          "step": "Sito archeologico \"Eras del Alcázar\"",
+          "items": []
+        },
+        {
+          "step": "Chiesa di San Lorenzo",
+          "items": []
+        },
+        {
+          "step": "Casa delle Torri",
+          "items": []
+        },
+        {
+          "step": "Palazzo Anguis de Medinilla",
+          "items": []
+        },
+        {
+          "step": "Reale Monastero di Santa Chiara",
+          "items": []
+        },
+        {
+          "step": "Museo Archeologico - Casa Mudéjar",
+          "items": []
+        },
+        {
+          "step": "Chiesa di San Paolo",
+          "items": []
+        },
+        {
+          "step": "Convento di San Michele e Museo San Giovanni della Croce",
+          "items": []
+        },
+        {
+          "step": "Porta del Losal",
+          "items": []
+        },
+        {
+          "step": "Museo della Ceramica \"Paco Tito\"",
+          "items": []
+        },
+        {
+          "step": "Convento di Nostra Signora della Concezione Immacolata",
+          "items": []
+        },
+        {
+          "step": "Chiesa di San Nicola di Bari",
+          "items": []
+        },
+        {
+          "step": "Casa de la Tercia (Centro di Interpretazione Olivo e Olio)",
+          "items": []
+        },
+        {
+          "step": "Chiesa della Santissima Trinità",
+          "items": []
+        },
+        {
+          "step": "Chiesa di San Isidoro",
+          "items": []
+        },
+        {
+          "step": "Ospedale di Santiago",
+          "items": []
+        }
+      ]
+    },
+    {
+      "id": "trip/8380",
+      "name": "Percorsi e Guide",
+      "description": "Le rotte turistiche e le visite guidate a Úbeda sono il miglior modo per scoprire la città in profondità. Attraverso guide professionali, il visitatore può conoscere la storia, le curiosità e i segreti del centro storico.\n\nEsistono rotte monumentali, rotte tematiche, visite notturne e percorsi adattati a diversi interessi, il che permette di personalizzare l''esperienza. Le rotte guidate aiutano a interpretare il patrimonio e a comprendere l''importanza storica e artistica di ogni spazio.\n\nSono anche offerte rotte legate al Rinascimento, all''oleoturismo o al patrimonio archeologico. Scoprire Úbeda con una guida è vivere la città in modo più completo, arricchente e memorabile.\n\nÚbeda offre al visitatore un''infinità di possibilità per essere scoperta attraverso rotte e visite guidate che permettono di conoscere la città da molteplici prospettive. La sua ricchezza storica, artistica e culturale trasforma ogni percorso in un viaggio nel tempo, dove il passato rinascimentale convive con la vita quotidiana attuale.",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/8380",
+      "itinerary": [
+        {
+          "step": "Percorsi per Úbeda",
+          "items": [
+            {
+              "name": "Rotta delle Tre Culture",
+              "poi_id": "poi/65801"
+            },
+            {
+              "name": "Percorso del Quartiere del Vasaio e Santo Tomás",
+              "poi_id": "poi/65803"
+            },
+            {
+              "name": "Percorso dei Quartieri Tradizionali",
+              "poi_id": "poi/65800"
+            },
+            {
+              "name": "Rotta Rinascimento del Sud",
+              "poi_id": "poi/65804"
+            }
+          ]
+        },
+        {
+          "step": "Visite Guidate",
+          "items": [
+            {
+              "name": "Artigiani",
+              "poi_id": "poi/35374"
+            },
+            {
+              "name": "Atlante",
+              "poi_id": "poi/35376"
+            },
+            {
+              "name": "Scopri Úbeda",
+              "poi_id": "poi/35468"
+            },
+            {
+              "name": "Fenice",
+              "poi_id": "poi/35389"
+            },
+            {
+              "name": "Turismo di Semer",
+              "poi_id": "poi/35379"
+            },
+            {
+              "name": "Scusi",
+              "poi_id": "poi/35380"
+            },
+            {
+              "name": "Vandelvira Turismo",
+              "poi_id": "poi/35382"
+            },
+            {
+              "name": "Agorà",
+              "poi_id": "poi/66484"
+            },
+            {
+              "name": "Esplora Úbeda Tour",
+              "poi_id": "poi/66485"
+            },
+            {
+              "name": "Terra della lince iberica",
+              "poi_id": "poi/35388"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "trip/8383",
+      "name": "Úbeda in 3 giorni",
+      "description": "Visitare Úbeda significa immergersi in una città che invita a camminare lentamente, a osservare i dettagli e a lasciarsi sorprendere dal suo patrimonio, dalla sua gastronomia e dal suo ambiente accogliente. Dedicare tre giorni a scoprirlo permette di conoscere i suoi principali monumenti, godere della sua vita locale e vivere esperienze adatte sia a famiglie che a coppie o gruppi di amici. Questo itinerario di tre giorni è pensato per sfruttare al massimo il tempo senza rinunciare al riposo né ai piccoli piaceri del viaggio.",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/8383",
+      "itinerary": [
+        {
+          "step": "Giorno 1",
+          "items": [
+            {
+              "name": "Piazza Vázquez de Molina",
+              "poi_id": "poi/30536"
+            },
+            {
+              "name": "Palazzo di Juan Vázquez de Molina",
+              "poi_id": "poi/5154"
+            },
+            {
+              "name": "Antico Pósito",
+              "poi_id": "poi/5147"
+            },
+            {
+              "name": "Basilica Minore di Santa Maria dei Reali Alcazari",
+              "poi_id": "poi/5144"
+            },
+            {
+              "name": "Prigione del Vescovo",
+              "poi_id": "poi/5145"
+            },
+            {
+              "name": "Palazzo del Marchese di Mancera",
+              "poi_id": "poi/30116"
+            },
+            {
+              "name": "Palazzo del Decano Ortega. Parador de Turismo",
+              "poi_id": "poi/30117"
+            },
+            {
+              "name": "Ospedale degli Onorevoli Vecchi di El Salvador",
+              "poi_id": "poi/5149"
+            },
+            {
+              "name": "Porta di Santa Lucia",
+              "poi_id": "poi/30154"
+            },
+            {
+              "name": "Belvedere di Santa Lucia",
+              "poi_id": "poi/30148"
+            },
+            {
+              "name": "Sito archeologico \"Eras del Alcázar\"",
+              "poi_id": "poi/30133"
+            },
+            {
+              "name": "Piazza dei Belvedere",
+              "poi_id": "poi/30535"
+            }
+          ]
+        },
+        {
+          "step": "Giorno 2",
+          "items": [
+            {
+              "name": "Chiesa di San Isidoro",
+              "poi_id": "poi/30122"
+            },
+            {
+              "name": "Antiche Macellerie",
+              "poi_id": "poi/30111"
+            },
+            {
+              "name": "Torre Ottogonale",
+              "poi_id": "poi/30125"
+            },
+            {
+              "name": "Chiesa della Santissima Trinità",
+              "poi_id": "poi/8439"
+            },
+            {
+              "name": "Piazza di Andalusia",
+              "poi_id": "poi/30538"
+            },
+            {
+              "name": "Palazzo dei Bussianos",
+              "poi_id": "poi/30123"
+            },
+            {
+              "name": "Strade Mesones e Obispo Cobos",
+              "poi_id": "poi/35697"
+            },
+            {
+              "name": "ATTIVITÀ IN PLAZA DE TOROS",
+              "poi_id": "poi/39144"
+            },
+            {
+              "name": "Plaza de Toros de Úbeda",
+              "poi_id": "poi/5151"
+            }
+          ]
+        },
+        {
+          "step": "Giorno 3",
+          "items": [
+            {
+              "name": "Centro di Interpretazione \"Le Mura di Úbeda: Torrione di Portillo del Santo Cristo\"",
+              "poi_id": "poi/30139"
+            },
+            {
+              "name": "Belvedere e monumento dell'Alfiere Rojas Navarrete",
+              "poi_id": "poi/30708"
+            },
+            {
+              "name": "Belvedere di San Lorenzo",
+              "poi_id": "poi/30143"
+            },
+            {
+              "name": "Chiesa di San Lorenzo",
+              "poi_id": "poi/5141"
+            },
+            {
+              "name": "Casa delle Torri",
+              "poi_id": "poi/5142"
+            },
+            {
+              "name": "Porta di Granada",
+              "poi_id": "poi/5143"
+            },
+            {
+              "name": "Palazzo dei Medinilla",
+              "poi_id": "poi/30131"
+            },
+            {
+              "name": "Chiesa di Santo Domingo",
+              "poi_id": "poi/30112"
+            },
+            {
+              "name": "Palazzo del Marchese di Contadero",
+              "poi_id": "poi/30132"
+            },
+            {
+              "name": "Palazzo Vela de los Cobos",
+              "poi_id": "poi/5156"
+            },
+            {
+              "name": "Reale Monastero di Santa Chiara",
+              "poi_id": "poi/30119"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "trip/8411",
+      "name": "Itinerario Patrimoniale. Úbeda in Famiglia",
+      "description": "Si tratta di un percorso circolare, che potrebbe iniziare e finire in qualsiasi punto.",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/8411",
+      "itinerary": [
+        {
+          "step": "Itinerario Patrimoniale. Úbeda in Famiglia",
+          "items": []
+        },
+        {
+          "step": "Piazza Vázquez de Molina",
+          "items": []
+        },
+        {
+          "step": "Sacra Cappella del Salvatore",
+          "items": []
+        },
+        {
+          "step": "Palazzo del Decano Ortega. Parador de Turismo",
+          "items": []
+        },
+        {
+          "step": "Ospedale degli Onorevoli Vecchi di El Salvador",
+          "items": []
+        },
+        {
+          "step": "Palazzo di Juan Vázquez de Molina",
+          "items": []
+        },
+        {
+          "step": "Basilica Minore di Santa Maria dei Reali Alcazari",
+          "items": []
+        },
+        {
+          "step": "Palazzo del Marchese di Mancera",
+          "items": []
+        },
+        {
+          "step": "Piazza 1º Maggio",
+          "items": []
+        },
+        {
+          "step": "Antichi Palazzi del Municipio",
+          "items": []
+        },
+        {
+          "step": "Chiesa di San Paolo",
+          "items": []
+        },
+        {
+          "step": "Antico Convento di San Andrea",
+          "items": []
+        },
+        {
+          "step": "Piazza di Andalusia",
+          "items": []
+        },
+        {
+          "step": "Torre dell'orologio",
+          "items": []
+        },
+        {
+          "step": "Chiesa della Santissima Trinità",
+          "items": []
+        },
+        {
+          "step": "Ospedale di Santiago",
+          "items": []
+        },
+        {
+          "step": "Chiesa di San Isidoro",
+          "items": []
+        },
+        {
+          "step": "Piazza San Pietro",
+          "items": []
+        },
+        {
+          "step": "Reale Monastero di Santa Chiara",
+          "items": []
+        },
+        {
+          "step": "Chiesa di Santo Domingo",
+          "items": []
+        },
+        {
+          "step": "Centro di Interpretazione \"Le Mura di Úbeda: Torrione di Portillo del Santo Cristo\"",
+          "items": []
+        },
+        {
+          "step": "Casa delle Torri",
+          "items": []
+        },
+        {
+          "step": "Chiesa di San Lorenzo",
+          "items": []
+        },
+        {
+          "step": "Porta di Granada",
+          "items": []
+        }
+      ]
+    },
+    {
+      "id": "trip/8412",
+      "name": "Itinerario 1 Úbeda in Famiglia",
+      "description": "Viaggiare a Úbeda in famiglia è un''opportunità perfetta per imparare, condividere e creare ricordi indimenticabili, scoprendo una città Patrimonio Mondiale che sa accogliere grandi e piccini con proposte pensate per tutti.\n\nPrendendo come riferimento le raccomandazioni del suo spazio di turismo familiare e le sue risorse interattive, ti proponiamo 5 percorsi.",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/8412",
+      "itinerary": [
+        {
+          "step": "Itinerario 1. Úbeda in Famiglia",
+          "items": []
+        },
+        {
+          "step": "Torre dell'orologio",
+          "items": []
+        },
+        {
+          "step": "Portada Plateresca calle Gradas",
+          "items": []
+        },
+        {
+          "step": "Chiesa di San Isidoro",
+          "items": []
+        },
+        {
+          "step": "Piccolo parco giochi",
+          "items": []
+        },
+        {
+          "step": "Plaza de Toros de Úbeda",
+          "items": []
+        },
+        {
+          "step": "Ospedale di Santiago",
+          "items": []
+        },
+        {
+          "step": "Parco Nord",
+          "items": []
+        }
+      ]
+    },
+    {
+      "id": "trip/8413",
+      "name": "Percorso 2 Úbeda in Famiglia",
+      "description": "Viaggiare a Úbeda in famiglia è un''opportunità perfetta per imparare, condividere e creare ricordi indimenticabili, scoprendo una città Patrimonio Mondiale che sa accogliere grandi e piccini con proposte pensate per tutti.\n\nPrendendo come riferimento le raccomandazioni del suo spazio di turismo familiare e le sue risorse interattive, ti proponiamo 5 percorsi.",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/8413",
+      "itinerary": [
+        {
+          "step": "Itinerario 2. Úbeda in Famiglia",
+          "items": []
+        },
+        {
+          "step": "Chiesa della Santissima Trinità",
+          "items": []
+        },
+        {
+          "step": "Palazzo dei Bussianos",
+          "items": []
+        },
+        {
+          "step": "Copertina del Cavallerizzo Ortega",
+          "items": []
+        },
+        {
+          "step": "Chiesa di San Nicola di Bari",
+          "items": []
+        },
+        {
+          "step": "Parco giochi del Gallo Rosso",
+          "items": []
+        },
+        {
+          "step": "Parco Vandelvira",
+          "items": []
+        }
+      ]
+    },
+    {
+      "id": "trip/8414",
+      "name": "Rotta 3 Úbeda in Famiglia",
+      "description": "Viaggiare a Úbeda in famiglia è un''opportunità perfetta per imparare, condividere e creare ricordi indimenticabili, scoprendo una città Patrimonio Mondiale che sa accogliere grandi e piccini con proposte pensate per tutti.\n\nPrendendo come riferimento le raccomandazioni del suo spazio di turismo familiare e le sue risorse interattive, ti proponiamo 5 percorsi.",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/8414",
+      "itinerary": [
+        {
+          "step": "Itinerario 3. Úbeda in Famiglia",
+          "items": []
+        },
+        {
+          "step": "Casa de la Tercia (Centro di Interpretazione Olivo e Olio)",
+          "items": []
+        },
+        {
+          "step": "Sala giochi e ludoteca Cocolet",
+          "items": []
+        },
+        {
+          "step": "Torre Ottogonale",
+          "items": []
+        },
+        {
+          "step": "Palazzo Don Luis de la Cueva",
+          "items": []
+        },
+        {
+          "step": "Convento di Nostra Signora della Concezione Immacolata",
+          "items": []
+        },
+        {
+          "step": "Museo Archeologico - Casa Mudéjar",
+          "items": []
+        },
+        {
+          "step": "Sinagoga dell'Acqua",
+          "items": []
+        },
+        {
+          "step": "Chiesa di San Paolo",
+          "items": []
+        },
+        {
+          "step": "Casa dei Granada Venegas",
+          "items": []
+        },
+        {
+          "step": "Convento di San Michele e Museo San Giovanni della Croce",
+          "items": []
+        },
+        {
+          "step": "Porta del Losal",
+          "items": []
+        },
+        {
+          "step": "Chiesa di San Millán",
+          "items": []
+        },
+        {
+          "step": "Museo della Ceramica \"Paco Tito\"",
+          "items": []
+        }
+      ]
+    },
+    {
+      "id": "trip/8415",
+      "name": "Percorso 4 Úbeda in Famiglia",
+      "description": "Viaggiare a Úbeda in famiglia è un''opportunità perfetta per imparare, condividere e creare ricordi indimenticabili, scoprendo una città Patrimonio Mondiale che sa accogliere grandi e piccini con proposte pensate per tutti.\n\nPrendendo come riferimento le raccomandazioni del suo spazio di turismo familiare e le sue risorse interattive, ti proponiamo 5 percorsi.",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/8415",
+      "itinerary": [
+        {
+          "step": "Percorso 4. Úbeda in Famiglia",
+          "items": []
+        },
+        {
+          "step": "Hotel Palazzo del Marchese de la Rambla",
+          "items": []
+        },
+        {
+          "step": "Chiesa di San Pietro",
+          "items": []
+        },
+        {
+          "step": "Ristorante Hotel Palazzo di Úbeda G.L. \"El Ábside\"",
+          "items": []
+        },
+        {
+          "step": "Teatro Ideal Cinema",
+          "items": []
+        },
+        {
+          "step": "Reale Monastero di Santa Chiara",
+          "items": []
+        },
+        {
+          "step": "Palazzo Anguis de Medinilla",
+          "items": []
+        },
+        {
+          "step": "Palazzo Vela de los Cobos",
+          "items": []
+        },
+        {
+          "step": "Palazzo di Juan Vázquez de Molina",
+          "items": []
+        },
+        {
+          "step": "Chiesa di Santo Domingo",
+          "items": []
+        },
+        {
+          "step": "Casa Museo Arte Andalusí",
+          "items": []
+        }
+      ]
+    },
+    {
+      "id": "trip/8416",
+      "name": "Itinerario 5 Úbeda in Famiglia",
+      "description": "Viaggiare a Úbeda in famiglia è un''opportunità perfetta per imparare, condividere e creare ricordi indimenticabili, scoprendo una città Patrimonio Mondiale che sa accogliere grandi e piccini con proposte pensate per tutti.\n\nPrendendo come riferimento le raccomandazioni del suo spazio di turismo familiare e le sue risorse interattive, ti proponiamo 5 percorsi.",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/8416",
+      "itinerary": [
+        {
+          "step": "Itinerario 5. Úbeda in Famiglia",
+          "items": []
+        },
+        {
+          "step": "Centro di Interpretazione \"Le Mura di Úbeda: Torrione di Portillo del Santo Cristo\"",
+          "items": []
+        },
+        {
+          "step": "Giardini della Cava e parco giochi",
+          "items": []
+        },
+        {
+          "step": "Belvedere e monumento dell'Alfiere Rojas Navarrete",
+          "items": []
+        },
+        {
+          "step": "Belvedere di San Lorenzo",
+          "items": []
+        },
+        {
+          "step": "Chiesa di San Lorenzo",
+          "items": []
+        },
+        {
+          "step": "Officina di fabbro Tiznajo",
+          "items": []
+        },
+        {
+          "step": "Porta di Granada",
+          "items": []
+        },
+        {
+          "step": "Piazza Vázquez de Molina",
+          "items": []
+        },
+        {
+          "step": "Belvedere di Santa Lucia",
+          "items": []
+        },
+        {
+          "step": "Parco giochi Ronda Antonio Muñoz Molina",
+          "items": []
+        }
+      ]
+    },
+    {
+      "id": "trip/8417",
+      "name": "Monumenti",
+      "description": "I monumenti di Úbeda costituiscono uno dei complessi patrimoniali più importanti dell''Andalusia e di tutta la Spagna. La città si distingue per la sua straordinaria architettura rinascimentale, riconosciuta internazionalmente dopo la sua dichiarazione come Patrimonio Mondiale dall''UNESCO. Passeggiare per Úbeda è scoprire palazzi, chiese e edifici civili che riflettono lo splendore artistico e politico vissuto durante i secoli XVI e XVII.\n\nTra i monumenti più emblematici si trova la Plaza Vázquez de Molina, considerata una delle piazze rinascimentali più belle d''Europa. In essa si concentrano gioielli architettonici come la Sacra Cappella del Salvador, il Palazzo delle Catene o l''Antico Pósito, che trasformano questo spazio nel cuore monumentale della città.\n\nLa Sacra Cappella del Salvador è uno dei grandi simboli di Úbeda e una visita imprescindibile. La sua facciata monumentale e il suo interno riccamente decorato riflettono l''importanza del Rinascimento spagnolo e il potere dei suoi promotori.\n\nAltri monumenti degni di nota sono la Basilica minore di Santa Maria dei Reali Alcázares, l''Ospedale di Santiago — conosciuto come l''“Escorial andaluso” — e numerosi palazzi nobiliari che costellano il centro storico.\n\nVisitare i monumenti di Úbeda è immergersi in secoli di storia, arte e cultura, godendo di un ambiente monumentale unico che rende la città una destinazione imprescindibile per gli amanti del patrimonio.",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/8417",
+      "itinerary": [
+        {
+          "step": "Sacra Cappella del Salvatore",
+          "items": []
+        },
+        {
+          "step": "Basilica Minore di Santa Maria dei Reali Alcazari",
+          "items": []
+        },
+        {
+          "step": "Piazza Vázquez de Molina",
+          "items": []
+        },
+        {
+          "step": "Antico Pósito",
+          "items": []
+        },
+        {
+          "step": "Prigione del Vescovo",
+          "items": []
+        },
+        {
+          "step": "Ospedale di Santiago",
+          "items": []
+        },
+        {
+          "step": "Torre del Palazzo dei Conti di Guadiana",
+          "items": []
+        },
+        {
+          "step": "Palazzo del Marchese di Mancera",
+          "items": []
+        },
+        {
+          "step": "Ospedale degli Onorevoli Vecchi di El Salvador",
+          "items": []
+        },
+        {
+          "step": "Chiesa di San Paolo",
+          "items": []
+        },
+        {
+          "step": "Antichi Palazzi del Municipio",
+          "items": []
+        },
+        {
+          "step": "Chiesa di San Michele",
+          "items": []
+        },
+        {
+          "step": "Palazzo Vela de los Cobos",
+          "items": []
+        },
+        {
+          "step": "Reale Monastero di Santa Chiara",
+          "items": []
+        },
+        {
+          "step": "Palazzo Anguis de Medinilla",
+          "items": []
+        },
+        {
+          "step": "Chiesa della Santissima Trinità",
+          "items": []
+        },
+        {
+          "step": "Chiesa di San Isidoro",
+          "items": []
+        },
+        {
+          "step": "Chiesa di Santo Domingo",
+          "items": []
+        },
+        {
+          "step": "Chiesa di San Lorenzo",
+          "items": []
+        },
+        {
+          "step": "Casa delle Torri",
+          "items": []
+        },
+        {
+          "step": "Palazzo dei Medinilla",
+          "items": []
+        },
+        {
+          "step": "Chiesa di San Millán",
+          "items": []
+        },
+        {
+          "step": "Palazzo Don Luis de la Cueva",
+          "items": []
+        },
+        {
+          "step": "Porta di Santa Lucia",
+          "items": []
+        },
+        {
+          "step": "Porta del Losal",
+          "items": []
+        },
+        {
+          "step": "Porta di Granada",
+          "items": []
+        },
+        {
+          "step": "Chiesa di San Pietro",
+          "items": []
+        },
+        {
+          "step": "Palazzo del Marchese di Contadero",
+          "items": []
+        },
+        {
+          "step": "Antico Convento di San Andrea",
+          "items": []
+        },
+        {
+          "step": "Palazzo dei Torrente",
+          "items": []
+        },
+        {
+          "step": "Palazzo dei Bussianos",
+          "items": []
+        },
+        {
+          "step": "Antico Convento della Vittoria",
+          "items": []
+        },
+        {
+          "step": "Copertina del Cavallerizzo Ortega",
+          "items": []
+        },
+        {
+          "step": "Sito archeologico \"Eras del Alcázar\"",
+          "items": []
+        },
+        {
+          "step": "Palazzo degli Orozco",
+          "items": []
+        },
+        {
+          "step": "Antiche Macellerie",
+          "items": []
+        },
+        {
+          "step": "Palazzo dei Carvajales",
+          "items": []
+        },
+        {
+          "step": "Palazzo Francisco de los Cobos",
+          "items": []
+        },
+        {
+          "step": "Edificio delle Poste e dei Telegrafi",
+          "items": []
+        },
+        {
+          "step": "Casa del Obispo Canastero",
+          "items": []
+        },
+        {
+          "step": "Palazzo dei Manueles",
+          "items": []
+        },
+        {
+          "step": "Portada Plateresca calle Gradas",
+          "items": []
+        }
+      ]
+    },
+    {
+      "id": "trip/8418",
+      "name": "Museo e Centri di Interpretazione",
+      "description": "I musei e i centri di interpretazione di Úbeda completano la loro offerta monumentale e permettono di approfondire la storia, l''arte e le tradizioni della città. Questi spazi offrono al visitatore un''esperienza culturale completa e arricchente.\n\nIl Centro di Interpretazione del Rinascimento è fondamentale per comprendere l''importanza di Úbeda durante questo periodo storico. Attraverso risorse audiovisive e mostre didattiche, il visitatore può contestualizzare il valore del complesso monumentale.\n\nAltri musei e spazi espositivi trattano temi come l''archeologia, l''arte sacra o la cultura dell''olio d''oliva, uno dei principali pilastri economici e culturali del territorio.\n\nQuesti centri sono pensati per tutti i tipi di pubblico, dalle famiglie ai visitatori specializzati, e permettono una visita accessibile, piacevole e formativa.\n\nI musei di Úbeda trasformano la visita in un''esperienza culturale completa, ideale per coloro che desiderano conoscere la città oltre le sue strade e monumenti.",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/8418",
+      "itinerary": [
+        {
+          "step": "Museo Archeologico - Casa Mudéjar",
+          "items": []
+        },
+        {
+          "step": "Convento di Nostra Signora della Concezione Immacolata",
+          "items": []
+        },
+        {
+          "step": "Museo della Ceramica \"Paco Tito\"",
+          "items": []
+        },
+        {
+          "step": "Convento di San Michele e Museo San Giovanni della Croce",
+          "items": []
+        },
+        {
+          "step": "Casa de la Tercia (Centro di Interpretazione Olivo e Olio)",
+          "items": []
+        },
+        {
+          "step": "Centro di Interpretazione \"Le Mura di Úbeda: Torrione di Portillo del Santo Cristo\"",
+          "items": []
+        },
+        {
+          "step": "Torre dell'orologio",
+          "items": []
+        }
+      ]
+    },
+    {
+      "id": "trip/8419",
+      "name": "Siti Archeologici",
+      "description": "I siti archeologici di Úbeda e dintorni:\n\nI siti archeologici delle Eras del Alcázar e delle Rovine di Santo Tomás fanno parte della ricchezza patrimoniale di Úbeda e contribuiscono a rafforzare la sua identità storica. Questi spazi permettono di comprendere come la città si sia costruita nel corso del tempo, dai suoi primi insediamenti fino ai giorni nostri.\n\nInoltre, questi siti archeologici rappresentano un''opportunità per godere di un''esperienza culturale diversa, in cui storia, archeologia e turismo si combinano per offrire al visitatore una visione più completa di Úbeda. La conservazione e la valorizzazione di questi siti riflettono l''impegno della città verso il suo patrimonio e la diffusione del suo retaggio culturale.\n\nVisitare questi spazi non significa solo scoprire resti archeologici, ma anche partecipare alla storia viva di Úbeda. Ogni visita contribuisce alla valorizzazione di questi luoghi e alla conoscenza di un patrimonio che appartiene a tutti.\n\nÚbeda è una città riconosciuta a livello internazionale per il suo straordinario patrimonio storico e artistico. Le sue strade rinascimentali, la sua architettura monumentale e la sua ricca tradizione culturale rendono questo luogo uno dei destini più affascinanti del sud della Spagna. Tuttavia, oltre alle sue piazze e edifici emblematici, Úbeda custodisce ancora tesori che permettono di viaggiare in epoche più antiche e comprendere l''origine e l''evoluzione della città. Tra questi spiccano i siti archeologici delle Eras del Alcázar e delle Rovine di Santo Tomás, due spazi che offrono un''esperienza unica per scoprire la storia dalle sue fondamenta.",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/8419",
+      "itinerary": [
+        {
+          "step": "Sito archeologico \"Eras del Alcázar\"",
+          "items": []
+        },
+        {
+          "step": "Complesso Archeologico Rovine di Santo Tomas",
+          "items": []
+        }
+      ]
+    },
+    {
+      "id": "trip/8420",
+      "name": "Altri Luoghi di Interesse Turistico",
+      "description": "Oltre al suo complesso monumentale, Úbeda dispone di numerosi luoghi di interesse turistico che arricchiscono la visita. Mirador naturali, quartieri storici, piazze affascinanti e spazi culturali completano l''esperienza.\n\nL''ambiente naturale che circonda la città offre paesaggi unici dominati dal mare di ulivi. Questi luoghi permettono di scoprire una Úbeda più tranquilla e autentica, lontana dai percorsi più noti.\n\nEsplorare altri angoli di Úbeda è lasciarsi sorprendere da una città piena di sfumature e fascino.\n\nÚbeda punta su un turismo inclusivo e accessibile, lavorando affinché tutte le persone possano godere del suo patrimonio e della sua offerta culturale in condizioni di parità. Il turismo per tutti è un impegno con la diversità e il miglioramento continuo dell''esperienza turistica.\n\nLa città dispone di itinerari accessibili, spazi adattati e risorse informative che facilitano la visita a persone con mobilità ridotta, diversità funzionale o necessità speciali. L''obiettivo è eliminare barriere e promuovere un turismo più giusto e rispettoso.\n\nMolti dei principali monumenti e spazi culturali di Úbeda incorporano misure di accessibilità, permettendo che un maggior numero di persone possa conoscere e godere della sua ricchezza storica e artistica.\n\nInoltre, le informazioni turistiche sono offerte in diversi formati, facilitando la comprensione e l''accesso ai contenuti. Questo contribuisce a che ogni visitatore possa organizzare la sua visita secondo le sue necessità e preferenze.\n\nÚbeda si consolida così come una destinazione impegnata con il turismo per tutti, dove l''accessibilità e l''inclusione fanno parte della sua identità come città aperta e accogliente.",
+      "type": "TouristTrip",
+      "url": "https://inventrip.com/ubeda/trip/8420",
+      "itinerary": [
+        {
+          "step": "Sinagoga dell'Acqua",
+          "items": []
+        },
+        {
+          "step": "Casa dei Granada Venegas",
+          "items": []
+        },
+        {
+          "step": "Casa Museo Arte Andalusí",
+          "items": []
+        },
+        {
+          "step": "Piazzetta della Giudecca",
+          "items": []
+        },
+        {
+          "step": "Sala Museo OleoUnione",
+          "items": []
         }
       ]
     }

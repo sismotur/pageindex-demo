@@ -780,15 +780,9 @@ def run_interactive(system_prompt: str, index: dict, sections_text: str,
             meta += f" | cache {hits}/{total}"
         meta += f" | turn {turn}]"
         print(f"\033[2m{meta}\033[0m")
-
-        # What the app parser extracts from the answer (see
-        # docs/mobile-offline-contract.md §3.6 — POI tags)
-        refs = extract_poi_tags(result["answer"], index)
-        if refs:
-            links = ";  ".join(
-                f"{r['text']} → {r.get('uri', '(unknown id)')}" for r in refs
-            )
-            print(f"\033[2m  links: {links}\033[0m")
+        # The <poi>/<trip>/<path> tags already carry the app's link targets;
+        # no secondary URL list is printed.  extract_poi_tags remains
+        # available for scripted logs and downstream parsers.
         print()
 
 

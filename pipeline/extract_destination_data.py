@@ -84,13 +84,49 @@ def get_item_poi_id(item: dict) -> str:
     API versions/place types have used `identifier`, `item`, and
     `id_object`.  Preserve a valid value rather than inferring an id from
     a translated name; the index builder will validate it against the
-    destination POI map.
+    destination POI map.  Folder entries returned by the API have no
+    concrete identifier (the sentinel `Some(None)`/`null`) — skip them so
+    later resolution never mistakes a group label for a POI id.
     """
     for key in ("identifier", "item", "id_object", "poi_id"):
         value = item.get(key)
-        if value not in (None, ""):
-            return str(value)
+        if value in (None, ""):
+            continue
+        return str(value)
     return ""
+
+
+def extract_itinerary_items(item_list_elements: list[dict],
+                            lang: str) -> list[dict]:
+    """Recursively extract itinerary items, preserving folder/POI hierarchy.
+
+    The Inventrip v120 /trips|/paths payload nests `itemListElement`:
+    a step can carry direct POIs and/or `ItemList` folders that group
+    child POIs (e.g. "1.1 Plaza Vázquez de Molina").  The previous
+    extractor flattened only the top level and lost every child inside
+    a folder.  Each returned entry has:
+      - name:   localized display name (may be empty)
+      - poi_id: stable identifier (present only if the raw item carries one)
+      - items:  nested list (present only when the raw item has children)
+    """
+    out: list[dict] = []
+    for elem in item_list_elements or []:
+        if not isinstance(elem, dict):
+            continue
+        name    = get_localized(elem.get("name", []), lang)
+        poi_id  = get_item_poi_id(elem)
+        children = extract_itinerary_items(
+            elem.get("itemListElement") or [], lang
+        )
+        if not (name or poi_id or children):
+            continue
+        entry: dict = {"name": name}
+        if poi_id:
+            entry["poi_id"] = poi_id
+        if children:
+            entry["items"] = children
+        out.append(entry)
+    return out
 
 
 # ── Fetchers ───────────────────────────────────────────────────────────────────
@@ -128,17 +164,11 @@ def fetch_trips(session, base_url: str, destination: str, lang: str) -> list:
         itinerary = []
         for step in t.get("itinerary", []):
             step_name = get_localized(step.get("name", []), lang)
-            pois = []
-            for item in step.get("itemListElement", []):
-                poi_name = get_localized(item.get("name", []), lang)
-                poi_id = get_item_poi_id(item)
-                if poi_name or poi_id:
-                    poi = {"name": poi_name}
-                    if poi_id:
-                        poi["poi_id"] = poi_id
-                    pois.append(poi)
-            if step_name or pois:
-                itinerary.append({"step": step_name, "pois": pois})
+            items = extract_itinerary_items(
+                step.get("itemListElement") or [], lang
+            )
+            if step_name or items:
+                itinerary.append({"step": step_name, "items": items})
         trips.append({
             "id":          t.get("identifier", ""),
             "name":        name,
@@ -148,6 +178,21 @@ def fetch_trips(session, base_url: str, destination: str, lang: str) -> list:
             "itinerary":   itinerary,
         })
     return trips
+
+
+def _flatten_waypoints(items: list[dict]) -> list[dict]:
+    """Return every POI-like leaf under a recursive item tree.
+
+    Kept only for the top-level `waypoints` compatibility field on paths.
+    """
+    out: list[dict] = []
+    for item in items or []:
+        children = item.get("items") or []
+        if children:
+            out.extend(_flatten_waypoints(children))
+        else:
+            out.append({k: v for k, v in item.items() if k != "items"})
+    return out
 
 
 def fetch_paths(session, base_url: str, route_ids: list, lang: str) -> list:
@@ -162,33 +207,24 @@ def fetch_paths(session, base_url: str, route_ids: list, lang: str) -> list:
             p = data[0]
             name = get_localized(p.get("name", []), lang)
             desc = get_localized(p.get("description", []), lang)
-            waypoints = []
             itinerary = []
+            all_leaves: list[dict] = []
             for step in p.get("itinerary", []):
                 step_name = get_localized(step.get("name", []), lang)
-                step_waypoints = []
-                for item in step.get("itemListElement", []):
-                    wp = get_localized(item.get("name", []), lang)
-                    poi_id = get_item_poi_id(item)
-                    if wp or poi_id:
-                        waypoint = {"name": wp}
-                        if poi_id:
-                            waypoint["poi_id"] = poi_id
-                        waypoints.append(waypoint)
-                        step_waypoints.append(waypoint)
-                if step_name or step_waypoints:
-                    itinerary.append({
-                        "step": step_name,
-                        "pois": step_waypoints,
-                    })
+                items = extract_itinerary_items(
+                    step.get("itemListElement") or [], lang
+                )
+                if step_name or items:
+                    itinerary.append({"step": step_name, "items": items})
+                    all_leaves.extend(_flatten_waypoints(items))
             paths.append({
                 "id":         p.get("identifier", str(rid)),
                 "name":       name,
                 "description": desc,
-                "waypoints":  waypoints,
+                "waypoints":  all_leaves,
                 "itinerary":  itinerary,
             })
-            print(f"  [path {rid}] \"{name}\"  ({len(waypoints)} waypoints)")
+            print(f"  [path {rid}] \"{name}\"  ({len(all_leaves)} waypoints)")
         except SystemExit:
             print(f"  [SKIP path {rid}] fetch failed", file=sys.stderr)
     return paths
@@ -218,7 +254,18 @@ def fetch_tourist_types(session, base_url: str, lang: str) -> dict:
     return mapping
 
 
-# ── Main ───────────────────────────────────────────────────────────────────────
+def _count_leaf_items(items: list[dict]) -> int:
+    total = 0
+    for item in items or []:
+        children = item.get("items")
+        if children:
+            total += _count_leaf_items(children)
+        else:
+            total += 1
+    return total
+
+
+# ── Main ──────────────────────────────────────────────────────────────
 
 def main() -> None:
     parser = argparse.ArgumentParser(
@@ -258,7 +305,7 @@ def main() -> None:
     print("\n[2/5] Fetching trips with itineraries...")
     trips = fetch_trips(session, base_url, args.destination, args.lang)
     for t in trips:
-        total_pois = sum(len(s["pois"]) for s in t["itinerary"])
+        total_pois = sum(_count_leaf_items(s["items"]) for s in t["itinerary"])
         print(f"  {t['id']:12s}  \"{t['name']}\"  "
               f"({len(t['itinerary'])} steps, {total_pois} POIs)")
 

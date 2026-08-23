@@ -148,7 +148,7 @@ destinations by proximity.
 
 ---
 
-## 4. The index file (schema v5)
+## 4. The index file (schema v6)
 
 One JSON object per file. Reference size: ~0.75 MB (Úbeda, 367 POIs).
 Parse it fully into memory at session start — everything is then
@@ -173,15 +173,18 @@ dict/map lookups.
 ```json
 { "destination": "ubeda", "destination_display": "Úbeda", "lang": "en",
   "generated_at": "2026-08-16T05:13:09Z", "poi_count": 367,
-  "section_count": 18, "schema_version": 5 }
+  "section_count": 18, "schema_version": 6 }
 ```
 
 **Versioning rule:** additive changes bump `schema_version`; readers
 must ignore unknown keys. v2 added `sections[].groups`; v3 adds
 `facets.search_terms` for deterministic evidence search; v4 adds
 resolved `trips[]` and `paths[]`; v5 adds stable source-id and
-cross-language itinerary-stop resolution. Older readers still work
-because `sections[].poi_ids` and POI records remain complete.
+cross-language itinerary-stop resolution; v6 stores itinerary stops as a
+nested `steps[].items[]` tree (`folder | poi | unresolved`) while keeping
+the flat `steps[].poi_ids` projection for older readers. All previous
+readers still work because `sections[].poi_ids` and POI records remain
+complete.
 
 ### 4.3 `trips[]` and `paths[]`
 
@@ -191,13 +194,24 @@ because `sections[].poi_ids` and POI records remain complete.
   "trip_id": "trip/4407",
   "kind": "trip",
   "source_type": "TouristTrip",
-  "name": "TASTE ÚBEDA",
+  "name": "Savor Úbeda",
   "description": "…",
   "url": "https://inventrip.com/ubeda/trip/4407",
   "steps": [{
     "position": 1,
     "title": "Restaurants",
-    "poi_ids": ["poi/35398", "poi/35403"],
+    "items": [
+      { "kind": "poi", "poi_id": "poi/35398",
+        "source_name": "Restaurant Asador de Santiago",
+        "resolution":  "source_id" }
+    ],
+    "poi_ids": ["poi/35398"],
+    "poi_resolutions": [
+      { "poi_id": "poi/35398",
+        "source_name": "Restaurant Asador de Santiago",
+        "resolution":  "source_id" }
+    ],
+    "subfolders":           [],
     "unresolved_poi_names": []
   }]
 }
@@ -207,9 +221,10 @@ because `sections[].poi_ids` and POI records remain complete.
 The distinction is mandatory: trips are editorial visit suggestions;
 paths are physical walking/cycling/trail records from `/v120/paths`.
 
-`poi_ids` are already localized resolved IDs. Keep
-`unresolved_poi_names`: source itineraries sometimes name stops that have
-no matching offline POI record.
+Each step exposes both a nested `items` tree (schema v6, `folder`, `poi`,
+`unresolved` kinds) and a flat `poi_ids` projection in reading order for
+pre-v6 readers. Keep `unresolved_poi_names`: source itineraries sometimes
+name stops that have no matching offline POI record.
 
 ### 4.4 `sections[]` and v2 `groups[]`
 
@@ -337,7 +352,9 @@ it must never invent the relationship.
 
 Schema v4 adds `trips[]` and `paths[]`, both with ordered step records:
 `position`, `title`, resolved `poi_ids`, and preserved
-`unresolved_poi_names`.
+`unresolved_poi_names`. Schema v6 adds the nested `steps[].items[]` tree
+so subfolders like `1.1 Plaza Vázquez de Molina` keep their child POIs
+instead of collapsing to a single label.
 
 - `trips[]` comes from `/v120/trips`: editorial suggestions for a theme,
   day, or multi-day visit. A trip is **not** a physical route.
@@ -426,7 +443,7 @@ The LLM layer on top of this (tools, prompt, loop) is specified in
 
 | Metric | Value |
 |---|---|
-| Index file size | 1.1 MB / 130 KB gzip (schema v5, English) |
+| Index file size | 1.2 MB / 140 KB gzip (schema v6, English) |
 | POIs / sections | 367 / 18 (4 sections carry `groups`) |
 | Parse time on desktop | < 10 ms |
 | Assistant quality gate (E2B) | grounding 75.0% / content-fetch 95% — both pass |

@@ -48,7 +48,8 @@ from index_tools import (
     strip_poi_tags,
 )
 from common.textnorm import normalize_text, tokenize
-from pipeline.build_index import _resolve_itinerary_steps
+from pipeline.build_index import _resolve_items, _resolve_itinerary_steps
+from pipeline.extract_destination_data import extract_itinerary_items
 from run_eval import (
     grounding_failure_message,
     is_physical_route_request,
@@ -140,17 +141,15 @@ class TestStrictGrounding:
         from index_tools import resolve_history_selection
         history = [{
             "role": "assistant",
-            "content": (
-                '<trip id=4453>Ú. en Familia-R. Secundaria 2</trip>'
-            ),
+            "content": '<trip id=4457>Qué No Perderte</trip>',
         }]
         selection = resolve_history_selection(
-            "Secundaria 2", history, spanish_index
+            "No Perderte", history, spanish_index
         )
         assert selection == {
             "kind": "trip",
-            "id": "trip/4453",
-            "label": "Ú. en Familia-R. Secundaria 2",
+            "id": "trip/4457",
+            "label": "Qué No Perderte",
         }
 
     def test_resolves_unique_poi_selection_from_history(self, index):
@@ -187,8 +186,8 @@ class TestStrictGrounding:
 class TestSectionGroups:
     """Sections with > 30 POIs must carry a consistent per-type group map."""
 
-    def test_schema_version_is_5(self, index):
-        assert index["meta"]["schema_version"] == 5
+    def test_schema_version_is_6(self, index):
+        assert index["meta"]["schema_version"] == 6
 
     def test_large_sections_have_groups(self, index):
         grouped = {s["section_id"] for s in index["sections"] if s.get("groups")}
@@ -407,9 +406,9 @@ class TestEvidenceSearch:
 class TestCuratedItineraries:
     """Trips are suggestions; paths are physical routes from /v120/paths."""
 
-    def test_schema_v5_has_trips_and_paths(self, index):
-        assert index["meta"]["schema_version"] == 5
-        assert len(index["trips"]) == 29
+    def test_schema_v6_has_trips_and_paths(self, index):
+        assert index["meta"]["schema_version"] == 6
+        assert len(index["trips"]) >= 29
         # Úbeda currently advertises no /paths route IDs. Empty is valid.
         assert index["paths"] == []
 
@@ -417,7 +416,7 @@ class TestCuratedItineraries:
         trip = get_trip(index, "trip/4407")
         assert trip is not None
         assert trip["kind"] == "trip"
-        assert trip["name"] == "TASTE ÚBEDA"
+        assert trip["name"] == "Savor Úbeda"
         assert [step["position"] for step in trip["steps"]] == \
             list(range(1, len(trip["steps"]) + 1))
         assert any(step["poi_ids"] for step in trip["steps"])
@@ -426,13 +425,13 @@ class TestCuratedItineraries:
                 assert poi_id in index["pois"]
 
     def test_trip_search_returns_trip_tags_not_path_tags(self, index):
-        out = format_search_trips(index, "taste ubeda", limit=3)
-        assert "<trip id=4407>TASTE ÚBEDA</trip>" in out
+        out = format_search_trips(index, "savor", limit=3)
+        assert "<trip id=4407>Savor Úbeda</trip>" in out
         assert "<path " not in out
 
     def test_trip_detail_has_tagged_ordered_poi_stops(self, index):
         out = format_trip(index, "4407")  # bare numeric id accepted
-        assert out.startswith("# <trip id=4407>TASTE ÚBEDA</trip>")
+        assert out.startswith("# <trip id=4407>Savor Úbeda</trip>")
         assert "1. Restaurants" in out
         assert "<poi id=" in out
         assert "[poi/" not in out
@@ -498,17 +497,116 @@ class TestCuratedItineraries:
         assert steps[0]["poi_ids"] == ["poi/30117"]
         assert steps[0]["poi_resolutions"][0]["resolution"] == "source_id"
 
-    def test_spanish_trip_aliases_link_but_absent_stop_stays_hidden(self, spanish_index):
+class TestNestedItems:
+    """Schema v6: itineraries preserve folder/POI hierarchy end-to-end."""
+
+    def test_extractor_recurses_folder_children(self):
+        raw = [{
+            "identifier": None,
+            "type":       ["ItemList"],
+            "name":       [{"language": "es",
+                            "value": "1.1 Plaza Vázquez de Molina"}],
+            "itemListElement": [{
+                "identifier": "poi/30536",
+                "name":       [{"language": "es",
+                                "value":    "Plaza Vázquez de Molina"}],
+            }],
+        }]
+        out = extract_itinerary_items(raw, "es")
+        assert len(out) == 1
+        folder = out[0]
+        # Folder itself never carries a POI id.
+        assert folder["name"] == "1.1 Plaza Vázquez de Molina"
+        assert "poi_id" not in folder
+        # Its child is a resolved leaf.
+        child = folder["items"][0]
+        assert child == {
+            "name":   "Plaza Vázquez de Molina",
+            "poi_id": "poi/30536",
+        }
+
+    def test_extractor_skips_language_only_folder_headers(self):
+        # A folder with no localized name and no children collapses away.
+        raw = [{
+            "identifier": None,
+            "name":       [{"language": "en", "value": "only english"}],
+            "itemListElement": [],
+        }]
+        assert extract_itinerary_items(raw, "es") == []
+
+    def test_builder_classifies_folder_poi_and_unresolved(self):
+        raw_items = [
+            {
+                "name": "1.1 Plaza Vázquez de Molina",
+                "items": [
+                    {"name": "Real POI",     "poi_id": "30117"},
+                    {"name": "Ghost lodging"},
+                ],
+            },
+            {"name": "Direct POI", "poi_id": "5155"},
+        ]
+        flat_ids: list[str] = []
+        flat_res: list[dict] = []
+        flat_sub: list[str] = []
+        flat_unres: list[str] = []
+        resolved = _resolve_items(
+            raw_items,
+            name_index={},
+            alias_name_index={},
+            valid_poi_ids={"poi/30117", "poi/5155"},
+            flat_poi_ids=flat_ids,
+            flat_resolutions=flat_res,
+            flat_subfolders=flat_sub,
+            flat_unresolved=flat_unres,
+        )
+        kinds = [item["kind"] for item in resolved]
+        assert kinds == ["folder", "poi"]
+        folder = resolved[0]
+        assert [c["kind"] for c in folder["items"]] == ["poi", "unresolved"]
+        # Flat accumulators are populated in reading order.
+        assert flat_ids == ["poi/30117", "poi/5155"]
+        assert flat_sub == ["1.1 Plaza Vázquez de Molina"]
+        assert flat_unres == ["Ghost lodging"]
+
+    def test_builder_accepts_legacy_flat_pois(self):
+        """Rebuilding an old snapshot without re-extraction must still work."""
+        steps = _resolve_itinerary_steps(
+            [{"step": "Stops", "pois": ["Plain string entry"]}],
+            name_index={"plain string entry": "poi/5155"},
+            alias_name_index={},
+            valid_poi_ids={"poi/5155"},
+        )
+        assert steps[0]["poi_ids"] == ["poi/5155"]
+        # The nested tree mirrors the flat resolution so newer renderers
+        # still have something to walk.
+        assert steps[0]["items"][0]["kind"] == "poi"
+
+    def test_renderer_indents_nested_folders(self, spanish_index):
+        rendered = format_trip(spanish_index, "trip/4444")
+        # First folder line at depth 1, its child POIs at depth 2.
+        assert "   - 1.1 Plaza Vázquez de Molina" in rendered
+        assert "      - <poi id=30536" in rendered
+
+    def test_spanish_trip_source_ids_link_but_absent_stop_stays_hidden(self, spanish_index):
         trip = get_trip(spanish_index, "trip/4444")
         first_step = trip["steps"][0]
+        # Schema v6 keeps subfolder labels in a flat list for tools that
+        # do not walk the nested tree (Android search, etc.).
         assert "1.1 Plaza Vázquez de Molina" in first_step["subfolders"]
         lodging = next(step for step in trip["steps"] if step["title"].startswith("4."))
         resolved = {item["source_name"]: item for item in lodging["poi_resolutions"]}
-        assert resolved["Yit El Postigo Hotel"]["poi_id"] == "poi/30459"
-        assert resolved["Yit El Postigo Hotel"]["resolution"] == "cross_language_alias"
+        # The API now carries a stable poi id per stop, so the localized
+        # Spanish name resolves via source_id rather than a cross-language
+        # alias.
+        assert resolved["Hotel Yit El Postigo"]["poi_id"] == "poi/30459"
+        assert resolved["Hotel Yit El Postigo"]["resolution"] == "source_id"
+        # CR La Casería de Tito still has no matching POI in the ES corpus,
+        # so it stays QA-only and out of visitor output.
         assert "CR La Casería de Tito" in lodging["unresolved_poi_names"]
 
         rendered = format_trip(spanish_index, "trip/4444")
+        # Nested folder header at depth 1 (three-space indent) followed by
+        # its child POIs at depth 2 (six-space indent).
         assert "   - 1.1 Plaza Vázquez de Molina" in rendered
         assert "<poi id=30459 type=Hotel>Hotel Yit El Postigo</poi>" in rendered
         assert "CR La Casería de Tito" not in rendered
@@ -601,6 +699,22 @@ class TestPoiTags:
         assert sanitized.startswith("places include ")
         assert "<poi id=36694 type=OilMill>Almazara</poi>" in sanitized
         assert "<place " not in sanitized
+
+    def test_interactive_output_has_no_redundant_link_footer(self):
+        """The <poi>/<trip>/<path> tags are the only link carriers in chat
+        output; the interactive print path must not emit a secondary URL
+        footer built from extract_poi_tags on the streamed answer.
+
+        We inspect the source of run_interactive so the regression test
+        stays deterministic (no LLM call).
+        """
+        import inspect
+        from chat_demo import run_interactive
+        src = inspect.getsource(run_interactive)
+        # The removed footer built a semicolon-joined `links: ...` line.
+        assert " links: " not in src
+        # And relied on extract_poi_tags applied to the streamed answer.
+        assert 'extract_poi_tags(result["answer"]' not in src
 
     def test_no_tags_returns_empty(self, index):
         assert extract_poi_tags("no tags here", index) == []

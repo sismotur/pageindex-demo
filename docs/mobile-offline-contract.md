@@ -48,15 +48,17 @@ deployment target; expect ≥ the 70% rubric thresholds on EN/ES/IT.
 
 ## 2. The index file (`indexes/{dest}_{lang}.json`)
 
-One JSON object, `meta.schema_version == 5`. Sizes: ~0.7–1.3 MB per pair
+One JSON object, `meta.schema_version == 6`. Sizes: ~0.7–1.3 MB per pair
 (367 POIs, Úbeda). Parse it fully into memory at session start.
 
 Schema v2 adds the optional `sections[].groups` field. Schema v3 adds
 `facets.search_terms`, the deterministic full-text evidence index used by
 `search_pois`. Schema v4 adds resolved `trips[]` and `paths[]`. Schema v5
-adds source-id/cross-language itinerary stop resolution. Older readers can
-ignore these additions — `sections[].poi_ids` and POI records remain
-complete.
+adds source-id/cross-language itinerary stop resolution. Schema v6 stores
+ordered itinerary stops as a nested tree (`steps[].items[]` with `folder`,
+`poi`, and `unresolved` kinds) so subfolder POIs are preserved. Older
+readers that only walk the flat `steps[].poi_ids` continue to work —
+`sections[].poi_ids` and POI records remain complete.
 
 ```jsonc
 {
@@ -67,12 +69,31 @@ complete.
     "generated_at": "2026-08-16T05:13:09Z",
     "poi_count": 367,
     "section_count": 18,
-    "schema_version": 5
+    "schema_version": 6
   },
   "destination_overview": "…multi-line string, embedded in the system prompt…",
   "trips": [
-    { "trip_id": "…", "name": "…", "description": "…", "url": "…",
-      "steps": [ { "step": "…", "pois": ["POI name", …] } ] }
+    { "itinerary_id": "trip/4407", "trip_id": "trip/4407",
+      "kind": "trip", "name": "…", "description": "…", "url": "…",
+      "steps": [ {
+        "position": 1, "title": "1. What not to miss",
+        // v6: recursive tree, folder | poi | unresolved
+        "items": [
+          { "kind": "folder", "name": "1.1 Plaza Vázquez de Molina",
+            "items": [
+              { "kind": "poi", "poi_id": "poi/30536",
+                "source_name": "Plaza Vázquez de Molina",
+                "resolution":  "source_id" },
+              // …
+            ] },
+          { "kind": "unresolved", "name": "CR La Casería de Tito" }
+        ],
+        // Flat reading-order projections kept for pre-v6 readers.
+        "poi_ids":              ["poi/30536"],
+        "poi_resolutions":      [ /* {poi_id, source_name, resolution} */ ],
+        "subfolders":           ["1.1 Plaza Vázquez de Molina"],
+        "unresolved_poi_names": ["CR La Casería de Tito"]
+      } ] }
   ],
   "sections": [
     { "section_id": "shopping",              // slug, stable

@@ -1129,6 +1129,33 @@ def format_search_paths(index: dict, query: str, limit: int = 10) -> str:
     return _format_curated_search(index, query, "paths", "Routes", limit)
 
 
+def _render_curated_items(items: list[dict], index: dict,
+                          lines: list[str], depth: int) -> None:
+    """Recursively render a nested item tree (schema v6).
+
+    Folders are shown with an indented dash label so the visitor sees the
+    editorial structure; POIs render as tag-ready mentions so the mobile
+    parser can deep-link them.  Unresolved items are QA-only and hidden.
+    """
+    indent = "   " * depth
+    for item in items or []:
+        kind = item.get("kind")
+        if kind == "folder":
+            name = item.get("name") or ""
+            if name:
+                lines.append(f"{indent}- {name}")
+            _render_curated_items(
+                item.get("items") or [], index, lines, depth + 1
+            )
+        elif kind == "poi":
+            poi_id = item.get("poi_id") or ""
+            poi = get_poi(index, poi_id) if poi_id else None
+            if poi:
+                lines.append(f"{indent}- {_poi_tag(poi)}")
+        # "unresolved" is intentionally skipped: source labels may be
+        # stale or foreign-language and must not appear as tourist text.
+
+
 def _format_curated_detail(index: dict, itinerary_id: str, collection: str,
                            tag_builder, unavailable: str) -> str:
     """Render ordered trip/path stops, preserving unlinked source names."""
@@ -1148,6 +1175,12 @@ def _format_curated_detail(index: dict, itinerary_id: str, collection: str,
         position = step.get("position") or "?"
         title = step.get("title") or f"Stop {position}"
         lines.append(f"{position}. {title}")
+        step_items = step.get("items")
+        if step_items:
+            # Schema v6 nested items keep folder/POI hierarchy visible.
+            _render_curated_items(step_items, index, lines, depth=1)
+            continue
+        # Legacy flat shape (pre-v6): show subfolder labels then POIs.
         for subfolder in step.get("subfolders") or []:
             lines.append(f"   - {subfolder}")
         for poi_id in step.get("poi_ids") or []:
