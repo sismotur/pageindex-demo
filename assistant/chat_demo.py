@@ -50,6 +50,7 @@ from run_eval import (   # noqa: E402
     NO_DIRECT_EVIDENCE_PREFIX,
     COMPLEMENTARY_SEARCH_INSTRUCTION,
     is_physical_route_request,
+    is_weather_request,
     NO_PATH_ANSWER_INSTRUCTION,
     route_lookup_context,
     SOURCE_GROUNDING_TOOLS,
@@ -60,9 +61,11 @@ from run_eval import (   # noqa: E402
     selected_source_context,
     requires_trip_detail,
     TRIP_DETAIL_REQUIRED_INSTRUCTION,
+    WEATHER_LOOKUP_ENFORCED_INSTRUCTION,
 )
 from index_tools import (   # noqa: E402
     load_index,
+    load_weather,
     format_sections_overview,
     format_section,
     extract_poi_tags,
@@ -71,6 +74,7 @@ from index_tools import (   # noqa: E402
     resolve_trip_query,
     search_trips,
     sanitize_tourist_answer,
+    weather_hint,
 )
 from common.lang_support import (   # noqa: E402
     SUPPORTED_LANGS,
@@ -149,6 +153,8 @@ def _status_for_call(name: str, args: dict) -> str:
         return "Loading route details"
     if name == "list_sections":
         return "Checking available information"
+    if name == "get_weather":
+        return "Checking the forecast"
     return f"Calling {name}"
 
 
@@ -160,13 +166,16 @@ def run_turn(question: str, messages: list[dict],
              on_status=None,
              on_stream_start=None,
              stream: bool = False,
-             recovery_msg: str = "") -> dict:
+             recovery_msg: str = "",
+             weather: dict | None = None) -> dict:
     """Execute one conversation turn over the POI index.
 
     `messages` is mutated in-place with the new user/assistant/tool turns
     so the next call sees full context.
     """
     messages.append({"role": "user", "content": question})
+    weather_lookup_enforced = False
+    weather_intent = bool(weather) and is_weather_request(question)
 
     tool_calls_made = []
     answer     = ""
@@ -207,7 +216,8 @@ def run_turn(question: str, messages: list[dict],
             "path": ("get_path", "path_id"),
         }[selection["kind"]]
         result, hit = execute_tool(
-            tool_name, {arg_name: selection["id"]}, index, sections_text, cache
+            tool_name, {arg_name: selection["id"]}, index, sections_text, cache,
+            weather=weather,
         )
         if hit:
             cache_hits += 1
@@ -265,7 +275,8 @@ def run_turn(question: str, messages: list[dict],
             return False
         selected_id = trip_search_default["itinerary_id"]
         result, hit = execute_tool(
-            "get_trip", {"trip_id": selected_id}, index, sections_text, cache
+            "get_trip", {"trip_id": selected_id}, index, sections_text, cache,
+            weather=weather,
         )
         if hit:
             cache_hits += 1
@@ -359,6 +370,35 @@ def run_turn(question: str, messages: list[dict],
             messages.append(assistant_msg)
 
             if not acc_tool_calls:
+                if weather_intent and "get_weather" not in grounding_tools:
+                    if not weather_lookup_enforced:
+                        weather_lookup_enforced = True
+                        weather_result, weather_hit = execute_tool(
+                            "get_weather", {}, index,
+                            sections_text, cache, weather=weather,
+                        )
+                        if weather_hit:
+                            cache_hits += 1
+                        tool_calls_made.append({
+                            "tool": "get_weather",
+                            "args": {},
+                            "result_preview": weather_result[:250],
+                            "cache_hit": weather_hit,
+                            "automatic": True,
+                        })
+                        grounded = True
+                        if "get_weather" not in grounding_tools:
+                            grounding_tools.append("get_weather")
+                        automatic_source_calls.append({
+                            "tool": "get_weather",
+                            "args": {},
+                        })
+                        messages.append({
+                            "role": "user",
+                            "content": (WEATHER_LOOKUP_ENFORCED_INSTRUCTION
+                                        + "\n\n" + weather_result),
+                        })
+                        continue
                 if physical_route_request and not path_search_started:
                     if route_lookup_enforced:
                         answer = sanitize_tourist_answer(acc_content.strip(), index)
@@ -366,7 +406,7 @@ def run_turn(question: str, messages: list[dict],
                     route_lookup_enforced = True
                     route_result, route_hit = execute_tool(
                         "search_paths", {"query": question}, index,
-                        sections_text, cache,
+                        sections_text, cache, weather=weather,
                     )
                     path_search_started = True
                     no_matching_path = route_result.startswith(
@@ -493,6 +533,35 @@ def run_turn(question: str, messages: list[dict],
             messages.append(assistant_msg)
 
             if not message.tool_calls:
+                if weather_intent and "get_weather" not in grounding_tools:
+                    if not weather_lookup_enforced:
+                        weather_lookup_enforced = True
+                        weather_result, weather_hit = execute_tool(
+                            "get_weather", {}, index,
+                            sections_text, cache, weather=weather,
+                        )
+                        if weather_hit:
+                            cache_hits += 1
+                        tool_calls_made.append({
+                            "tool": "get_weather",
+                            "args": {},
+                            "result_preview": weather_result[:250],
+                            "cache_hit": weather_hit,
+                            "automatic": True,
+                        })
+                        grounded = True
+                        if "get_weather" not in grounding_tools:
+                            grounding_tools.append("get_weather")
+                        automatic_source_calls.append({
+                            "tool": "get_weather",
+                            "args": {},
+                        })
+                        messages.append({
+                            "role": "user",
+                            "content": (WEATHER_LOOKUP_ENFORCED_INSTRUCTION
+                                        + "\n\n" + weather_result),
+                        })
+                        continue
                 if physical_route_request and not path_search_started:
                     if route_lookup_enforced:
                         answer = sanitize_tourist_answer(
@@ -503,7 +572,7 @@ def run_turn(question: str, messages: list[dict],
                     route_lookup_enforced = True
                     route_result, route_hit = execute_tool(
                         "search_paths", {"query": question}, index,
-                        sections_text, cache,
+                        sections_text, cache, weather=weather,
                     )
                     path_search_started = True
                     no_matching_path = route_result.startswith(
@@ -601,7 +670,9 @@ def run_turn(question: str, messages: list[dict],
             if on_status:
                 on_status(_status_for_call(fn_name, fn_args))
 
-            result, hit = execute_tool(fn_name, fn_args, index, sections_text, cache)
+            result, hit = execute_tool(
+                fn_name, fn_args, index, sections_text, cache, weather=weather,
+            )
             if fn_name in SOURCE_GROUNDING_TOOLS:
                 grounded = True
                 if fn_name not in grounding_tools:
@@ -703,7 +774,8 @@ def prewarm_cache(index: dict) -> dict:
 
 def run_conversation(thread: dict, system_prompt: str,
                      index: dict, sections_text: str,
-                     model: str) -> dict:
+                     model: str,
+                     weather: dict | None = None) -> dict:
     """Run all turns of a conversation thread sharing one cache + history."""
     cache    = prewarm_cache(index)
     messages: list[dict] = [{"role": "system", "content": system_prompt}]
@@ -723,7 +795,8 @@ def run_conversation(thread: dict, system_prompt: str,
 
         t0 = time.time()
         result = run_turn(question, messages,
-                          index, sections_text, model, cache)
+                          index, sections_text, model, cache,
+                          weather=weather)
         elapsed = round(time.time() - t0, 2)
 
         status = "ERROR" if result["error"] else "OK"
@@ -775,7 +848,8 @@ def run_conversation(thread: dict, system_prompt: str,
 def run_interactive(system_prompt: str, index: dict, sections_text: str,
                     model: str, lang: str,
                     destination_name: str,
-                    recovery_msg: str) -> None:
+                    recovery_msg: str,
+                    weather: dict | None = None) -> None:
     """Interactive chat session in the terminal."""
     cache    = prewarm_cache(index)
     messages: list[dict] = [{"role": "system", "content": system_prompt}]
@@ -824,6 +898,7 @@ def run_interactive(system_prompt: str, index: dict, sections_text: str,
             on_stream_start=on_stream_start,
             stream=True,
             recovery_msg=recovery_msg,
+            weather=weather,
         )
 
         if not spinner_stopped:
@@ -908,11 +983,17 @@ def main() -> None:
                           or "Tourism"
     sections_text = format_sections_overview(index)
     overview_text = index.get("destination_overview", "")
+    # Optional per-destination weather artifact next to the index.
+    dest_slug = (index.get("meta") or {}).get("destination") or ""
+    weather_path = PROJECT_ROOT / "weather" / f"{dest_slug}_{args.lang}.json"
+    weather = load_weather(weather_path) if dest_slug else None
+    hint_text = weather_hint(weather, destination_display) if weather else ""
     system_prompt = make_system_prompt(
         sections_text=sections_text,
         destination=destination_display,
         destination_overview=overview_text,
         lang=args.lang,
+        weather_hint_text=hint_text,
     )
     recovery_msg = _recovery_msg(args.lang)
 
@@ -921,7 +1002,8 @@ def main() -> None:
         run_interactive(system_prompt, index, sections_text,
                         args.model, args.lang,
                         destination_name=destination_display,
-                        recovery_msg=recovery_msg)
+                        recovery_msg=recovery_msg,
+                        weather=weather)
         return
 
     # Scripted mode
@@ -952,7 +1034,8 @@ def main() -> None:
     total_start = time.time()
     for thread in threads:
         result = run_conversation(thread, system_prompt,
-                                  index, sections_text, args.model)
+                                  index, sections_text, args.model,
+                                  weather=weather)
         results.append(result)
     total_elapsed = round(time.time() - total_start, 1)
     print(f"\n[INFO] All conversations complete in {total_elapsed}s")

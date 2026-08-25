@@ -41,6 +41,23 @@ def load_index(path: str | Path) -> dict:
         return json.load(f)
 
 
+def load_weather(path: str | Path) -> dict | None:
+    """Read the offline weather artifact if it exists on disk.
+
+    Returns None (rather than raising) when the file is missing so the
+    runtime can degrade gracefully without a forecast.
+    """
+    p = Path(path)
+    if not p.exists():
+        return None
+    try:
+        with open(p, encoding="utf-8") as fh:
+            data = json.load(fh)
+    except (OSError, json.JSONDecodeError):
+        return None
+    return data if isinstance(data, dict) else None
+
+
 # ── Section listing ─────────────────────────────────────────────────────────
 
 def format_sections_overview(index: dict) -> str:
@@ -1440,6 +1457,206 @@ def format_path(index: dict, path_id: str) -> str:
         index, path_id, "paths", _path_tag,
         "That physical route is not available.",
     )
+
+# ── Weather ------------------------------------------------------------------
+#
+# The offline weather artifact is a small JSON with a `meta` and a
+# 7-entry `forecast` list, downloaded by the phone from a Cloudflare
+# Worker daily.  Details in docs/mobile-offline-contract.md §2.4.
+
+FORECAST_TAG_RE = re.compile(
+    r"<forecast\b[^>]*\bday\s*=\s*\"?(\d{4}-\d{2}-\d{2})\"?[^>]*>(.*?)</forecast>",
+    re.IGNORECASE | re.DOTALL,
+)
+
+WEATHER_UNAVAILABLE_MESSAGES: dict[str, str] = {
+    "en": "The downloaded data has no current forecast.",
+    "es": "Los datos descargados no incluyen una previsión vigente.",
+    "it": "I dati scaricati non includono una previsione attuale.",
+    "fr": "Les données téléchargées ne contiennent pas de prévisions actuelles.",
+    "de": "Die heruntergeladenen Daten enthalten keine aktuelle Vorhersage.",
+    "pt": "Os dados transferidos não incluem uma previsão atual.",
+}
+
+_WEATHER_STALE_MESSAGES: dict[str, str] = {
+    "en": "Estimated forecast fetched {n}d ago",
+    "es": "Previsión estimada obtenida hace {n} días",
+    "it": "Previsione stimata recuperata {n} giorni fa",
+    "fr": "Prévisions estimées récupérées il y a {n}j",
+    "de": "Geschätzte Vorhersage vor {n} Tagen abgerufen",
+    "pt": "Previsão estimada obtida há {n} dias",
+}
+
+_WEEKDAY_ALIASES: dict[str, int] = {
+    # English
+    "monday": 1, "tuesday": 2, "wednesday": 3, "thursday": 4,
+    "friday": 5, "saturday": 6, "sunday": 7,
+    # Spanish
+    "lunes": 1, "martes": 2, "miercoles": 3, "jueves": 4,
+    "viernes": 5, "sabado": 6, "domingo": 7,
+    # Italian
+    "lunedi": 1, "martedi": 2, "mercoledi": 3, "giovedi": 4,
+    "venerdi": 5, "sabato": 6, "domenica": 7,
+}
+
+WEATHER_STALE_HOURS  = 24
+WEATHER_EXPIRED_DAYS = 7
+
+
+def _weather_lang(weather: dict) -> str:
+    return (weather.get("meta") or {}).get("lang") or "en"
+
+
+def weather_unavailable_message(weather: dict | None,
+                                fallback_lang: str = "en") -> str:
+    """Return the localized 'no forecast' message."""
+    lang = _weather_lang(weather or {}) if weather else fallback_lang
+    return WEATHER_UNAVAILABLE_MESSAGES.get(
+        lang, WEATHER_UNAVAILABLE_MESSAGES["en"]
+    )
+
+
+def _parse_utc_timestamp(value: str) -> "datetime | None":
+    """Parse the 'YYYY-MM-DDTHH:MM:SSZ' timestamps produced by build_weather."""
+    from datetime import datetime, timezone
+    try:
+        return datetime.strptime(value, "%Y-%m-%dT%H:%M:%SZ").replace(
+            tzinfo=timezone.utc
+        )
+    except (TypeError, ValueError):
+        return None
+
+
+def _weather_age_days(weather: dict,
+                     now: "datetime | None" = None) -> float | None:
+    """How many whole days have passed since `meta.fetched_at`."""
+    from datetime import datetime, timezone
+    fetched = _parse_utc_timestamp((weather.get("meta") or {}).get("fetched_at", ""))
+    if fetched is None:
+        return None
+    ref = now or datetime.now(timezone.utc)
+    return (ref - fetched).total_seconds() / 86_400.0
+
+
+def _resolve_forecast_day(weather: dict, day: str | None,
+                          now: "datetime | None" = None) -> dict | None:
+    """Return the single forecast entry that matches `day`, or None.
+
+    Accepts:
+      - None / "" (caller wants the whole week; handled elsewhere)
+      - 'today' / 'tomorrow' in English or the localized aliases below
+      - an ISO 'YYYY-MM-DD' date
+      - a weekday name (monday..sunday, plus localized aliases)
+    """
+    forecast = weather.get("forecast") or []
+    if not forecast:
+        return None
+    raw = (day or "").strip()
+    if not raw:
+        return None
+    # ISO date matches must be tested before normalize_text, which strips
+    # dashes ("2026-08-27" → "2026 08 27").
+    if re.fullmatch(r"\d{4}-\d{2}-\d{2}", raw):
+        for entry in forecast:
+            if entry.get("date") == raw:
+                return entry
+        return None
+    key = normalize_text(raw)
+    if not key:
+        return None
+    from datetime import datetime, timezone, date as date_cls
+    ref = now or datetime.now(timezone.utc)
+    ref_date = ref.date()
+    # today / tomorrow
+    today_aliases    = {"today", "hoy", "oggi", "aujourd hui", "heute", "hoje"}
+    tomorrow_aliases = {"tomorrow", "manana", "domani", "demain", "morgen", "amanha"}
+    if key in today_aliases:
+        target = ref_date
+    elif key in tomorrow_aliases:
+        target = date_cls.fromordinal(ref_date.toordinal() + 1)
+    else:
+        target = None
+    if target is not None:
+        iso = target.isoformat()
+        for entry in forecast:
+            if entry.get("date") == iso:
+                return entry
+        return None
+    # Weekday name (e.g. 'martes'): return the earliest forecast entry
+    # matching that iso_weekday.
+    weekday = _WEEKDAY_ALIASES.get(key)
+    if weekday is not None:
+        for entry in forecast:
+            if entry.get("iso_weekday") == weekday:
+                return entry
+    return None
+
+
+def _forecast_tag(entry: dict) -> str:
+    date = entry.get("date") or ""
+    label = entry.get("day_label") or date
+    return f'<forecast day="{date}">{label}</forecast>'
+
+
+def _forecast_line(entry: dict) -> str:
+    tag = _forecast_tag(entry)
+    condition = (entry.get("condition") or "").strip()
+    temp_min = entry.get("temp_min_c")
+    temp_max = entry.get("temp_max_c")
+    parts: list[str] = []
+    if condition:
+        parts.append(condition)
+    if isinstance(temp_min, (int, float)) and isinstance(temp_max, (int, float)):
+        parts.append(f"{temp_min:g}–{temp_max:g} °C")
+    elif isinstance(temp_max, (int, float)):
+        parts.append(f"{temp_max:g} °C")
+    suffix = f" — {', '.join(parts)}" if parts else ""
+    return f"{tag}{suffix}"
+
+
+def weather_hint(weather: dict | None, destination_display: str,
+                 now: "datetime | None" = None) -> str:
+    """Return a one-line 'today' hint for the system prompt, or ''."""
+    if not weather:
+        return ""
+    entry = _resolve_forecast_day(weather, "today", now=now)
+    if entry is None:
+        return ""
+    line = _forecast_line(entry)
+    return f"Today in {destination_display}: {line}. Consult get_weather for other days."
+
+
+def format_weather(weather: dict | None, day: str | None = None,
+                   now: "datetime | None" = None) -> str:
+    """Render the tourist-safe weather answer for the LLM tool.
+
+    Returns a localized 'unavailable' message when the file is missing
+    or expired, an 'estimated' prefix when it is stale but usable, and
+    a single-day or full-week block otherwise.
+    """
+    if not weather:
+        return weather_unavailable_message(weather)
+    age = _weather_age_days(weather, now=now)
+    if age is None or age > WEATHER_EXPIRED_DAYS:
+        return weather_unavailable_message(weather)
+    prefix = ""
+    if age > 1:
+        template = _WEATHER_STALE_MESSAGES.get(
+            _weather_lang(weather), _WEATHER_STALE_MESSAGES["en"]
+        )
+        prefix = template.format(n=int(age)) + ":\n"
+    if day:
+        entry = _resolve_forecast_day(weather, day, now=now)
+        if entry is None:
+            return weather_unavailable_message(weather)
+        return f"{prefix}{_forecast_line(entry)}"
+    forecast = weather.get("forecast") or []
+    if not forecast:
+        return weather_unavailable_message(weather)
+    lines = [f"  - {_forecast_line(entry)}" for entry in forecast]
+    body = "\n".join(lines)
+    return f"{prefix}{body}"
+
 
 def format_filter_pois(index: dict, limit: int = 20, **filters: Any) -> str:
     """Render facet-filter results without exposing filter internals."""

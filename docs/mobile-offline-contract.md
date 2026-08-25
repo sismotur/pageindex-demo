@@ -8,9 +8,10 @@
 **Data source:** `docs/cloudflare-worker-spec.md` (download endpoints)
 
 This document is the **complete contract** for the on-device assistant.
-A phone downloads one index file per `(destination, language)` and then
-works **with no internet connection**: the LLM (Gemma 4 E2B) and all ten
-retrieval tools run locally.
+A phone downloads one index file plus a small daily weather file per
+`(destination, language)` and then works **with no internet
+connection**: the LLM (Gemma 4 E2B) and all eleven retrieval tools run
+locally.
 
 ---
 
@@ -23,10 +24,13 @@ retrieval tools run locally.
 │  indexes/{dest}_{lang}.json   ← downloaded once (ETag       │
 │                                 refresh when online)        │
 │                                                             │
+│  weather/{dest}_{lang}.json  ← refreshed daily (ETag)      │
+│                                                             │
 │  Tool layer  ← port of assistant/index_tools.py             │
 │    list_sections / get_section / get_poi /                  │
 │    find_poi_by_name / filter_pois / search_pois             │
-│    search_trips / get_trip / search_paths / get_path        │
+│    search_trips / get_trip / search_paths / get_path /      │
+│    get_weather                                              │
 │    (pure lookups over the parsed JSON — no DB, no network)  │
 │                                                             │
 │  Agentic loop  ← port of assistant/run_eval.py              │
@@ -161,12 +165,61 @@ Notes for ports:
 
 ---
 
-## 3. The ten tools (exact semantics)
+## 2.4 The weather file (`weather/{dest}_{lang}.json`)
 
-All ten are pure functions over the parsed index. **Outputs are text
-blobs returned to the LLM verbatim** — match the Python formatting
-exactly, because the system prompt and the model's learned behaviour
-depend on it. Reference: `assistant/index_tools.py`.
+One small JSON per `(destination, language)`, refreshed daily by the
+Cloudflare Worker (see `docs/cloudflare-worker-spec.md` §4–5). The phone
+downloads it independently of the index via `GET /v1/weather/{dest}/{lang}`
+with ETag revalidation, falls back to the last downloaded copy when
+offline, and treats a file older than 7 days as expired.
+
+```jsonc
+{
+  "meta": {
+    "destination":    "ubeda",
+    "lang":           "es",
+    "latitude":       38.0108,
+    "longitude":      -3.3717,
+    "units":          "metric",
+    "fetched_at":     "2026-08-25T04:00:00Z",
+    "expires_at":     "2026-08-26T04:00:00Z",   // fetched_at + 24 h
+    "schema_version": 1
+  },
+  "forecast": [
+    {
+      "date":           "2026-08-25",           // ISO YYYY-MM-DD
+      "iso_weekday":    2,                       // 1=Mon…7=Sun
+      "day_label":      "Mar 25",                // localized source string
+      "temp_min_c":     31.6,
+      "temp_max_c":     46.0,
+      "condition":      "Cielo claro",           // localized source string
+      "condition_code": "2119bfd6-a006-4577-e0f0-bba80a256700",
+      "icon_url":       "https://…/public"       // rendered by the app UI
+    }
+    // …up to 7 entries
+  ]
+}
+```
+
+Notes:
+- `condition_code` is the 36-character UUID from the Inventrip CDN URL,
+  stable across languages. The mobile app maps codes to bundled icons.
+- The runtime treats a file with `now - fetched_at > 24 h` as *stale but
+  usable* and prefixes the answer with a localized "estimated forecast"
+  note; past 7 days the file is *expired* and the tool returns the
+  localized unavailable message.
+- Missing file is not an error — the tool simply refuses to answer
+  weather questions, and the model must not invent a forecast.
+
+---
+
+## 3. The eleven tools (exact semantics)
+
+All eleven are pure functions over the parsed index (and, for
+`get_weather`, the parsed weather file). **Outputs are text blobs
+returned to the LLM verbatim** — match the Python formatting exactly,
+because the system prompt and the model's learned behaviour depend on
+it. Reference: `assistant/index_tools.py`.
 
 ### 3.1 `list_sections()`
 
@@ -490,6 +543,40 @@ does not promise verbatim wording: the model may paraphrase retrieved
 data, but must not introduce location/trip facts without a current
 retrieval result.
 
+### 3.12 `get_weather(day?)`
+
+Returns the tourist-safe forecast produced by
+`assistant/index_tools.py::format_weather` against the parsed weather
+file (§2.4). `day` accepts one of: omitted (full 7-day outlook),
+`today`/`tomorrow` (plus localized aliases), an ISO `YYYY-MM-DD` date,
+or a weekday name (`monday`…`sunday`, plus localized aliases).
+
+Every rendered day is wrapped in a `<forecast day="YYYY-MM-DD">day_label</forecast>`
+tag so a future mobile parser can deep-link to a per-day forecast
+screen without re-parsing the file. The tag never appears without a
+validated date.
+
+Staleness handling matches the file semantics in §2.4:
+- Age ≤ 24 h: rendered as-is.
+- 24 h < age ≤ 7 days: prefixed with a localized “estimated forecast
+fetched Nd ago” note; the model must not present it as fresh.
+- Age > 7 days or file missing: the tool returns the localized
+“forecast unavailable” message and the model must not invent one.
+
+Weather intent safety net (mirrors the route safety net in §3.10): if
+the visitor turn contains a weather keyword (e.g. `tiempo`, `weather`,
+`meteo`, `temperatura`) and the model answers without calling
+`get_weather`, the runtime performs one deterministic full-week
+lookup, appends the localized `WEATHER_LOOKUP_ENFORCED_INSTRUCTION`
+plus the tool result, and lets the model answer once. Bounded to one
+attempt per user turn; no loops.
+
+System-prompt hint: when a weather file is loaded, `make_system_prompt`
+embeds a single line above the destination overview:
+`Today in {destination_display}: {condition}, {temp_min_c}–{temp_max_c}
+°C. Consult get_weather for other days.` (~20 tokens). Omitted when
+no weather file is available; the outdoor-plan rule still applies.
+
 ---
 
 ## 4. Text normalization (critical for name search)
@@ -526,7 +613,7 @@ You are a tourism assistant for {destination}.  You answer visitor questions usi
 
 The full section catalogue is listed below — you do NOT need to call any tool to discover it.  Use this information directly.
 
-You have TEN tools. Pick the one that fits the question:
+You have ELEVEN tools. Pick the one that fits the question:
 
   • get_section(section_id, sort?, limit?)
         List POIs inside one section.  Returns id + name + a one-line preview.
@@ -552,8 +639,14 @@ You have TEN tools. Pick the one that fits the question:
   • search_paths(query, limit?) / get_path(path_id)
         Physical walking/cycling/trail routes only. Never substitute a trip.
 
+  • get_weather(day?)
+        Return the downloaded 7-day forecast (or one day: `today`, `tomorrow`, an ISO date, or a weekday name). Use before any outdoor or day-plan recommendation.
+
   • list_sections()
         Returns the catalogue below.  Rarely needed — sections are pre-loaded.
+
+--- WEATHER HINT ---     (omitted when no weather file is available)
+Today in {destination}: {condition}, {temp_min_c}–{temp_max_c} °C. Consult get_weather for other days.
 
 --- DESTINATION OVERVIEW ---
 {destination_overview}

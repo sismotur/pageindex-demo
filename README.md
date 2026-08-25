@@ -110,12 +110,13 @@ POI-aware index uses the structure that already exists in the source.
               │  assistant/run_eval.py           │       litellm tool calls
               │  assistant/chat_demo.py          │       to oMLX / Ollama
               │                                  │       (reference impl of
-              │  Ten tools (pure dict lookups):  │       the on-device loop)
+              │  Eleven tools (pure dict lookups):│       the on-device loop)
               │   list_sections, get_section,    │
               │   get_poi, find_poi_by_name,     │
               │   filter_pois, search_pois,      │
-              │   trips + physical paths         │
-              └──────────────────────────────────┘
+              │   trips + physical paths,        │
+              │   get_weather                    │
+              └─────────────────────────────────────┘
 ```
 
 `common/` (`lang_support.py`, `textnorm.py`) is shared by both parts and
@@ -128,8 +129,8 @@ in a text editor — but no script consumes it.
 
 ### Tools exposed to the LLM
 
-The model has ten tools, each a pure dict lookup against the index
-(no I/O, no LLM-in-the-loop):
+The model has eleven tools, each a pure dict lookup against the
+index or the daily weather artifact (no I/O, no LLM-in-the-loop):
 
 | Tool | Purpose |
 |---|---|
@@ -141,6 +142,7 @@ The model has ten tools, each a pure dict lookup against the index
 | `search_pois(query, section_id, limit)` | Same-record full-text evidence search for compound visitor needs; prevents unsupported claims that one place combines separate concepts. |
 | `search_trips(query, limit)` / `get_trip(id)` | Curated theme/day/multi-day suggestions from `/v120/trips`; never presented as routes. |
 | `search_paths(query, limit)` / `get_path(id)` | Physical walking/cycling/trail routes from `/v120/paths`; never substitutes a trip. |
+| `get_weather(day?)` | Local 7-day forecast (or one day: `today`/`tomorrow`/ISO date/weekday) with a stale-file prefix and localized unavailable fallback. |
 
 A typical answer flow:
 
@@ -209,6 +211,7 @@ pageindex-demo/
 │   ├── extract_pois.py                ← Step 1a: fetch POIs (--destination, --lang)
 │   ├── extract_destination_data.py    ← Step 1b: fetch trips & taxonomies
 │   ├── build_index.py                 ← Step 2: build indexes/{dest}_{lang}.json
+│   ├── build_weather.py               ← Step 2b: daily weather/{dest}_{lang}.json
 │   └── json_to_markdown.py            ← optional human-readable export
 │
 ├── assistant/                         ← PART 2: offline chatbot reference (→ mobile)
@@ -223,6 +226,9 @@ pageindex-demo/
 │
 ├── indexes/                           ← build_index.py output, tracked
 │   └── ubeda_{en,es,it}.json          ← POI-aware index (~1.0–1.1 MB; ~135 KB gzip)
+│
+├── weather/                           ← build_weather.py output, tracked
+│   └── ubeda_{en,es,it}.json          ← 7-day forecast (~1 KB; daily refresh)
 │
 ├── eval/
 │   ├── questions.json                 ← 20 curated visitor questions (English)
@@ -314,6 +320,10 @@ INVENTRIP_API_KEY=your_api_key_here
 # 2. Build the POI-aware index (deterministic, sub-second, no LLM)
 .venv/bin/python pipeline/build_index.py --destination ubeda --lang en
 # → indexes/ubeda_en.json
+
+# 2b. Refresh the daily weather artifact (~1 KB per language)
+.venv/bin/python pipeline/build_weather.py --destination ubeda --lang en
+# → weather/ubeda_en.json
 
 # 3. Run the Q&A evaluation (server model ~10 min; E2B ~75 s on oMLX)
 .venv/bin/python assistant/run_eval.py \

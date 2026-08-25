@@ -78,9 +78,12 @@ from index_tools import (
     extract_poi_tags,
     format_history_followup,
     format_trip_choice_offer,
+    format_weather,
+    load_weather,
     resolve_history_selection,
     resolve_trip_query,
     sanitize_tourist_answer,
+    weather_hint,
 )
 from common.lang_support import (
     SUPPORTED_LANGS,
@@ -138,6 +141,7 @@ NO_PATH_ANSWER_INSTRUCTION = (
 SOURCE_GROUNDING_TOOLS = frozenset({
     "get_poi", "get_section", "find_poi_by_name", "filter_pois",
     "search_pois", "search_trips", "get_trip", "search_paths", "get_path",
+    "get_weather",
 })
 GROUNDING_REQUIRED_INSTRUCTION = (
     "This is a tourist information request and requires current source "
@@ -197,6 +201,49 @@ def is_physical_route_request(question: str) -> bool:
         )
         for term in terms
     )
+
+
+WEATHER_INTENT_TERMS = frozenset({
+    # English
+    "weather", "forecast", "temperature", "temp", "rain", "sunny",
+    "cloudy", "windy", "storm", "cold", "hot",
+    # Spanish / Catalan / Galician / Basque
+    "tiempo", "clima", "temperatura", "lluvia", "soleado", "nublado",
+    "tormenta", "calor", "frío", "frio", "eguraldi",
+    # Italian / French / Portuguese
+    "meteo", "tempo", "previsione", "pioggia", "soleggiato", "nuvoloso",
+    "caldo", "freddo", "météo", "meteo", "température", "pluie",
+    "ensoleillé", "nuageux", "chaud", "froid", "tempo", "chuva",
+    "ensolarado", "nublado", "quente", "frio",
+    # German / Dutch / Croatian / Russian / Ukrainian / Japanese / Chinese
+    "wetter", "vorhersage", "temperatur", "regen", "sonnig", "bewölkt",
+    "heiß", "kalt", "weer", "weersvoorspelling", "regen", "zonnig",
+    "vrijeme", "prognoza", "kiša", "sunčano", "vruće", "hladno",
+    "погода", "прогноз", "температура", "天気", "天气", "预报",
+})
+
+
+def is_weather_request(question: str) -> bool:
+    """Detect a weather-intent visitor turn across the supported languages.
+
+    Uses the same prefix-tolerant match as ROUTE_INTENT_TERMS so morphological
+    variants ("weathered", "tempesta") do not trigger false positives.
+    """
+    terms = tokenize(question)
+    return any(
+        term in WEATHER_INTENT_TERMS
+        or any(
+            len(term) >= 4 and term.startswith(intent)
+            for intent in WEATHER_INTENT_TERMS if len(intent) >= 4
+        )
+        for term in terms
+    )
+
+
+WEATHER_LOOKUP_ENFORCED_INSTRUCTION = (
+    "A weather lookup has already completed. Use these forecast results to "
+    "answer the visitor; do not add outside knowledge about the weather."
+)
 
 
 TRIP_PLAN_INTENT_TERMS = frozenset({
@@ -287,7 +334,7 @@ of every point of interest, trip and itinerary in the destination.
 The full section catalogue is listed below — you do NOT need to call any \
 tool to discover it.  Use this information directly.
 
-You have TEN tools. Pick the one that fits the question:
+You have ELEVEN tools. Pick the one that fits the question:
 
   • get_section(section_id, sort?, limit?)
         List POIs inside one section.  Returns id + name + a one-line preview.
@@ -344,11 +391,16 @@ visitor question.
         Return the full ordered waypoint stops of one physical route.
         Use after search_paths().
 
+  • get_weather(day?)
+        Return the downloaded 7-day forecast (or one day: `today`, \
+`tomorrow`, an ISO date `YYYY-MM-DD`, or a weekday name). Use it for \
+any outdoor/day-plan question. Never invent temperatures or conditions.
+
   • list_sections()
         Returns the catalogue below.  Rarely needed — sections are \
 pre-loaded.
 
---- DESTINATION OVERVIEW ---
+{weather_hint_block}--- DESTINATION OVERVIEW ---
 {destination_overview}
 
 --- SECTIONS (pre-loaded, do not fetch again) ---
@@ -370,6 +422,10 @@ full record in one call.
   route requests, search physical paths first. A curated trip is never a
   physical route; if no path is available, say so rather than substituting
   a trip. Do not ask the visitor to reformulate the route request.
+- For outdoor, walking, or day-plan questions, call get_weather(day) \
+before recommending. When the forecast is unfavourable (>35 °C, rain, \
+storms), prefer indoor stops or early-morning windows. If the tool \
+reports the forecast is unavailable, do not invent one.
 - After search_trips, do not invent named plans, option headings, or
   day-by-day stop combinations. Present only returned <trip> tags, or
   call get_trip for one returned source trip before describing its plan.
@@ -418,13 +474,19 @@ name untagged rather than creating a tag.
 
 
 def make_system_prompt(sections_text: str, destination: str,
-                       destination_overview: str, lang: str = "en") -> str:
-    """Build the system prompt with sections and overview embedded."""
+                       destination_overview: str, lang: str = "en",
+                       weather_hint_text: str = "") -> str:
+    """Build the system prompt with sections, overview, and (optional)
+    today’s weather hint embedded.
+    """
     overview = destination_overview.strip() or "(no overview available)"
+    hint = weather_hint_text.strip()
+    weather_hint_block = f"--- WEATHER HINT ---\n{hint}\n\n" if hint else ""
     return _SYSTEM_PROMPT_TEMPLATE.replace("{{lang_rule}}", lang_rule(lang)).format(
         sections_text=sections_text,
         destination=destination,
         destination_overview=overview,
+        weather_hint_block=weather_hint_block,
     )
 
 
@@ -685,6 +747,32 @@ TOOL_DEFS = [
     {
         "type": "function",
         "function": {
+            "name": "get_weather",
+            "description": (
+                "Return the offline weather forecast downloaded with the "
+                "visitor data. Pass no day to see the full 7-day outlook, "
+                "or a specific day: 'today', 'tomorrow', an ISO date "
+                "'YYYY-MM-DD', or a weekday name (monday..sunday, or the "
+                "localized variants). Call this before recommending any "
+                "outdoor plan or day-by-day itinerary."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "day": {
+                        "type": "string",
+                        "description": (
+                            "Optional day selector: 'today', 'tomorrow', "
+                            "'YYYY-MM-DD', or a weekday name."
+                        ),
+                    },
+                },
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
             "name": "list_sections",
             "description": (
                 "Return the section catalogue.  Already embedded in your "
@@ -699,11 +787,13 @@ TOOL_DEFS = [
 # ── Tool dispatch ──────────────────────────────────────────────────────────
 
 def execute_tool(name: str, args: dict, index: dict,
-                 sections_text: str, cache: dict) -> tuple[str, bool]:
+                 sections_text: str, cache: dict,
+                 weather: dict | None = None) -> tuple[str, bool]:
     """Run a tool call against the index.
 
     Returns (text_result, cache_hit).  `cache` is shared across calls within
-    a session and is keyed by (tool, normalised-arg-tuple).
+    a session and is keyed by (tool, normalised-arg-tuple). `weather` is
+    the optional loaded weather artifact used by `get_weather`.
     """
     if name == "list_sections":
         return sections_text, True   # always pre-warmed
@@ -797,6 +887,14 @@ def execute_tool(name: str, args: dict, index: dict,
         if key in cache:
             return cache[key], True
         result = format_path(index, path_id)
+        cache[key] = result
+        return result, False
+    if name == "get_weather":
+        day = (args.get("day") or "").strip() or None
+        key = ("get_weather", (day or "").lower())
+        if key in cache:
+            return cache[key], True
+        result = format_weather(weather, day)
         cache[key] = result
         return result, False
 
@@ -921,12 +1019,15 @@ def sections_accessed_from_calls(tool_calls: list, index: dict) -> list[str]:
 def run_agentic_loop(question: str, system_prompt: str,
                      index: dict, sections_text: str,
                      model: str, cache: dict,
-                     recovery_msg: str = "") -> dict:
+                     recovery_msg: str = "",
+                     weather: dict | None = None) -> dict:
     """Run the tool-calling loop for one question."""
     messages = [
         {"role": "system", "content": system_prompt},
         {"role": "user",   "content": question},
     ]
+    weather_lookup_enforced = False
+    weather_intent = bool(weather) and is_weather_request(question)
     tool_calls_made = []
     answer = ""
     error  = None
@@ -957,7 +1058,7 @@ def run_agentic_loop(question: str, system_prompt: str,
     if direct_trip_selection:
         result, hit = execute_tool(
             "get_trip", {"trip_id": direct_trip_selection["id"]},
-            index, sections_text, cache,
+            index, sections_text, cache, weather=weather,
         )
         if hit:
             cache_hits += 1
@@ -1042,6 +1143,35 @@ def run_agentic_loop(question: str, system_prompt: str,
         messages.append(assistant_msg)
 
         if not message.tool_calls:
+            if weather_intent and "get_weather" not in grounding_tools:
+                if not weather_lookup_enforced:
+                    weather_lookup_enforced = True
+                    weather_result, weather_hit = execute_tool(
+                        "get_weather", {}, index,
+                        sections_text, cache, weather=weather,
+                    )
+                    if weather_hit:
+                        cache_hits += 1
+                    tool_calls_made.append({
+                        "tool": "get_weather",
+                        "args": {},
+                        "result_preview": weather_result[:300],
+                        "cache_hit": weather_hit,
+                        "automatic": True,
+                    })
+                    grounded = True
+                    if "get_weather" not in grounding_tools:
+                        grounding_tools.append("get_weather")
+                    automatic_source_calls.append({
+                        "tool": "get_weather",
+                        "args": {},
+                    })
+                    messages.append({
+                        "role": "user",
+                        "content": (WEATHER_LOOKUP_ENFORCED_INSTRUCTION
+                                    + "\n\n" + weather_result),
+                    })
+                    continue
             if physical_route_request and not path_search_started:
                 # E2B occasionally responds to a route request with a
                 # clarification question without calling search_paths.
@@ -1056,7 +1186,7 @@ def run_agentic_loop(question: str, system_prompt: str,
                 route_lookup_enforced = True
                 route_result, route_hit = execute_tool(
                     "search_paths", {"query": question}, index,
-                    sections_text, cache,
+                    sections_text, cache, weather=weather,
                 )
                 path_search_started = True
                 no_matching_path = route_result.startswith(
@@ -1112,7 +1242,7 @@ def run_agentic_loop(question: str, system_prompt: str,
                     selected_id = trip_search_default["itinerary_id"]
                     result, hit = execute_tool(
                         "get_trip", {"trip_id": selected_id}, index,
-                        sections_text, cache,
+                        sections_text, cache, weather=weather,
                     )
                     if hit:
                         cache_hits += 1
@@ -1182,7 +1312,9 @@ def run_agentic_loop(question: str, system_prompt: str,
             except json.JSONDecodeError:
                 pass
 
-            result, hit = execute_tool(fn_name, fn_args, index, sections_text, cache)
+            result, hit = execute_tool(
+                fn_name, fn_args, index, sections_text, cache, weather=weather,
+            )
             if fn_name in SOURCE_GROUNDING_TOOLS:
                 grounded = True
                 if fn_name not in grounding_tools:
@@ -1342,11 +1474,16 @@ def main() -> None:
                           or "this destination"
     sections_text = format_sections_overview(index)
     overview_text = index.get("destination_overview", "")
+    dest_slug = (index.get("meta") or {}).get("destination") or ""
+    weather_path = PROJECT_ROOT / "weather" / f"{dest_slug}_{args.lang}.json"
+    weather = load_weather(weather_path) if dest_slug else None
+    hint_text = weather_hint(weather, destination_display) if weather else ""
     system_prompt = make_system_prompt(
         sections_text=sections_text,
         destination=destination_display,
         destination_overview=overview_text,
         lang=args.lang,
+        weather_hint_text=hint_text,
     )
 
     # Pre-warm: cache get_section for every section with the adaptive
@@ -1387,6 +1524,7 @@ def main() -> None:
         loop = run_agentic_loop(
             question, system_prompt, index, sections_text,
             args.model, cache, recovery_msg=recovery,
+            weather=weather,
         )
 
         elapsed = round(time.time() - t0, 2)

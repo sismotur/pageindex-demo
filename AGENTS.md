@@ -255,6 +255,21 @@ The relevant query parameters (from `params-builder.js`):
 Step 1. No LLM calls. No Markdown intermediate. Re-runnable any time
 without side effects.
 
+### Step 2b — Build the daily weather artifact
+
+```bash
+.venv/bin/python pipeline/build_weather.py --destination ubeda --lang en
+.venv/bin/python pipeline/build_weather.py --destination ubeda --all-languages
+# → weather/ubeda_{lang}.json   (~1.1 KB; deterministic per language)
+```
+
+`pipeline/build_weather.py` is the reference for the Cloudflare daily
+cron branch. It reads the destination coordinates from any available
+`data/{destination}_destination_{lang}.json`, calls
+`/v100/weather-daily`, and writes a normalised `weather/{destination}_
+{lang}.json` (schema v1) that the phone downloads independently of the
+weekly index.
+
 ### Step 3 — Run the agentic Q&A evaluation
 
 ```bash
@@ -299,8 +314,9 @@ files still score.
 
 ## LLM tool surface
 
-Ten tools, all pure dict lookups against the index. No I/O, no
-LLM-in-the-loop, no line slicing.
+Eleven tools, all pure dict lookups against the index (plus the small
+weather artifact for `get_weather`). No I/O, no LLM-in-the-loop, no
+line slicing.
 
 | Tool | Purpose |
 |---|---|
@@ -312,6 +328,7 @@ LLM-in-the-loop, no line slicing.
 | `search_pois(query, section_id, limit)` | Same-record full-text evidence search for compound visitor requests. |
 | `search_trips(query, limit)` / `get_trip(id)` | Editorial day/theme/multi-day suggestions from `/v120/trips`; never physical routes. |
 | `search_paths(query, limit)` / `get_path(id)` | Physical walking/cycling/trail routes from `/v120/paths`; never substitutes a trip. |
+| `get_weather(day?)` | Local 7-day forecast (or one day: `today`/`tomorrow`/ISO date/weekday) with a stale-file prefix and a localized unavailable fallback. |
 
 Typical flows handled by the model:
 
@@ -354,6 +371,7 @@ pageindex-demo/
 │   ├── extract_pois.py                ← Step 1a: fetch POIs
 │   ├── extract_destination_data.py    ← Step 1b: fetch trips & taxonomies
 │   ├── build_index.py                 ← Step 2: build POI-aware index
+│   ├── build_weather.py               ← Step 2b: daily weather artifact
 │   └── json_to_markdown.py            ← optional human-readable export
 │
 ├── assistant/                         ← PART 2: offline chatbot reference
@@ -367,6 +385,9 @@ pageindex-demo/
 │   └── ubeda_destination_{en,es,it}.json
 │
 ├── indexes/                           ← build_index.py output, tracked
+│   └── ubeda_{en,es,it}.json
+│
+├── weather/                           ← build_weather.py output, tracked
 │   └── ubeda_{en,es,it}.json
 │
 ├── eval/

@@ -99,11 +99,13 @@ channel.
 ```
 GET /v1/manifest                      → catalogue of everything available
 GET /v1/index/{dest}/{lang}           → one index file
+GET /v1/weather/{dest}/{lang}         → one weather file (daily refresh)
 ```
 
 Auth: `X-Inventrip-Key: <app key>` header. Errors are JSON:
 `{"error": "index_not_found", "dest": …, "lang": …}` (404),
-`{"error": "unauthorized"}` (401).
+`{"error": "weather_not_found", "dest": …, "lang": …}` (404 on the
+weather endpoint), `{"error": "unauthorized"}` (401).
 
 ### 3.2 Refresh flow (ETag)
 
@@ -134,8 +136,14 @@ Auth: `X-Inventrip-Key: <app key>` header. Errors are JSON:
       "longitude": -3.3733,
       "tourist_types": ["HERITAGE TOURISM", "FOOD TOURISM"],
       "languages": {
-        "en": { "etag": "\"a1b2…\"", "bytes": 748544,
-                "poi_count": 367, "updated_at": "2026-08-16T03:01:12Z" }
+        "en": {
+          "etag": "\"a1b2…\"", "bytes": 748544,
+          "poi_count": 367, "updated_at": "2026-08-16T03:01:12Z",
+          "weather": {
+            "etag": "\"w9x8…\"", "bytes": 1150,
+            "updated_at": "2026-08-25T03:15:04Z"
+          }
+        }
       }
     }
   ]
@@ -145,6 +153,28 @@ Auth: `X-Inventrip-Key: <app key>` header. Errors are JSON:
 Use `bytes` to show download sizes in the UI and `poi_count` as a
 coverage hint. `country`/`region`/`latitude`/`longitude` let you sort
 destinations by proximity.
+
+The optional `weather` sub-object appears once the Cloudflare Worker
+has published a forecast for that language. Use it as the change signal
+for a separate `GET /v1/weather/{dest}/{lang}` download; the file is
+~1 KB and refreshes daily.
+
+### 3.4 Weather download
+
+```
+GET /v1/weather/{dest}/{lang}         → one weather file (~1 KB)
+```
+
+Same ETag / 304 semantics as the index endpoint but re-checked every
+day (the object rotates on the server-side daily cron). Store the file
+and its ETag next to the index; the offline assistant loads it beside
+`indexes/{dest}_{lang}.json` and exposes it via the `get_weather` tool.
+
+The schema and refresh contract live in `docs/mobile-offline-contract.md`
+§2.4 and §3.12. Fields the mobile UI cares about beyond the runtime
+tool: `icon_url` (CDN URL, resolve lazily when online) and
+`condition_code` (stable UUID; map to a bundled icon for offline
+rendering).
 
 ---
 

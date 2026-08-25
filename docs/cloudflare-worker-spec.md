@@ -114,7 +114,10 @@ client's change signal (§6).
 ```toml
 # wrangler.toml (excerpt)
 [triggers]
-crons = ["0 3 * * 0"]    # weekly, Sunday 03:00 UTC
+crons = [
+  "0 3 * * 0",      # weekly: rebuild POI indexes on Sunday 03:00 UTC
+  "15 3 * * *"      # daily:  refresh weather every day at 03:15 UTC
+]
 ```
 
 Cron invocations allow up to 15 minutes of wall time. One
@@ -178,7 +181,7 @@ After all pairs finish, rebuild `meta/manifest.json`:
 ```json
 {
   "generated_at": "2026-08-16T03:00:00Z",
-  "schema_version": 1,
+  "schema_version": 2,
   "destinations": [
     {
       "slug": "ubeda",
@@ -189,15 +192,31 @@ After all pairs finish, rebuild `meta/manifest.json`:
       "longitude": -3.3733,
       "tourist_types": ["HERITAGE TOURISM", "FOOD TOURISM"],
       "languages": {
-        "en": { "etag": "\"a1b2…\"", "bytes": 737280, "poi_count": 367,
-                "updated_at": "2026-08-16T03:01:12Z" },
-        "es": { "etag": "\"c3d4…\"", "bytes": 820224, "poi_count": 369,
-                "updated_at": "2026-08-16T03:01:19Z" }
+        "en": {
+          "etag": "\"a1b2…\"", "bytes": 737280, "poi_count": 367,
+          "updated_at": "2026-08-16T03:01:12Z",
+          "weather": {
+            "etag": "\"w9x8…\"", "bytes": 1150,
+            "updated_at": "2026-08-25T03:15:04Z"
+          }
+        },
+        "es": {
+          "etag": "\"c3d4…\"", "bytes": 820224, "poi_count": 369,
+          "updated_at": "2026-08-16T03:01:19Z",
+          "weather": {
+            "etag": "\"w7v6…\"", "bytes": 1178,
+            "updated_at": "2026-08-25T03:15:05Z"
+          }
+        }
       }
     }
   ]
 }
 ```
+
+Manifest `schema_version` bumps to `2` because per-language entries now
+carry a nested `weather` sub-object. Readers that only inspect the
+index ETag remain compatible — the `weather` key is optional.
 
 The manifest doubles as the **destination catalogue** the app shows for
 download (name, region, size per language) and the change-detection feed
@@ -216,7 +235,34 @@ destination, e.g. `ubeda`):
 Any regression in the TS port (normalization, section assignment, facet
 ordering) fails this test before it can corrupt the mobile corpora.
 
-### 4.5 Checkpointing & partial rebuilds
+### 4.5 Daily weather build (separate cron branch)
+
+The weekly index cron does not touch weather. A second cron branch
+(`"15 3 * * *"`) runs daily and, for every `(dest, lang)` pair present
+in the manifest, ports `pipeline/build_weather.py`:
+
+1. Read the destination coordinates from the current `meta/manifest.json`
+   (`latitude` / `longitude`). Fall back to reading them from the stored
+   index if missing.
+2. `fetchWeather(dest, lang)` — `GET /v100/weather-daily?latitude=&longitude=&cnt=7&language={lang}&units=metric&api_key=…`.
+3. `normalizeForecast()` and `buildWeather()` — same field names as the
+   Python reference (`date`, `iso_weekday`, `day_label`, `temp_min_c`,
+   `temp_max_c`, `condition`, `condition_code`, `icon_url`); wrap in a
+   `meta` block with `fetched_at`, `expires_at` (fetched_at + 24 h),
+   `schema_version: 1`.
+4. `R2.put("weather/{dest}/{dest}_{lang}.json", json)`.
+5. Refresh the manifest so each language entry gains a `weather.etag`,
+   `weather.bytes`, and `weather.updated_at` field.
+
+Cost budget: 200 destinations × 16 languages ≈ 3.2 k fetches/day
+(bounded concurrency 8 in flight). Well within Worker/API limits.
+
+When the source API rate-limits or errors for a specific pair, keep the
+previous R2 object in place — the phone treats an unchanged ETag as
+“no update” and continues to use its cached copy until the next daily
+run succeeds.
+
+### 4.6 Checkpointing & partial rebuilds
 
 - A `meta/build_state.json` object records `{ pair: last_built_at }`.
 - The cron skips pairs whose source data is unchanged when the Inventrip
@@ -255,6 +301,41 @@ async function serveIndex(env: Env, dest: string, lang: string,
   if (!obj) {
     return Response.json(
       { error: "index_not_found", dest, lang }, { status: 404 });
+  }
+  const headers = new Headers({
+    "Content-Type":  "application/json; charset=utf-8",
+    "Cache-Control": "public, max-age=3600",
+    "ETag":          obj.etag,
+  });
+  if (request.headers.get("If-None-Match") === obj.etag) {
+    return new Response(null, { status: 304, headers });
+  }
+  return new Response(obj.body, { headers });
+}
+```
+
+### `GET /v1/weather/{dest}/{lang}`
+
+Streams `weather/{dest}/{dest}_{lang}.json` from R2. Same ETag / 304
+semantics as the index endpoint, with a shorter revalidation window so
+the app picks up new forecasts within the day.
+
+- `Cache-Control: public, max-age=3600` (phone should still send
+  `If-None-Match`; the object rotates once per 24 h).
+- 404 JSON body when the weather pair has not been built:
+  `{ "error": "weather_not_found", "dest": "…", "lang": "…" }`. The app
+  falls back to the English weather (`…/{dest}/en`) when present, and if
+  neither exists the on-device tool degrades gracefully to “forecast
+  unavailable” without lying about the weather.
+
+```typescript
+async function serveWeather(env: Env, dest: string, lang: string,
+                            request: Request): Promise<Response> {
+  const key = `weather/${dest}/${dest}_${lang}.json`;
+  const obj = await env.RAG_BUCKET.get(key);
+  if (!obj) {
+    return Response.json(
+      { error: "weather_not_found", dest, lang }, { status: 404 });
   }
   const headers = new Headers({
     "Content-Type":  "application/json; charset=utf-8",
