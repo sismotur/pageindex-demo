@@ -1658,6 +1658,50 @@ def format_weather(weather: dict | None, day: str | None = None,
     return f"{prefix}{body}"
 
 
+def get_weather_entry(weather: dict | None, day: str | None = None,
+                      now: "datetime | None" = None) -> dict | None:
+    """Return the raw forecast entry for `day` (default 'today'), or None.
+
+    None is returned when the file is missing/expired or the day cannot
+    be resolved — the same staleness gate `format_weather` applies.
+    Unlike `format_weather`, this exposes the entry's raw fields (e.g.
+    `temp_max_c`) for callers that reason about the data itself rather
+    than its rendered, tourist-facing text.
+    """
+    if not weather:
+        return None
+    age = _weather_age_days(weather, now=now)
+    if age is None or age > WEATHER_EXPIRED_DAYS:
+        return None
+    return _resolve_forecast_day(weather, day or "today", now=now)
+
+
+# Exact threshold already documented in the system prompt's outdoor-plan
+# rule (run_eval.py::_SYSTEM_PROMPT_TEMPLATE): "...unfavourable (>35 °C,
+# rain, storms)...". Kept here as the single source of truth for the
+# numeric half of that rule so the two never drift apart.
+OUTDOOR_HIGH_TEMP_C = 35.0
+
+
+def is_forecast_too_hot(entry: dict | None) -> bool:
+    """True when a forecast entry's max temperature exceeds the
+    documented outdoor-plan threshold (>35 °C).
+
+    Deliberately narrow: a pure numeric comparison on a field that is
+    already extracted, so it needs no per-language data and behaves
+    identically regardless of the visitor's language. Rain/storm/clear
+    judgments are NOT attempted here — the model already receives the
+    localized `condition` string verbatim and can read it directly in
+    whichever of the 16 supported languages the index uses; hand-built
+    per-language condition keyword lists would not scale the way this
+    one threshold check does.
+    """
+    if not entry:
+        return False
+    temp_max = entry.get("temp_max_c")
+    return isinstance(temp_max, (int, float)) and temp_max > OUTDOOR_HIGH_TEMP_C
+
+
 def format_filter_pois(index: dict, limit: int = 20, **filters: Any) -> str:
     """Render facet-filter results without exposing filter internals."""
     # Drop None/empty filters to decide whether this is a valid request.

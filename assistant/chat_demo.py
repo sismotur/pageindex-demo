@@ -51,7 +51,7 @@ from run_eval import (   # noqa: E402
     COMPLEMENTARY_SEARCH_INSTRUCTION,
     is_physical_route_request,
     is_weather_request,
-    NO_PATH_ANSWER_INSTRUCTION,
+    no_path_answer_instruction,
     route_lookup_context,
     SOURCE_GROUNDING_TOOLS,
     GROUNDING_REQUIRED_INSTRUCTION,
@@ -436,7 +436,9 @@ def run_turn(question: str, messages: list[dict],
                     no_path_answer_enforced = True
                     messages.append({
                         "role": "user",
-                        "content": NO_PATH_ANSWER_INSTRUCTION,
+                        "content": no_path_answer_instruction(
+                            "get_weather" in grounding_tools
+                        ),
                     })
                     continue
                 if direct_evidence_missing and not complementary_retrieval_started:
@@ -602,7 +604,9 @@ def run_turn(question: str, messages: list[dict],
                     no_path_answer_enforced = True
                     messages.append({
                         "role": "user",
-                        "content": NO_PATH_ANSWER_INSTRUCTION,
+                        "content": no_path_answer_instruction(
+                            "get_weather" in grounding_tools
+                        ),
                     })
                     continue
                 if direct_evidence_missing and not complementary_retrieval_started:

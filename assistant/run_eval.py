@@ -79,6 +79,8 @@ from index_tools import (
     format_history_followup,
     format_trip_choice_offer,
     format_weather,
+    get_weather_entry,
+    is_forecast_too_hot,
     load_weather,
     resolve_history_selection,
     resolve_trip_query,
@@ -136,6 +138,26 @@ NO_PATH_ANSWER_INSTRUCTION = (
     "clearly and concisely now. Do not ask a follow-up question and do not "
     "substitute a curated trip as though it were a route."
 )
+# Used instead of NO_PATH_ANSWER_INSTRUCTION when get_weather already ran
+# this turn: the lack of a cataloged route must never make the model drop
+# the forecast it already has. This is an internal, English-only model
+# directive (like every other *_INSTRUCTION constant here) — it is never
+# shown to the visitor, so it needs no per-language translation.
+NO_PATH_ANSWER_WITH_WEATHER_INSTRUCTION = (
+    "The visitor information has no matching physical path, but you "
+    "already retrieved the forecast this turn. Answer using BOTH facts: "
+    "first state whether the weather is good for walking outdoors based "
+    "only on the forecast already retrieved, then separately note that no "
+    "specific route is available in the catalog. The lack of a cataloged "
+    "route does not change the weather judgment. Do not ask a follow-up "
+    "question."
+)
+
+
+def no_path_answer_instruction(weather_grounded: bool) -> str:
+    """Pick the no-path instruction that fits whether weather already ran."""
+    return (NO_PATH_ANSWER_WITH_WEATHER_INSTRUCTION if weather_grounded
+            else NO_PATH_ANSWER_INSTRUCTION)
 
 
 SOURCE_GROUNDING_TOOLS = frozenset({
@@ -243,6 +265,16 @@ def is_weather_request(question: str) -> bool:
 WEATHER_LOOKUP_ENFORCED_INSTRUCTION = (
     "A weather lookup has already completed. Use these forecast results to "
     "answer the visitor; do not add outside knowledge about the weather."
+)
+
+# English-only, model-facing note appended to a get_weather(day=...) tool
+# result when that specific day exceeds the outdoor-plan heat threshold.
+# Deliberately not localized: it is read by the model (which already
+# renders its final answer in the visitor's language per {lang_rule}),
+# never shown to the visitor verbatim.
+OUTDOOR_HEAT_NOTE = (
+    "Note: exceeds 35 \u00b0C \u2014 treat as unfavourable for a midday walk; "
+    "suggest an early morning visit or an indoor plan instead."
 )
 
 
@@ -425,7 +457,10 @@ full record in one call.
 - For outdoor, walking, or day-plan questions, call get_weather(day) \
 before recommending. When the forecast is unfavourable (>35 °C, rain, \
 storms), prefer indoor stops or early-morning windows. If the tool \
-reports the forecast is unavailable, do not invent one.
+reports the forecast is unavailable, do not invent one. Judge whether \
+the weather suits an outdoor activity ONLY from the forecast; whether a \
+specific physical route exists in the catalog is a separate fact and \
+must never change that judgment or replace it in your answer.
 - After search_trips, do not invent named plans, option headings, or
   day-by-day stop combinations. Present only returned <trip> tags, or
   call get_trip for one returned source trip before describing its plan.
@@ -895,6 +930,11 @@ def execute_tool(name: str, args: dict, index: dict,
         if key in cache:
             return cache[key], True
         result = format_weather(weather, day)
+        # Deterministic, language-agnostic heat check on whichever day
+        # was resolved; only fires for a specific day, never the 7-day
+        # dump, since "too hot" needs one temperature to compare.
+        if day and is_forecast_too_hot(get_weather_entry(weather, day)):
+            result = f"{result}\n{OUTDOOR_HEAT_NOTE}"
         cache[key] = result
         return result, False
 
@@ -1216,7 +1256,9 @@ def run_agentic_loop(question: str, system_prompt: str,
                 no_path_answer_enforced = True
                 messages.append({
                     "role": "user",
-                    "content": NO_PATH_ANSWER_INSTRUCTION,
+                    "content": no_path_answer_instruction(
+                        "get_weather" in grounding_tools
+                    ),
                 })
                 continue
             # A small model can correctly discover that no single record
