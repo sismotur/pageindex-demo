@@ -5,7 +5,9 @@ pipeline/extract_destination_data.py — Fetch destination-level data for any to
 Collects five data sources and saves to data/{destination}_destination_{lang}.json:
   1. /v120/tourist-destinations  — destination overview, trip IDs, route IDs
   2. /v120/trips                 — curated trips with full itineraries
-  3. /v120/paths                 — walking/driving routes (one fetch per ID)
+  3. /v120/trips (by id)         — walking/driving routes: a route is simply
+                                    a trip whose extras.path is non-null;
+                                    that field carries the real /v120/paths id
   4. /v120/interest-levels       — editorial hierarchy: Indispensable / Interesting / Outstanding
   5. /v120/tourist-types         — type codes with human-readable names
 
@@ -21,6 +23,7 @@ Environment variables (loaded from .env):
 import argparse
 import json
 import os
+import re
 import sys
 from pathlib import Path
 
@@ -195,38 +198,70 @@ def _flatten_waypoints(items: list[dict]) -> list[dict]:
     return out
 
 
+def _parse_id_path(path_ref: str) -> str:
+    """Extract the numeric id_path from a trip's extras.path reference.
+
+    e.g. 'paths?id_path=255' -> '255'.  Returns '' when absent/unparseable.
+    """
+    match = re.search(r"id_path=(\d+)", str(path_ref or ""))
+    return match.group(1) if match else ""
+
+
 def fetch_paths(session, base_url: str, route_ids: list, lang: str) -> list:
-    """Fetch individual path records by ID."""
+    """Fetch physical routes referenced by the destination's `routes` ids.
+
+    Each id in `routes` is NOT a /v120/paths id_path — it is the id of a
+    trip record. A route is simply a trip whose extras.path field
+    ('paths?id_path=N') is non-null; that field carries the real path id.
+    A trip with no extras.path is not a route and is skipped. Name,
+    description, and the ordered itinerary all come from the trip record
+    itself (add_itinerary=true), exactly like fetch_trips() — /v120/paths
+    only carries raw geometry (kml, length, elevation), no visitor text,
+    so it is not fetched here.
+    """
     paths = []
     for rid in route_ids:
         try:
-            data = fetch(session, f"{base_url}/v120/paths",
-                         {"id_path": rid, "add_itinerary": "true"})
-            if not isinstance(data, list) or not data:
-                continue
-            p = data[0]
-            name = get_localized(p.get("name", []), lang)
-            desc = get_localized(p.get("description", []), lang)
-            itinerary = []
-            all_leaves: list[dict] = []
-            for step in p.get("itinerary", []):
-                step_name = get_localized(step.get("name", []), lang)
-                items = extract_itinerary_items(
-                    step.get("itemListElement") or [], lang
-                )
-                if step_name or items:
-                    itinerary.append({"step": step_name, "items": items})
-                    all_leaves.extend(_flatten_waypoints(items))
-            paths.append({
-                "id":         p.get("identifier", str(rid)),
-                "name":       name,
-                "description": desc,
-                "waypoints":  all_leaves,
-                "itinerary":  itinerary,
+            trip_data = fetch(session, f"{base_url}/v120/trips", {
+                "trip": rid, "add_itinerary": "true", "limit": 1, "offset": 0,
             })
-            print(f"  [path {rid}] \"{name}\"  ({len(all_leaves)} waypoints)")
         except SystemExit:
-            print(f"  [SKIP path {rid}] fetch failed", file=sys.stderr)
+            print(f"  [SKIP route {rid}] trip lookup failed", file=sys.stderr)
+            continue
+        if not isinstance(trip_data, list) or not trip_data:
+            print(f"  [SKIP route {rid}] trip not found", file=sys.stderr)
+            continue
+
+        trip = trip_data[0]
+        id_path = _parse_id_path((trip.get("extras") or {}).get("path"))
+        if not id_path:
+            print(f"  [SKIP route {rid}] no linked path (not a route)",
+                  file=sys.stderr)
+            continue
+
+        name = get_localized(trip.get("name", []), lang)
+        desc = get_localized(trip.get("description", []), lang)
+        itinerary = []
+        all_leaves: list[dict] = []
+        for step in trip.get("itinerary") or []:
+            step_name = get_localized(step.get("name", []), lang)
+            items = extract_itinerary_items(
+                step.get("itemListElement") or [], lang
+            )
+            if step_name or items:
+                itinerary.append({"step": step_name, "items": items})
+                all_leaves.extend(_flatten_waypoints(items))
+
+        paths.append({
+            "id":          f"path/{id_path}",
+            "name":        name,
+            "description": desc,
+            "url":         (trip.get("url") or [""])[0],
+            "waypoints":   all_leaves,
+            "itinerary":   itinerary,
+        })
+        print(f"  [route {rid} -> path/{id_path}] \"{name}\"  "
+              f"({len(all_leaves)} waypoints)")
     return paths
 
 

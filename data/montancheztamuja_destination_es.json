@@ -7368,7 +7368,2744 @@
       ]
     }
   ],
-  "paths": [],
+  "paths": [
+    {
+      "id": "path/255",
+      "name": "PR-CC 27 Ruta de los Molinos",
+      "description": "La ruta tiene inicio en al panel informativo ubicado junto a la entrada del complejo \"Fuentes del Salor\".\n\nTomando la dirección de espaldas al panel recorremos los primeros metros atravesando las calles Centenal y Coso hasta llegar a la Plaza de España, desde aquí tomamos la calle Virgen de los Remedios por la que salimos del municipio. Al final de la misma, junto a una fuente, encontramos la flecha que nos indica la dirección hacia Arroyomolinos 5,5 Km.\n\nNos dirigimos por un antiguo camino de herradura entre callejones de piedra, atravesando los parajes de \"La Resbaladera\", \"Cancho del Tomillar\" y \"Las Tarazonas\" hasta llegar a la carretera CC-60, aquí la flecha direccional nos indica que tras 500 metros llegamos a Arroyomolinos.\n\nAtravesamos el municipio por las calles Bolo, Molero y Altozano, al final de ésta encontraremos el panel informativo. Desde aquí no dirigimos hacia el gran atractivo de esta ruta que son los diferentes molinos que se van sucediendo conforme recorremos la garganta del mismo nombre. Hay que fijarse bien, pues los más antiguos se encuentran, en ocasiones, camuflados entre la vegetación o forman parte de los fundamentos de otros más modernos.\n\nUna vez hemos superado la garganta y tras un serpenteo entre olivares llegamos a la confluencia con el camino de las Vaquerizas, continuamos en dirección norte compartiendo itinerario con el sendero PR-CC 28 “Ruta de la Vaqueriza”. Sin abandonar este camino principal, bordearemos el castañar y compartiremos los últimos 1,2 km de itinerario con el sendero local SL-CC 6 “El Castañar” Hasta llegar al mismo punto donde iniciamos la ruta.\n\nLongitud: 12.2 km.\nRecorrido: Circular",
+      "url": "https://inventrip.com/montancheztamuja/trip/6330",
+      "waypoints": [
+        {
+          "name": "Molino harinero rehabilitado",
+          "poi_id": "poi/45627"
+        },
+        {
+          "name": "Molino",
+          "poi_id": "poi/45629"
+        },
+        {
+          "name": "Molino",
+          "poi_id": "poi/45628"
+        },
+        {
+          "name": "Molino",
+          "poi_id": "poi/45630"
+        },
+        {
+          "name": "Molino",
+          "poi_id": "poi/45631"
+        },
+        {
+          "name": "Molino",
+          "poi_id": "poi/45632"
+        },
+        {
+          "name": "Molino",
+          "poi_id": "poi/45633"
+        },
+        {
+          "name": "Molino",
+          "poi_id": "poi/45634"
+        },
+        {
+          "name": "Molino",
+          "poi_id": "poi/45635"
+        },
+        {
+          "name": "Molino",
+          "poi_id": "poi/45636"
+        },
+        {
+          "name": "Molino",
+          "poi_id": "poi/45637"
+        },
+        {
+          "name": "Molino",
+          "poi_id": "poi/45639"
+        },
+        {
+          "name": "Molino",
+          "poi_id": "poi/45640"
+        },
+        {
+          "name": "Molino",
+          "poi_id": "poi/45641"
+        },
+        {
+          "name": "Molino",
+          "poi_id": "poi/45643"
+        },
+        {
+          "name": "Molino",
+          "poi_id": "poi/45644"
+        }
+      ],
+      "itinerary": [
+        {
+          "step": "Arroyomolinos",
+          "items": []
+        },
+        {
+          "step": "PR-CC 27 Ruta de los Molinos",
+          "items": []
+        },
+        {
+          "step": "Principales molinos:",
+          "items": [
+            {
+              "name": "Molino harinero rehabilitado",
+              "poi_id": "poi/45627"
+            },
+            {
+              "name": "Molino",
+              "poi_id": "poi/45629"
+            },
+            {
+              "name": "Molino",
+              "poi_id": "poi/45628"
+            },
+            {
+              "name": "Molino",
+              "poi_id": "poi/45630"
+            },
+            {
+              "name": "Molino",
+              "poi_id": "poi/45631"
+            },
+            {
+              "name": "Molino",
+              "poi_id": "poi/45632"
+            },
+            {
+              "name": "Molino",
+              "poi_id": "poi/45633"
+            },
+            {
+              "name": "Molino",
+              "poi_id": "poi/45634"
+            },
+            {
+              "name": "Molino",
+              "poi_id": "poi/45635"
+            },
+            {
+              "name": "Molino",
+              "poi_id": "poi/45636"
+            },
+            {
+              "name": "Molino",
+              "poi_id": "poi/45637"
+            },
+            {
+              "name": "Molino",
+              "poi_id": "poi/45639"
+            },
+            {
+              "name": "Molino",
+              "poi_id": "poi/45640"
+            },
+            {
+              "name": "Molino",
+              "poi_id": "poi/45641"
+            },
+            {
+              "name": "Molino",
+              "poi_id": "poi/45643"
+            },
+            {
+              "name": "Molino",
+              "poi_id": "poi/45644"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "path/623",
+      "name": "Ruta Santa Lucía del Trampal-Sierra del Centinela",
+      "description": "La ruta hacia la Basílica de Santa Lucía del Trampal es una experiencia única para los amantes de la historia y la naturaleza. Partiendo del centro de Alcuéscar, el recorrido atraviesa calles emblemáticas como la Plaza de España y la Fuente del Castaño, pasando por el albergue de peregrinos de la Vía de la Plata.\n\nEl camino serpentea entre olivares y campos de labor, ofreciendo un paisaje pintoresco antes de llegar a la Basílica visigoda de Santa Lucía del Trampal, una joya arquitectónica del siglo VII, declarada Bien de Interés Cultural.\n\nJunto al templo, el Centro de Interpretación permite conocer su fascinante historia y contexto arqueológico. El regreso a Alcuéscar se realiza por la Sierra del Centinela, con vistas espectaculares de la llanura extremeña. Una ruta perfecta para descubrir el legado visigodo y disfrutar de la belleza natural de la región",
+      "url": "https://inventrip.com/montancheztamuja/trip/7816",
+      "waypoints": [
+        {
+          "name": "Casa de la Encomienda",
+          "poi_id": "poi/55932"
+        },
+        {
+          "name": "Fuente del Castaño",
+          "poi_id": "poi/55931"
+        },
+        {
+          "name": "Basílica Santa Lucía del Trampal",
+          "poi_id": "poi/9642"
+        },
+        {
+          "name": "Centro de Interpretación Santa Lucia del Trampal",
+          "poi_id": "poi/46728"
+        }
+      ],
+      "itinerary": [
+        {
+          "step": "Alcuéscar",
+          "items": []
+        },
+        {
+          "step": "puntos de interés de la ruta",
+          "items": [
+            {
+              "name": "Casa de la Encomienda",
+              "poi_id": "poi/55932"
+            },
+            {
+              "name": "Fuente del Castaño",
+              "poi_id": "poi/55931"
+            },
+            {
+              "name": "Basílica Santa Lucía del Trampal",
+              "poi_id": "poi/9642"
+            },
+            {
+              "name": "Centro de Interpretación Santa Lucia del Trampal",
+              "poi_id": "poi/46728"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "path/625",
+      "name": "Sendero Villasviejas",
+      "description": "La ruta comienza en la Plaza Mayor de Botija, adentrándose en la Dehesa Boyal, un paisaje de encinas y alcornoques. Desde allí se accede al yacimiento arqueológico de Villasviejas del Tamuja, antigua fortificación prerromana. El recorrido continúa hacia el Molino de la Muralla, junto al río Tamuja, un ingenio hidráulico del siglo XVIII.\n\nSiguiendo antiguos senderos, se alcanza el Puente Viejo (siglos XVI-XVII), con tres arcos de medio punto, y se llega a la Ermita del Santísimo Cristo Resucitado. Más adelante, se cruza el Puente de los Hierros y se visita la Fuente de la Huerta, manantial de aguas ferruginosas.\n\nEl camino prosigue hasta el Puente del Verraco (12,7 km), con 14 ojos y 13 tajamares, donde se halló un verraco vetón. El tramo final sigue el camino de Montánchez, pasando por un crucero de piedra, y concluye en la Iglesia de Santa María Magdalena, en el corazón del pueblo.",
+      "url": "https://inventrip.com/montancheztamuja/trip/7818",
+      "waypoints": [
+        {
+          "name": "Castro prerromano de Villasviejas del Tamuja",
+          "poi_id": "poi/9649"
+        },
+        {
+          "name": "El Molino de la Muralla",
+          "poi_id": "poi/43606"
+        },
+        {
+          "name": "Molino del Puente Viejo",
+          "poi_id": "poi/43611"
+        },
+        {
+          "name": "Puente Viejo",
+          "poi_id": "poi/45515"
+        },
+        {
+          "name": "Ermita del Santísimo Cristo Resucitado",
+          "poi_id": "poi/43610"
+        },
+        {
+          "name": "Puente del Verraco",
+          "poi_id": "poi/45523"
+        },
+        {
+          "name": "Cruz Camino de Montanchez",
+          "poi_id": "poi/43609"
+        },
+        {
+          "name": "Iglesia parroquial de Santa María Magdalena",
+          "poi_id": "poi/9975"
+        }
+      ],
+      "itinerary": [
+        {
+          "step": "Botija",
+          "items": []
+        },
+        {
+          "step": "Puntos de interés de la ruta",
+          "items": [
+            {
+              "name": "Castro prerromano de Villasviejas del Tamuja",
+              "poi_id": "poi/9649"
+            },
+            {
+              "name": "El Molino de la Muralla",
+              "poi_id": "poi/43606"
+            },
+            {
+              "name": "Molino del Puente Viejo",
+              "poi_id": "poi/43611"
+            },
+            {
+              "name": "Puente Viejo",
+              "poi_id": "poi/45515"
+            },
+            {
+              "name": "Ermita del Santísimo Cristo Resucitado",
+              "poi_id": "poi/43610"
+            },
+            {
+              "name": "Puente del Verraco",
+              "poi_id": "poi/45523"
+            },
+            {
+              "name": "Cruz Camino de Montanchez",
+              "poi_id": "poi/43609"
+            },
+            {
+              "name": "Iglesia parroquial de Santa María Magdalena",
+              "poi_id": "poi/9975"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "path/626",
+      "name": "Sendero Vía de la Plata",
+      "description": "La Vía de la Plata, antigua calzada romana y ruta jacobea, atraviesa los municipios de Alcuéscar, Casas de Don Antonio y Aldea del Cano, ofreciendo un recorrido cargado de historia y patrimonio. \n\nA lo largo de este sendero de 15,67 km de dificultad moderada (solo ida), con desnivel positivo de 29 m y negativo de 61 m, podrás descubrir varios restos romanos como miliarios, puentes como el Puente de Santiago Bencáliz o paisajes de dehesa.\n\nUna ruta ideal para peregrinos y amantes del patrimonio.\n\nMás info: https://www.semtayr.es/es/ ",
+      "url": "https://inventrip.com/montancheztamuja/trip/7829",
+      "waypoints": [
+        {
+          "name": "Puente antiguo de Casas de Don Antonio",
+          "poi_id": "poi/45761"
+        },
+        {
+          "name": "Miliario XXVIII",
+          "poi_id": "poi/45832"
+        },
+        {
+          "name": "Miliario XXV",
+          "poi_id": "poi/45831"
+        },
+        {
+          "name": "Miliario XXX Via de la Plata",
+          "poi_id": "poi/45829"
+        },
+        {
+          "name": "Basílica Santa Lucía del Trampal",
+          "poi_id": "poi/9642"
+        },
+        {
+          "name": "Centro de Interpretación Santa Lucia del Trampal",
+          "poi_id": "poi/46728"
+        },
+        {
+          "name": "Museo Municipal del Tuero",
+          "poi_id": "poi/52482"
+        },
+        {
+          "name": "Museo de los Uniformes Históricos, de Emilio Mariño.",
+          "poi_id": "poi/44358"
+        },
+        {
+          "name": "Albergue Municipal Miliario del Verdinal",
+          "poi_id": "poi/55910"
+        },
+        {
+          "name": "Albergue Vía de la Plata",
+          "poi_id": "poi/63630"
+        },
+        {
+          "name": "Casa de la Misericordia - Albergue de peregrinos",
+          "poi_id": "poi/44359"
+        }
+      ],
+      "itinerary": [
+        {
+          "step": "Alcuéscar",
+          "items": []
+        },
+        {
+          "step": "Casas de Don Antonio",
+          "items": []
+        },
+        {
+          "step": "Aldea del Cano",
+          "items": []
+        },
+        {
+          "step": "Puntos de interés de la ruta",
+          "items": [
+            {
+              "name": "Puente antiguo de Casas de Don Antonio",
+              "poi_id": "poi/45761"
+            },
+            {
+              "name": "Miliario XXVIII",
+              "poi_id": "poi/45832"
+            },
+            {
+              "name": "Miliario XXV",
+              "poi_id": "poi/45831"
+            },
+            {
+              "name": "Miliario XXX Via de la Plata",
+              "poi_id": "poi/45829"
+            }
+          ]
+        },
+        {
+          "step": "No dejes de visitar",
+          "items": [
+            {
+              "name": "Basílica Santa Lucía del Trampal",
+              "poi_id": "poi/9642"
+            },
+            {
+              "name": "Centro de Interpretación Santa Lucia del Trampal",
+              "poi_id": "poi/46728"
+            },
+            {
+              "name": "Museo Municipal del Tuero",
+              "poi_id": "poi/52482"
+            },
+            {
+              "name": "Museo de los Uniformes Históricos, de Emilio Mariño.",
+              "poi_id": "poi/44358"
+            }
+          ]
+        },
+        {
+          "step": "Dónde dormir",
+          "items": [
+            {
+              "name": "Albergue Municipal Miliario del Verdinal",
+              "poi_id": "poi/55910"
+            },
+            {
+              "name": "Albergue Vía de la Plata",
+              "poi_id": "poi/63630"
+            },
+            {
+              "name": "Casa de la Misericordia - Albergue de peregrinos",
+              "poi_id": "poi/44359"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "path/624",
+      "name": "Ruta del Embalse del Gallo y alrededores de Torremocha ",
+      "description": "La ruta circular de Torremocha invita a descubrir algunos de los paisajes más emblemáticos de su entorno natural y patrimonial. Comienza en la Charca del Pozuelo, junto a la entrada del pueblo, y transcurre por senderos suaves entre encinas y alcornoques, hábitat de aves rapaces como milanos y cernícalos, así como pequeños mamíferos y anfibios.\n\nEl recorrido atraviesa el casco urbano, permitiendo admirar la Iglesia Parroquial de la Asunción, de estilo barroco, y la Ermita del Cristo del Humilladero. Más adelante, el camino conduce al Embalse del Gallo, un rincón sereno donde el agua y la vegetación de ribera ofrecen un refugio natural.\n\nLa ruta continúa cruzando el río Salor por un antiguo puente de piedra, y tras atravesar la carretera CC-118, se cierra el bucle cruzando el Puente Grande, de origen medieval. Ideal para realizar en familia, esta ruta combina naturaleza, historia y tranquilidad en cualquier estación del año.",
+      "url": "https://inventrip.com/montancheztamuja/trip/7817",
+      "waypoints": [
+        {
+          "name": "Charca del Pozuelo",
+          "poi_id": "poi/63494"
+        },
+        {
+          "name": "Iglesia de la Asunción",
+          "poi_id": "poi/9982"
+        },
+        {
+          "name": "Ermita del Cristo del  Humilladero",
+          "poi_id": "poi/9987"
+        },
+        {
+          "name": "Embalse del Gallo",
+          "poi_id": "poi/43590"
+        },
+        {
+          "name": "Puente Grande",
+          "poi_id": "poi/9990"
+        }
+      ],
+      "itinerary": [
+        {
+          "step": "Torremocha",
+          "items": []
+        },
+        {
+          "step": "Puntos de interés de la ruta",
+          "items": [
+            {
+              "name": "Charca del Pozuelo",
+              "poi_id": "poi/63494"
+            },
+            {
+              "name": "Iglesia de la Asunción",
+              "poi_id": "poi/9982"
+            },
+            {
+              "name": "Ermita del Cristo del  Humilladero",
+              "poi_id": "poi/9987"
+            },
+            {
+              "name": "Embalse del Gallo",
+              "poi_id": "poi/43590"
+            },
+            {
+              "name": "Puente Grande",
+              "poi_id": "poi/9990"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "path/619",
+      "name": "Ruta del Risco de Sierra de Fuentes",
+      "description": "La ruta por la Sierra de la Mosca es una experiencia única para los amantes del senderismo y la naturaleza. Partiendo del núcleo urbano, el camino asciende hacia el Risco, ofreciendo vistas espectaculares de los Llanos de Cáceres.\n\nEn la bifurcación hacia la cima, un desvío lleva a la Ermita del Cristo del Risco, el mirador de los Llanos de Cáceres y el radar meteorológico, puntos ideales para disfrutar de panorámicas impresionantes.\n\nLa ruta continúa cerca del Centro de Recuperación de Fauna y Los Hornos, rodeando la sierra entre matorral mediterráneo. Durante el recorrido, es posible avistar milanos reales, cernícalos y avutardas, en un paisaje dominado por encinas y alcornoques.\n\nUn itinerario perfecto para descubrir la belleza natural de Sierra de Fuentes, combinando historia, vistas espectaculares y biodiversidad en un entorno único",
+      "url": "https://inventrip.com/montancheztamuja/trip/7352",
+      "waypoints": [],
+      "itinerary": [
+        {
+          "step": "Sierra de Fuentes",
+          "items": []
+        },
+        {
+          "step": "Puntos de interés de la ruta",
+          "items": []
+        },
+        {
+          "step": "Ermita del Cristo del Risco",
+          "items": []
+        },
+        {
+          "step": "Mirador de El Risco",
+          "items": []
+        },
+        {
+          "step": "Radar meteorológico ",
+          "items": []
+        },
+        {
+          "step": "Centro de recuperación de fauna Los Hornos",
+          "items": []
+        },
+        {
+          "step": "Hornos de Cal",
+          "items": []
+        }
+      ]
+    },
+    {
+      "id": "path/599",
+      "name": "Ruta por la Dehesa boyal de Santa Marta de Magasca",
+      "description": "La Ruta por la Dehesa Boyal de Santa Marta de Magasca ofrece un recorrido circular de 5 km por un entorno natural de gran valor ecológico, integrado en la ZEPA Magasca, espacio protegido por su riqueza en avifauna esteparia y ribereña. El sendero atraviesa dehesas de encinas y llanuras abiertas, reflejo del paisaje tradicional extremeño.\n\nAl acercarse al río Gibranzos, el entorno se transforma en una frondosa ribera, hábitat ideal para aves, mamíferos y reptiles. En este cruce de ecosistemas conviven especies emblemáticas como el aguilucho cenizo, el cernícalo primilla, el alimoche y la cigüeña negra, especie vulnerable que encuentra aquí refugio.\n\nLa ruta, de baja dificultad y sin grandes desniveles, es ideal para disfrutar en cualquier época del año. El regreso, entre suaves lomas, ofrece vistas abiertas y la serenidad del campo extremeño, en un entorno donde la biodiversidad y la conservación se dan la mano.",
+      "url": "https://inventrip.com/montancheztamuja/trip/7353",
+      "waypoints": [],
+      "itinerary": [
+        {
+          "step": "Santa Marta de Magasca",
+          "items": []
+        },
+        {
+          "step": "puntos de interés de la ruta",
+          "items": []
+        },
+        {
+          "step": "Rollo de Santa Marta de Magasca ",
+          "items": []
+        },
+        {
+          "step": "Mirador de Santa Marta de Magasca",
+          "items": []
+        }
+      ]
+    },
+    {
+      "id": "path/423",
+      "name": "TBL_Ruta BTT 1 “Llanos de Cáceres, Eurovelo y Vía de la Plata”",
+      "description": "Tamusia Bike Loop. Inicio de la Ruta BTT 1 “Llanos de Cáceres, Eurovelo y Vía de la Plata”.\nRecorrido por el oeste de la comarca de la Sierra de Montánchez, atravesando hasta 6 localidades de la comarca y transitando por los “Llanos de Cáceres y Sierra de Fuentes”. Compartiremos traza en gran parte del recorrido con el trazado de la Vía de la Plata, paralelos al Eurovelo 1 en su Etapa 3 Cáceres - Mérida.\nSaldremos de Torreorgaz en dirección Torrequemada, ...\nDistancia: 57,94 km\nDificultad técnica: Moderado",
+      "url": "https://inventrip.com/montancheztamuja/trip/7124",
+      "waypoints": [
+        {
+          "name": "Torreorgaz",
+          "poi_id": "poi/42497"
+        },
+        {
+          "name": "Torrequemada",
+          "poi_id": "poi/42496"
+        },
+        {
+          "name": "Albalá",
+          "poi_id": "poi/42510"
+        },
+        {
+          "name": "Alcuéscar",
+          "poi_id": "poi/42481"
+        },
+        {
+          "name": "Casas de Don Antonio",
+          "poi_id": "poi/42484"
+        },
+        {
+          "name": "Aldea del Cano",
+          "poi_id": "poi/42485"
+        },
+        {
+          "name": "Zona de observación de aves Embalse de Valdesalor.",
+          "poi_id": "poi/45539"
+        },
+        {
+          "name": "Cruz del Camino",
+          "poi_id": "poi/9969"
+        },
+        {
+          "name": "Iglesia de San Pedro",
+          "poi_id": "poi/9962"
+        },
+        {
+          "name": "Embalse de Valdesalor",
+          "poi_id": "poi/9966"
+        },
+        {
+          "name": "Ermita de San Isidro",
+          "poi_id": "poi/43596"
+        },
+        {
+          "name": "Pozo del Marqués",
+          "poi_id": "poi/9964"
+        },
+        {
+          "name": "Ermita del Humilladero",
+          "poi_id": "poi/9968"
+        },
+        {
+          "name": "Ruta Las Corralás- Ermita Nuestra Sra. Salor",
+          "poi_id": "poi/43456"
+        },
+        {
+          "name": "Plaza Mayor",
+          "poi_id": "poi/45844"
+        },
+        {
+          "name": "Puente antiguo de Casas de Don Antonio",
+          "poi_id": "poi/45761"
+        },
+        {
+          "name": "Miliario XXV",
+          "poi_id": "poi/45831"
+        },
+        {
+          "name": "Miliario XXVIII",
+          "poi_id": "poi/45832"
+        },
+        {
+          "name": "Miliario XXX Via de la Plata",
+          "poi_id": "poi/45829"
+        },
+        {
+          "name": "Bar León",
+          "poi_id": "poi/45569"
+        },
+        {
+          "name": "Bar-Restaurante Parador de los Llanos",
+          "poi_id": "poi/45828"
+        },
+        {
+          "name": "Cafetería Rayma",
+          "poi_id": "poi/45819"
+        },
+        {
+          "name": "Mesón Pepe",
+          "poi_id": "poi/45570"
+        },
+        {
+          "name": "Restaurante Donde Manuel",
+          "poi_id": "poi/10218"
+        },
+        {
+          "name": "Café-Bar El Vivas",
+          "poi_id": "poi/45817"
+        },
+        {
+          "name": "Café-Bar El Menuo",
+          "poi_id": "poi/45818"
+        },
+        {
+          "name": "Bar Restaurante La Plaza",
+          "poi_id": "poi/10219"
+        },
+        {
+          "name": "Restaurante Alta Cuesta",
+          "poi_id": "poi/45969"
+        },
+        {
+          "name": "Restaurante El Rincón de Paco",
+          "poi_id": "poi/45970"
+        },
+        {
+          "name": "Restaurante El Marques",
+          "poi_id": "poi/45968"
+        },
+        {
+          "name": "Hogar del pensionista",
+          "poi_id": "poi/45965"
+        },
+        {
+          "name": "Restaurante La Posada & Giraldo",
+          "poi_id": "poi/45765"
+        },
+        {
+          "name": "Restaurante las Vegas",
+          "poi_id": "poi/45764"
+        }
+      ],
+      "itinerary": [
+        {
+          "step": "Municipios ",
+          "items": [
+            {
+              "name": "Torreorgaz",
+              "poi_id": "poi/42497"
+            },
+            {
+              "name": "Torrequemada",
+              "poi_id": "poi/42496"
+            },
+            {
+              "name": "Albalá",
+              "poi_id": "poi/42510"
+            },
+            {
+              "name": "Alcuéscar",
+              "poi_id": "poi/42481"
+            },
+            {
+              "name": "Casas de Don Antonio",
+              "poi_id": "poi/42484"
+            },
+            {
+              "name": "Aldea del Cano",
+              "poi_id": "poi/42485"
+            },
+            {
+              "name": "lugares de interés (en el trayecto de la ruta)",
+              "items": [
+                {
+                  "name": "Zona de observación de aves Embalse de Valdesalor.",
+                  "poi_id": "poi/45539"
+                },
+                {
+                  "name": "Cruz del Camino",
+                  "poi_id": "poi/9969"
+                },
+                {
+                  "name": "Iglesia de San Pedro",
+                  "poi_id": "poi/9962"
+                },
+                {
+                  "name": "Embalse de Valdesalor",
+                  "poi_id": "poi/9966"
+                },
+                {
+                  "name": "Ermita de San Isidro",
+                  "poi_id": "poi/43596"
+                },
+                {
+                  "name": "Pozo del Marqués",
+                  "poi_id": "poi/9964"
+                },
+                {
+                  "name": "Ermita del Humilladero",
+                  "poi_id": "poi/9968"
+                },
+                {
+                  "name": "Ruta Las Corralás- Ermita Nuestra Sra. Salor",
+                  "poi_id": "poi/43456"
+                },
+                {
+                  "name": "Plaza Mayor",
+                  "poi_id": "poi/45844"
+                },
+                {
+                  "name": "Puente antiguo de Casas de Don Antonio",
+                  "poi_id": "poi/45761"
+                },
+                {
+                  "name": "Miliario XXV",
+                  "poi_id": "poi/45831"
+                },
+                {
+                  "name": "Miliario XXVIII",
+                  "poi_id": "poi/45832"
+                },
+                {
+                  "name": "Miliario XXX Via de la Plata",
+                  "poi_id": "poi/45829"
+                }
+              ]
+            },
+            {
+              "name": "dónde comer",
+              "items": [
+                {
+                  "name": "Bar León",
+                  "poi_id": "poi/45569"
+                },
+                {
+                  "name": "Bar-Restaurante Parador de los Llanos",
+                  "poi_id": "poi/45828"
+                },
+                {
+                  "name": "Cafetería Rayma",
+                  "poi_id": "poi/45819"
+                },
+                {
+                  "name": "Mesón Pepe",
+                  "poi_id": "poi/45570"
+                },
+                {
+                  "name": "Restaurante Donde Manuel",
+                  "poi_id": "poi/10218"
+                },
+                {
+                  "name": "Café-Bar El Vivas",
+                  "poi_id": "poi/45817"
+                },
+                {
+                  "name": "Café-Bar El Menuo",
+                  "poi_id": "poi/45818"
+                },
+                {
+                  "name": "Bar Restaurante La Plaza",
+                  "poi_id": "poi/10219"
+                },
+                {
+                  "name": "Restaurante Alta Cuesta",
+                  "poi_id": "poi/45969"
+                },
+                {
+                  "name": "Restaurante El Rincón de Paco",
+                  "poi_id": "poi/45970"
+                },
+                {
+                  "name": "Restaurante El Marques",
+                  "poi_id": "poi/45968"
+                },
+                {
+                  "name": "Hogar del pensionista",
+                  "poi_id": "poi/45965"
+                },
+                {
+                  "name": "Restaurante La Posada & Giraldo",
+                  "poi_id": "poi/45765"
+                },
+                {
+                  "name": "Restaurante las Vegas",
+                  "poi_id": "poi/45764"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "path/419",
+      "name": "TBL_Ruta BTT 2 “Ruta del queso”",
+      "description": "Tamusia Bike Loop\nRuta BTT 2 “Ruta del queso”\nRecorrido circular por el norte de la comarca de la Sierra de Montánchez, atravesando 3 localidades de la comarca y transitando por zonas adehesadas surcadas por los ríos Salor y Tamuja, además de diversos arroyos y un embalse.\nSaldremos de ADISMONTA...\nDistancia: 37,84 km\nDificultad Técnica: Moderado",
+      "url": "https://inventrip.com/montancheztamuja/trip/7121",
+      "waypoints": [
+        {
+          "name": "Torre de Santa María",
+          "poi_id": "poi/42489"
+        },
+        {
+          "name": "Valdefuentes",
+          "poi_id": "poi/42490"
+        },
+        {
+          "name": "Torremocha",
+          "poi_id": "poi/42495"
+        },
+        {
+          "name": "Botija",
+          "poi_id": "poi/42494"
+        },
+        {
+          "name": "Puente Grande",
+          "poi_id": "poi/9990"
+        },
+        {
+          "name": "Cruz Camino de Montanchez",
+          "poi_id": "poi/43609"
+        },
+        {
+          "name": "Puente del Verraco",
+          "poi_id": "poi/45523"
+        },
+        {
+          "name": "Hotel Restaurante Las Glorias",
+          "poi_id": "poi/10154"
+        },
+        {
+          "name": "La Estrella",
+          "poi_id": "poi/45785"
+        },
+        {
+          "name": "La Avenida",
+          "poi_id": "poi/46918"
+        },
+        {
+          "name": "Taperia La Paraina 2.0",
+          "poi_id": "poi/45835"
+        }
+      ],
+      "itinerary": [
+        {
+          "step": "municipios",
+          "items": [
+            {
+              "name": "Torre de Santa María",
+              "poi_id": "poi/42489"
+            },
+            {
+              "name": "Valdefuentes",
+              "poi_id": "poi/42490"
+            },
+            {
+              "name": "Torremocha",
+              "poi_id": "poi/42495"
+            },
+            {
+              "name": "Botija",
+              "poi_id": "poi/42494"
+            },
+            {
+              "name": "lugares de interés (en el trayecto de la ruta)",
+              "items": [
+                {
+                  "name": "Puente Grande",
+                  "poi_id": "poi/9990"
+                },
+                {
+                  "name": "Cruz Camino de Montanchez",
+                  "poi_id": "poi/43609"
+                },
+                {
+                  "name": "Puente del Verraco",
+                  "poi_id": "poi/45523"
+                }
+              ]
+            },
+            {
+              "name": "dónde comer",
+              "items": [
+                {
+                  "name": "Hotel Restaurante Las Glorias",
+                  "poi_id": "poi/10154"
+                },
+                {
+                  "name": "La Estrella",
+                  "poi_id": "poi/45785"
+                },
+                {
+                  "name": "La Avenida",
+                  "poi_id": "poi/46918"
+                },
+                {
+                  "name": "Taperia La Paraina 2.0",
+                  "poi_id": "poi/45835"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "path/422",
+      "name": "TBL_Ruta BTT 3 “Entre conejos, liebres y perdices”",
+      "description": "Recorrido circular por el noreste de la comarca de la Sierra de Montánchez, atravesando hasta 6 localidades de la comarca y transitando por zonas adehesadas de penillanura surcadas por el río Tamuja, además de diversos arroyos y un embalse.\n\nDistancia: 35,03 km\nDificultad técnica: Moderado\n",
+      "url": "https://inventrip.com/montancheztamuja/trip/7125",
+      "waypoints": [
+        {
+          "name": "Plasenzuela",
+          "poi_id": "poi/42498"
+        },
+        {
+          "name": "Santa Ana",
+          "poi_id": "poi/42492"
+        },
+        {
+          "name": "Salvatierra de Santiago",
+          "poi_id": "poi/42491"
+        },
+        {
+          "name": "Benquerencia",
+          "poi_id": "poi/41921"
+        },
+        {
+          "name": "Botija",
+          "poi_id": "poi/42494"
+        },
+        {
+          "name": "Ermita del Cristo del Amparo",
+          "poi_id": "poi/9646"
+        },
+        {
+          "name": "Mirador de Benquerencia",
+          "poi_id": "poi/45917"
+        },
+        {
+          "name": "Iglesia Parroquial de San Pedro Apóstol",
+          "poi_id": "poi/9972"
+        },
+        {
+          "name": "Cruz Camino de Montanchez",
+          "poi_id": "poi/43609"
+        },
+        {
+          "name": "Iglesia parroquial de Santa María Magdalena",
+          "poi_id": "poi/9975"
+        },
+        {
+          "name": "Puente del Verraco",
+          "poi_id": "poi/45523"
+        },
+        {
+          "name": "Café Morisco Bar",
+          "poi_id": "poi/45554"
+        },
+        {
+          "name": "Bar del Pensionista",
+          "poi_id": "poi/45920"
+        },
+        {
+          "name": "Bar Café Vetton ",
+          "poi_id": "poi/41918"
+        }
+      ],
+      "itinerary": [
+        {
+          "step": "municipios",
+          "items": [
+            {
+              "name": "Plasenzuela",
+              "poi_id": "poi/42498"
+            },
+            {
+              "name": "Santa Ana",
+              "poi_id": "poi/42492"
+            },
+            {
+              "name": "Salvatierra de Santiago",
+              "poi_id": "poi/42491"
+            },
+            {
+              "name": "Benquerencia",
+              "poi_id": "poi/41921"
+            },
+            {
+              "name": "Botija",
+              "poi_id": "poi/42494"
+            },
+            {
+              "name": "Lugares de interés (en el trayecto de la ruta)",
+              "items": [
+                {
+                  "name": "Ermita del Cristo del Amparo",
+                  "poi_id": "poi/9646"
+                },
+                {
+                  "name": "Mirador de Benquerencia",
+                  "poi_id": "poi/45917"
+                },
+                {
+                  "name": "Iglesia Parroquial de San Pedro Apóstol",
+                  "poi_id": "poi/9972"
+                },
+                {
+                  "name": "Cruz Camino de Montanchez",
+                  "poi_id": "poi/43609"
+                },
+                {
+                  "name": "Iglesia parroquial de Santa María Magdalena",
+                  "poi_id": "poi/9975"
+                },
+                {
+                  "name": "Puente del Verraco",
+                  "poi_id": "poi/45523"
+                },
+                {
+                  "name": "Dónde comer",
+                  "items": [
+                    {
+                      "name": "Café Morisco Bar",
+                      "poi_id": "poi/45554"
+                    },
+                    {
+                      "name": "Bar del Pensionista",
+                      "poi_id": "poi/45920"
+                    },
+                    {
+                      "name": "Bar Café Vetton ",
+                      "poi_id": "poi/41918"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "path/420",
+      "name": "TBL_Ruta BTT 4 “Bicicleta y caldereta”",
+      "description": "Tamusia Bike Loop\nRuta BTT 4 “Bicicleta y caldereta”\nRecorrido circular por el este de la comarca de la Sierra de Montánchez, atravesando hasta 5 localidades de la comarca y transitando por zonas adehesadas surcadas por el río Tamuja, además de diversos arroyos y un embalse.\nSaldremos de ADISMONTA...\nDistancia: 35,05 km\nDificultad Técnica: Moderado",
+      "url": "https://inventrip.com/montancheztamuja/trip/7122",
+      "waypoints": [
+        {
+          "name": "Torre de Santa María",
+          "poi_id": "poi/42489"
+        },
+        {
+          "name": "Valdefuentes",
+          "poi_id": "poi/42490"
+        },
+        {
+          "name": "Benquerencia",
+          "poi_id": "poi/41921"
+        },
+        {
+          "name": "Salvatierra de Santiago",
+          "poi_id": "poi/42491"
+        },
+        {
+          "name": "Santa Ana",
+          "poi_id": "poi/42492"
+        },
+        {
+          "name": "Zarza de Montánchez",
+          "poi_id": "poi/42488"
+        },
+        {
+          "name": "Casa con Esgrafiado",
+          "poi_id": "poi/9951"
+        },
+        {
+          "name": "Casa con Esgrafiado",
+          "poi_id": "poi/9952"
+        },
+        {
+          "name": "Casa con Esgrafiado",
+          "poi_id": "poi/9954"
+        },
+        {
+          "name": "Ermita del Cristo del Amparo",
+          "poi_id": "poi/9646"
+        },
+        {
+          "name": "Iglesia Parroquial de San Pedro Apóstol",
+          "poi_id": "poi/9972"
+        },
+        {
+          "name": "Encina La Terrona",
+          "poi_id": "poi/9645"
+        },
+        {
+          "name": "Puente Romano",
+          "poi_id": "poi/9886"
+        },
+        {
+          "name": "Hotel Restaurante Las Glorias",
+          "poi_id": "poi/10154"
+        },
+        {
+          "name": "La Estrella",
+          "poi_id": "poi/45785"
+        },
+        {
+          "name": "La Avenida",
+          "poi_id": "poi/46918"
+        },
+        {
+          "name": "Taperia La Paraina 2.0",
+          "poi_id": "poi/45835"
+        },
+        {
+          "name": "Bar del Pensionista",
+          "poi_id": "poi/45920"
+        },
+        {
+          "name": "Café Morisco Bar",
+          "poi_id": "poi/45554"
+        },
+        {
+          "name": "Cafetería Churrería El KIOSCO",
+          "poi_id": "poi/45621"
+        }
+      ],
+      "itinerary": [
+        {
+          "step": "Municipios",
+          "items": [
+            {
+              "name": "Torre de Santa María",
+              "poi_id": "poi/42489"
+            },
+            {
+              "name": "Valdefuentes",
+              "poi_id": "poi/42490"
+            },
+            {
+              "name": "Benquerencia",
+              "poi_id": "poi/41921"
+            },
+            {
+              "name": "Salvatierra de Santiago",
+              "poi_id": "poi/42491"
+            },
+            {
+              "name": "Santa Ana",
+              "poi_id": "poi/42492"
+            },
+            {
+              "name": "Zarza de Montánchez",
+              "poi_id": "poi/42488"
+            },
+            {
+              "name": "Lugares de interés (en el trayecto de la ruta)",
+              "items": [
+                {
+                  "name": "Casa con Esgrafiado",
+                  "poi_id": "poi/9951"
+                },
+                {
+                  "name": "Casa con Esgrafiado",
+                  "poi_id": "poi/9952"
+                },
+                {
+                  "name": "Casa con Esgrafiado",
+                  "poi_id": "poi/9954"
+                },
+                {
+                  "name": "Ermita del Cristo del Amparo",
+                  "poi_id": "poi/9646"
+                },
+                {
+                  "name": "Iglesia Parroquial de San Pedro Apóstol",
+                  "poi_id": "poi/9972"
+                },
+                {
+                  "name": "Encina La Terrona",
+                  "poi_id": "poi/9645"
+                },
+                {
+                  "name": "Puente Romano",
+                  "poi_id": "poi/9886"
+                },
+                {
+                  "name": "dónde comer",
+                  "items": [
+                    {
+                      "name": "Hotel Restaurante Las Glorias",
+                      "poi_id": "poi/10154"
+                    },
+                    {
+                      "name": "La Estrella",
+                      "poi_id": "poi/45785"
+                    },
+                    {
+                      "name": "La Avenida",
+                      "poi_id": "poi/46918"
+                    },
+                    {
+                      "name": "Taperia La Paraina 2.0",
+                      "poi_id": "poi/45835"
+                    },
+                    {
+                      "name": "Bar del Pensionista",
+                      "poi_id": "poi/45920"
+                    },
+                    {
+                      "name": "Café Morisco Bar",
+                      "poi_id": "poi/45554"
+                    },
+                    {
+                      "name": "Cafetería Churrería El KIOSCO",
+                      "poi_id": "poi/45621"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "path/421",
+      "name": "TBL_Ruta BTT 5 “Anillo de la sierra de Montánchez”",
+      "description": "Tamusia Bike Loop\nRuta BTT 5 “Anillo de la sierra de Montánchez” \nRecorrido circular por el corazón de la comarca de la Sierra de Montánchez, circundando la zona de sierra y atravesando hasta 5 localidades de la comarca. Transitando por zonas de cultivos, olivares, higuerales y pastos, además de zonas adehesadas y lugares con espléndidas vistas de la zona sur de la comarca.\nSaldremos de ADISMONTA ...\nDistancia: 39,55 km\nDificultad Técnica: Moderado",
+      "url": "https://inventrip.com/montancheztamuja/trip/7123",
+      "waypoints": [
+        {
+          "name": "Hotel Restaurante Las Glorias",
+          "poi_id": "poi/10154"
+        },
+        {
+          "name": "La Estrella",
+          "poi_id": "poi/45785"
+        },
+        {
+          "name": "Bar Bahía",
+          "poi_id": "poi/45998"
+        },
+        {
+          "name": "Churrería Bar Fragoso",
+          "poi_id": "poi/28515"
+        }
+      ],
+      "itinerary": [
+        {
+          "step": "Torre de Santa María",
+          "items": []
+        },
+        {
+          "step": "Valdemorales",
+          "items": []
+        },
+        {
+          "step": "Arroyomolinos",
+          "items": []
+        },
+        {
+          "step": "Albalá",
+          "items": []
+        },
+        {
+          "step": "Valdefuentes",
+          "items": []
+        },
+        {
+          "step": "Lugares de interés (en el trayecto de la ruta)",
+          "items": []
+        },
+        {
+          "step": "Cruz de Camino",
+          "items": []
+        },
+        {
+          "step": "Encina La Nieta",
+          "items": []
+        },
+        {
+          "step": "Torre",
+          "items": []
+        },
+        {
+          "step": "El Castilijillo",
+          "items": []
+        },
+        {
+          "step": "Iglesia de San Andrés",
+          "items": []
+        },
+        {
+          "step": "Punto de Información Turística",
+          "items": []
+        },
+        {
+          "step": "Escudo heráldico",
+          "items": []
+        },
+        {
+          "step": "Escudo heráldico",
+          "items": []
+        },
+        {
+          "step": "Iglesia de Nuestra Señora de la Consolación",
+          "items": []
+        },
+        {
+          "step": "Finca Majada de los Canchales",
+          "items": []
+        },
+        {
+          "step": "Dónde comer",
+          "items": [
+            {
+              "name": "Hotel Restaurante Las Glorias",
+              "poi_id": "poi/10154"
+            },
+            {
+              "name": "La Estrella",
+              "poi_id": "poi/45785"
+            },
+            {
+              "name": "Bar Bahía",
+              "poi_id": "poi/45998"
+            },
+            {
+              "name": "Churrería Bar Fragoso",
+              "poi_id": "poi/28515"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "path/418",
+      "name": "TBL_Ruta BTT 6  “Cancho Blanco”",
+      "description": "Tamusia Bike Loop\nRuta BTT 6 - “Cancho Blanco”\nRecorrido circular con tramo de ida-vuelta de subida al Cancho Blanco, segundo punto más alto de la comarca y mirador natural del territorio.\nSaldremos de ADISMONTA...\nDistancia: 30,37 km\nDificultad Técnica: Moderada",
+      "url": "https://inventrip.com/montancheztamuja/trip/7120",
+      "waypoints": [
+        {
+          "name": "Torre de Santa María",
+          "poi_id": "poi/42489"
+        },
+        {
+          "name": "Zarza de Montánchez",
+          "poi_id": "poi/42488"
+        },
+        {
+          "name": "Encina La Nieta",
+          "poi_id": "poi/9999"
+        },
+        {
+          "name": "Torre",
+          "poi_id": "poi/9997"
+        },
+        {
+          "name": "Mirador de Zarza de Montánchez",
+          "poi_id": "poi/45922"
+        },
+        {
+          "name": "Estación de Radar de Cancho Blanco",
+          "poi_id": "poi/45923"
+        },
+        {
+          "name": "Iglesia San Miguel Arcángel",
+          "poi_id": "poi/9885"
+        },
+        {
+          "name": "Hotel Restaurante Las Glorias",
+          "poi_id": "poi/10154"
+        },
+        {
+          "name": "La Estrella",
+          "poi_id": "poi/45785"
+        },
+        {
+          "name": "Bar Hogar del Pensionista",
+          "poi_id": "poi/45582"
+        },
+        {
+          "name": "Cafetería Churrería El KIOSCO",
+          "poi_id": "poi/45621"
+        }
+      ],
+      "itinerary": [
+        {
+          "step": "Municipios",
+          "items": [
+            {
+              "name": "Torre de Santa María",
+              "poi_id": "poi/42489"
+            },
+            {
+              "name": "Zarza de Montánchez",
+              "poi_id": "poi/42488"
+            },
+            {
+              "name": "Lugares de interés (en el trayecto de la ruta)",
+              "items": [
+                {
+                  "name": "Encina La Nieta",
+                  "poi_id": "poi/9999"
+                },
+                {
+                  "name": "Torre",
+                  "poi_id": "poi/9997"
+                },
+                {
+                  "name": "Mirador de Zarza de Montánchez",
+                  "poi_id": "poi/45922"
+                },
+                {
+                  "name": "Estación de Radar de Cancho Blanco",
+                  "poi_id": "poi/45923"
+                },
+                {
+                  "name": "Iglesia San Miguel Arcángel",
+                  "poi_id": "poi/9885"
+                },
+                {
+                  "name": "Dónde comer",
+                  "items": [
+                    {
+                      "name": "Hotel Restaurante Las Glorias",
+                      "poi_id": "poi/10154"
+                    },
+                    {
+                      "name": "La Estrella",
+                      "poi_id": "poi/45785"
+                    },
+                    {
+                      "name": "Bar Hogar del Pensionista",
+                      "poi_id": "poi/45582"
+                    },
+                    {
+                      "name": "Cafetería Churrería El KIOSCO",
+                      "poi_id": "poi/45621"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "path/417",
+      "name": "TBL_Ruta BTT 7 “Un jamón en el balcón”",
+      "description": "Tamusia Bike Loop\nRuta BTT 7  “Un jamón en el balcón”\nRecorrido lineal de ida y vuelta desde ADISMONTA a Montánchez, posibilitando la conexión con las rutas de Trail-Enduro del Centro MTB de Sierra de Montánchez.\nSaldremos de ADISMONTA...\nDistancia: 17,68 km\nDificultad Técnica: Moderado",
+      "url": "https://inventrip.com/montancheztamuja/trip/7119",
+      "waypoints": [
+        {
+          "name": "Torre de Santa María",
+          "poi_id": "poi/42489"
+        },
+        {
+          "name": "Montánchez",
+          "poi_id": "poi/26376"
+        },
+        {
+          "name": "Encina La Nieta",
+          "poi_id": "poi/9999"
+        },
+        {
+          "name": "Iglesia de la Asunción",
+          "poi_id": "poi/9994"
+        },
+        {
+          "name": "Torre",
+          "poi_id": "poi/9997"
+        },
+        {
+          "name": "Castillo de Montánchez",
+          "poi_id": "poi/9644"
+        },
+        {
+          "name": "Balcón de Extremadura",
+          "poi_id": "poi/10137"
+        },
+        {
+          "name": "Origen del río Salor",
+          "poi_id": "poi/30410"
+        },
+        {
+          "name": "Hotel Restaurante Las Glorias",
+          "poi_id": "poi/10154"
+        },
+        {
+          "name": "La Estrella",
+          "poi_id": "poi/45785"
+        },
+        {
+          "name": "Bar Club del Pensionista ",
+          "poi_id": "poi/30352"
+        },
+        {
+          "name": "Bar-Mesón Pitogordo",
+          "poi_id": "poi/30350"
+        },
+        {
+          "name": "El Escudo",
+          "poi_id": "poi/26421"
+        },
+        {
+          "name": "La Mora Cantana",
+          "poi_id": "poi/10163"
+        },
+        {
+          "name": "Restaurante Montecalabria",
+          "poi_id": "poi/10171"
+        }
+      ],
+      "itinerary": [
+        {
+          "step": "Municipios",
+          "items": [
+            {
+              "name": "Torre de Santa María",
+              "poi_id": "poi/42489"
+            },
+            {
+              "name": "Montánchez",
+              "poi_id": "poi/26376"
+            },
+            {
+              "name": "Lugares de interés (en el trayecto de la ruta)",
+              "items": [
+                {
+                  "name": "Encina La Nieta",
+                  "poi_id": "poi/9999"
+                },
+                {
+                  "name": "Iglesia de la Asunción",
+                  "poi_id": "poi/9994"
+                },
+                {
+                  "name": "Torre",
+                  "poi_id": "poi/9997"
+                },
+                {
+                  "name": "Castillo de Montánchez",
+                  "poi_id": "poi/9644"
+                },
+                {
+                  "name": "Balcón de Extremadura",
+                  "poi_id": "poi/10137"
+                },
+                {
+                  "name": "Origen del río Salor",
+                  "poi_id": "poi/30410"
+                },
+                {
+                  "name": "Dónde comer ",
+                  "items": [
+                    {
+                      "name": "Hotel Restaurante Las Glorias",
+                      "poi_id": "poi/10154"
+                    },
+                    {
+                      "name": "La Estrella",
+                      "poi_id": "poi/45785"
+                    },
+                    {
+                      "name": "Bar Club del Pensionista ",
+                      "poi_id": "poi/30352"
+                    },
+                    {
+                      "name": "Bar-Mesón Pitogordo",
+                      "poi_id": "poi/30350"
+                    },
+                    {
+                      "name": "El Escudo",
+                      "poi_id": "poi/26421"
+                    },
+                    {
+                      "name": "La Mora Cantana",
+                      "poi_id": "poi/10163"
+                    },
+                    {
+                      "name": "Restaurante Montecalabria",
+                      "poi_id": "poi/10171"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "path/264",
+      "name": "Ruta Sierra San Cristóbal (PR-CC 233)",
+      "description": "El recorrido es circular con inicio y final en la plaza de España de Almoharín.\nComenzaremos en dirección noreste por el camino de La Fuente hasta llegar al camino de Escurial. Continuando hasta la zona conocida como La Hoya, comenzaremos a\nascender hacia la Sierra de San Cristóbal, que da nombre a la Ruta. Podremos divisar desde el punto más alto, toda la zona de Las Vegas del Guadiana, desde aquí comenzará la bajada hasta el término municipal de Valdemorales.\nY volveremos por el camino conocido como De Reventón que mediante una pista nos acercará de nuevo a Almoharín.",
+      "url": "https://inventrip.com/montancheztamuja/trip/6341",
+      "waypoints": [],
+      "itinerary": [
+        {
+          "step": "Almoharín",
+          "items": []
+        },
+        {
+          "step": "puntos de interés de la ruta",
+          "items": []
+        },
+        {
+          "step": "Parroquia de El Salvador",
+          "items": []
+        },
+        {
+          "step": "Ermita de Santa Filomena",
+          "items": []
+        }
+      ]
+    },
+    {
+      "id": "path/642",
+      "name": "Ruta ornitológica 1. Llanos y riberos",
+      "description": "Esta ruta de 20,1 km, atraviesa tres destacados Puntos de Interés Ornitológico (PIOs) en el entorno de Santa Marta de Magasca y Sierra de Fuentes, dentro de zonas protegidas como las ZEPAs Llanos de Cáceres y Riberos del Almonte.  Comienza en el PIO 01 CP 01 Cordel del Casar, donde pueden observarse aves esteparias y rapaces como avutardas, sisones y el águila imperial ibérica. Continúa por el PIO 16 CC 01 Riberos del Tamuja, caracterizado por su bosque mediterráneo y el río Tamuja, ideal para ver cigüeñas negras, martines pescadores y otras especies acuáticas. Finaliza en el PIO 17 CC 02 Riberos del Magasca, con hábitats de ribera que albergan culebreras europeas, milanos negros o garzas reales.  La ruta, que combina accesibilidad con riqueza natural, incluye miradores, casetas de observación. Aprovecha tu estancia para ver el resto de recursos que se encuentran en estos dos municipios de la comarca Sierra de Montánchez y Tamuja. ",
+      "url": "https://inventrip.com/montancheztamuja/trip/7947",
+      "waypoints": [
+        {
+          "name": "Centro de recuperación de fauna Los Hornos",
+          "poi_id": "poi/10223"
+        },
+        {
+          "name": "Hornos de Cal",
+          "poi_id": "poi/63387"
+        },
+        {
+          "name": "Murales ",
+          "poi_id": "poi/44527"
+        },
+        {
+          "name": "Bar Restaurante Alfonso",
+          "poi_id": "poi/45575"
+        },
+        {
+          "name": "Bahama´s 23",
+          "poi_id": "poi/55912"
+        },
+        {
+          "name": "Bar Kowax",
+          "poi_id": "poi/45573"
+        },
+        {
+          "name": "Casa Rural Las Avutardas",
+          "poi_id": "poi/10152"
+        },
+        {
+          "name": "Apartamento Rural Las Candelas",
+          "poi_id": "poi/52446"
+        }
+      ],
+      "itinerary": [
+        {
+          "step": "Puntos de interés ornitológicos (PIOs)",
+          "items": []
+        },
+        {
+          "step": "PIO 01 Cordel del Casar (Sierra de Fuentes)",
+          "items": []
+        },
+        {
+          "step": "PIO 16 Riberos del Tamuja (Santa Marta de Magasca)",
+          "items": []
+        },
+        {
+          "step": "PIO 17 Riberos del Magasca (Santa Marta de Magasca)",
+          "items": []
+        },
+        {
+          "step": "Otros puntos de interés",
+          "items": [
+            {
+              "name": "Centro de recuperación de fauna Los Hornos",
+              "poi_id": "poi/10223"
+            },
+            {
+              "name": "Hornos de Cal",
+              "poi_id": "poi/63387"
+            },
+            {
+              "name": "Murales ",
+              "poi_id": "poi/44527"
+            }
+          ]
+        },
+        {
+          "step": "Dónde comer",
+          "items": [
+            {
+              "name": "Bar Restaurante Alfonso",
+              "poi_id": "poi/45575"
+            },
+            {
+              "name": "Bahama´s 23",
+              "poi_id": "poi/55912"
+            },
+            {
+              "name": "Bar Kowax",
+              "poi_id": "poi/45573"
+            }
+          ]
+        },
+        {
+          "step": "Dónde dormir",
+          "items": [
+            {
+              "name": "Casa Rural Las Avutardas",
+              "poi_id": "poi/10152"
+            },
+            {
+              "name": "Apartamento Rural Las Candelas",
+              "poi_id": "poi/52446"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "path/643",
+      "name": "Ruta Ornitológica 2. Tamusia",
+      "description": "Esta ruta de 29,9 km diseñada para la observación de aves en la comarca Sierra de Montánchez y Tamuja, conecta tres Puntos de Interés Ornitológico (PIO) destacados: el Cordel de Montánchez en Santa Ana (PIO 02);  Villasviejas del Tamuja en Botija (PIO 05); y el Camino de La Cumbre, también en Santa Ana (PIO 03). El recorrido atraviesa dos Zonas de Especial Protección para las Aves (ZEPA): Llanos de Trujillo y Riberos del Almonte. Esto permite la observación de aves en hábitats muy variados, como cultivos, pastizales, dehesas, bosques mediterráneos, cauces y charcas. En el PIO 02, destacan especies esteparias como la avutarda euroasiática, el sisón común y grandes rapaces. En Villasviejas del Tamuja, se observan especies ligadas a la dehesa y al río Tamuja, como el alimoche común, la cigüeña negra y el rabilargo ibérico. En el PIO 03, también se encuentran aves esteparias, así como anátidas y limícolas en las charcas. Además del interés ornitológico, la ruta ofrece atractivos patrimoniales como el castro vetón de Villasviejas del Tamuja, considerado como una de las siete maravillas de la comarca. Todos los PIO son accesibles, con zonas de aparcamiento y rutas a pie de corta distancia. Esta ruta combina biodiversidad, accesibilidad y riqueza cultural, convirtiéndose en una opción excelente para el turismo ornitológico y de naturaleza.",
+      "url": "https://inventrip.com/montancheztamuja/trip/7948",
+      "waypoints": [
+        {
+          "name": "Castro prerromano de Villasviejas del Tamuja",
+          "poi_id": "poi/9649"
+        },
+        {
+          "name": "Centro de Interpretación del castro vettón de Villasviejas del Tamuja.",
+          "poi_id": "poi/52483"
+        },
+        {
+          "name": "Iglesia Parroquial de la Asunción",
+          "poi_id": "poi/10001"
+        },
+        {
+          "name": "Restaurante la Cañada",
+          "poi_id": "poi/45512"
+        },
+        {
+          "name": "Café-Bar Cañas",
+          "poi_id": "poi/45503"
+        },
+        {
+          "name": "Bar 16 de Julio",
+          "poi_id": "poi/45502"
+        },
+        {
+          "name": "Casa Rural El Portalino",
+          "poi_id": "poi/45510"
+        }
+      ],
+      "itinerary": [
+        {
+          "step": "Puntos de Interés Ornitológico (PIOs)",
+          "items": []
+        },
+        {
+          "step": " PIO 02 Cordel de Montánchez  (Santa Ana)",
+          "items": []
+        },
+        {
+          "step": " PIO 05 Villasviejas del Tamuja (Botija).",
+          "items": []
+        },
+        {
+          "step": "PIO 03 Camino de la Cumbre (Santa Ana)",
+          "items": []
+        },
+        {
+          "step": "Otros puntos de interés",
+          "items": [
+            {
+              "name": "Castro prerromano de Villasviejas del Tamuja",
+              "poi_id": "poi/9649"
+            },
+            {
+              "name": "Centro de Interpretación del castro vettón de Villasviejas del Tamuja.",
+              "poi_id": "poi/52483"
+            },
+            {
+              "name": "Iglesia Parroquial de la Asunción",
+              "poi_id": "poi/10001"
+            }
+          ]
+        },
+        {
+          "step": "Dónde comer",
+          "items": [
+            {
+              "name": "Restaurante la Cañada",
+              "poi_id": "poi/45512"
+            },
+            {
+              "name": "Café-Bar Cañas",
+              "poi_id": "poi/45503"
+            },
+            {
+              "name": "Bar 16 de Julio",
+              "poi_id": "poi/45502"
+            }
+          ]
+        },
+        {
+          "step": "Dónde dormir",
+          "items": [
+            {
+              "name": "Casa Rural El Portalino",
+              "poi_id": "poi/45510"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "path/644",
+      "name": "Ruta 3. Ruta Ornitológica Sierra de Montánche",
+      "description": "Se trata de un itinerario de 20,5 km que recorre diversos hábitats en la sierra de Montánchez, combinando observación de aves, paisajes naturales y patrimonio cultural. Conecta cuatro puntos de interés ornitológico (PIO), cada uno con características únicas.\nEl PIO 14 Castañar de Montánchez destaca por su altitud (más de 800 m) y su bosque mediterráneo con castaños, robles y alcornoques. Desde el Mirador del Chamorro se observan aves forestales como el pico menor, oropéndola, águila calzada y águila imperial.\nEn el PIO 24 Montánchez (entorno urbano), el recorrido pasa por el centro histórico y el castillo. Se avistan especies urbanas como cernícalo primilla, vencejo común, golondrina y, en invierno, acentor alpino.\nEl PIO 07 La Terrona, en Zarza de Montánchez, atraviesa dehesas y llega hasta la encina centenaria “La Terrona”. Se observan aves como milano negro, colirrojo tizón, tarabilla común y diversas rapaces. Esta zona forma parte de la ZEPA Riberos del Almonte.\nEl PIO 21 Embalse de Navarredonda ofrece variedad de aves acuáticas y forestales, como martín pescador, somormujo lavanco y cigüeña negra. También se ubica dentro de la ZEPA.\nLa ruta transcurre por hábitats como bosque mediterráneo, dehesas, cauces fluviales y entornos urbanos, permitiendo observar aves rupícolas, acuáticas, forestales y esteparias. Además, el patrimonio histórico (castillos, iglesias) y la gastronomía local (jamón ibérico, vinos) enriquecen la experiencia, haciendo de esta ruta un enclave excepcional para la ornitología en Extremadura.\n",
+      "url": "https://inventrip.com/montancheztamuja/trip/7949",
+      "waypoints": [
+        {
+          "name": "PIO 14 Castañar de Montánchez",
+          "poi_id": "poi/64864"
+        },
+        {
+          "name": "PIO 24 Castillo de Montánchez",
+          "poi_id": "poi/64865"
+        },
+        {
+          "name": "PIO 07 La Terrona (Zarza de Montánchez)",
+          "poi_id": "poi/64867"
+        },
+        {
+          "name": "PIO 21 Embalse de Navarredonda (Zarza de Montánchez)",
+          "poi_id": "poi/64868"
+        },
+        {
+          "name": "Castillo de Montánchez",
+          "poi_id": "poi/9644"
+        },
+        {
+          "name": "Balcón de Extremadura",
+          "poi_id": "poi/10137"
+        },
+        {
+          "name": "Mirador de El Chamorro",
+          "poi_id": "poi/51975"
+        },
+        {
+          "name": "Encina La Terrona",
+          "poi_id": "poi/9645"
+        },
+        {
+          "name": "Restaurante El Zaguán ",
+          "poi_id": "poi/41917"
+        },
+        {
+          "name": "Bar-Mesón Pitogordo",
+          "poi_id": "poi/30350"
+        },
+        {
+          "name": "Casa Rural El Edén",
+          "poi_id": "poi/45446"
+        },
+        {
+          "name": "Casa rural Vuelos de Montaña l",
+          "poi_id": "poi/45600"
+        },
+        {
+          "name": "Casa rural La Recuera",
+          "poi_id": "poi/45599"
+        },
+        {
+          "name": "Hotel Rural La Casa de Carlota",
+          "poi_id": "poi/41916"
+        },
+        {
+          "name": "Casa rural El Mirador",
+          "poi_id": "poi/46311"
+        },
+        {
+          "name": "Casa rural Doña Sol",
+          "poi_id": "poi/45593"
+        },
+        {
+          "name": "Casa Rural La Terrona",
+          "poi_id": "poi/45963"
+        },
+        {
+          "name": "Apartamento rural Pitogordo",
+          "poi_id": "poi/10215"
+        },
+        {
+          "name": "Apartamento Turístico Montasol 1",
+          "poi_id": "poi/64628"
+        },
+        {
+          "name": "Apartamento Turístico Montasol 2",
+          "poi_id": "poi/64629"
+        }
+      ],
+      "itinerary": [
+        {
+          "step": "Puntos de Interés Ornitológico",
+          "items": [
+            {
+              "name": "PIO 14 Castañar de Montánchez",
+              "poi_id": "poi/64864"
+            },
+            {
+              "name": "PIO 24 Castillo de Montánchez",
+              "poi_id": "poi/64865"
+            },
+            {
+              "name": "PIO 07 La Terrona (Zarza de Montánchez)",
+              "poi_id": "poi/64867"
+            },
+            {
+              "name": "PIO 21 Embalse de Navarredonda (Zarza de Montánchez)",
+              "poi_id": "poi/64868"
+            }
+          ]
+        },
+        {
+          "step": "Otros puntos de interés",
+          "items": [
+            {
+              "name": "Castillo de Montánchez",
+              "poi_id": "poi/9644"
+            },
+            {
+              "name": "Balcón de Extremadura",
+              "poi_id": "poi/10137"
+            },
+            {
+              "name": "Mirador de El Chamorro",
+              "poi_id": "poi/51975"
+            },
+            {
+              "name": "Encina La Terrona",
+              "poi_id": "poi/9645"
+            }
+          ]
+        },
+        {
+          "step": "Dónde comer",
+          "items": [
+            {
+              "name": "Restaurante El Zaguán ",
+              "poi_id": "poi/41917"
+            },
+            {
+              "name": "Bar-Mesón Pitogordo",
+              "poi_id": "poi/30350"
+            }
+          ]
+        },
+        {
+          "step": "Dónde dormir",
+          "items": [
+            {
+              "name": "Casa Rural El Edén",
+              "poi_id": "poi/45446"
+            },
+            {
+              "name": "Casa rural Vuelos de Montaña l",
+              "poi_id": "poi/45600"
+            },
+            {
+              "name": "Casa rural La Recuera",
+              "poi_id": "poi/45599"
+            },
+            {
+              "name": "Hotel Rural La Casa de Carlota",
+              "poi_id": "poi/41916"
+            },
+            {
+              "name": "Casa rural El Mirador",
+              "poi_id": "poi/46311"
+            },
+            {
+              "name": "Casa rural Doña Sol",
+              "poi_id": "poi/45593"
+            },
+            {
+              "name": "Casa Rural La Terrona",
+              "poi_id": "poi/45963"
+            },
+            {
+              "name": "Apartamento rural Pitogordo",
+              "poi_id": "poi/10215"
+            },
+            {
+              "name": "Apartamento Turístico Montasol 1",
+              "poi_id": "poi/64628"
+            },
+            {
+              "name": "Apartamento Turístico Montasol 2",
+              "poi_id": "poi/64629"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "path/645",
+      "name": " Ruta 4. Ruta ornitológica Regadíos y Dehesa",
+      "description": "Se trata de un recorrido de 22,7 km en el entorno de Almoharín, que conecta tres Puntos de Interés Ornitológico (PIO) clave, atravesando diversos hábitats de alto valor ecológico y ornitológico. El PIO 10 Camino de la Cancha ofrece un paseo de 2,6 km entre muros de piedra seca, dehesas bien conservadas y bosque mediterráneo denso. La presencia de albercas y regatos favorece la observación de aves como el abejaruco europeo, águila calzada, curruca cabecinegra y grulla común. Está próximo al embalse del Búrdalo. El PIO 11 Regadíos de Almoharín consiste en un itinerario de 8,5 km en vehículo por campos de regadío (maíz, girasol, frutales) junto al canal de Orellana, con pinos piñoneros que ofrecen refugio a muchas especies. Se observan cernícalo primilla, cigüeña blanca, aguilucho lagunero y aves invernantes como ánsares comunes y milanos reales. El recorrido pasa por la ermita de Sopetrán y puede ampliarse al entorno urbano de Almoharín, relevante por su colonia de cernícalos primilla y su patrimonio (Iglesia del Salvador, BIC). El PIO 08 El Contadero, en Arroyomolinos, cuenta con dos rutas a pie (3 y 3,4 km) por dehesas y bosque mediterráneo. Es un excelente punto para avistar rapaces en vuelo como águila real, águila imperial ibérica o cigüeña negra, gracias a su proximidad al Parque Natural de Cornalvo. La ruta finaliza en la IBA 287 Sierra de Montánchez–Embalse de Cornalvo, destacada por su biodiversidad. En conjunto, esta ruta permite explorar dehesas, regadíos, bosques y charcas, combinando naturaleza y patrimonio.",
+      "url": "https://inventrip.com/montancheztamuja/trip/7950",
+      "waypoints": [
+        {
+          "name": "Ermita Sopetrán",
+          "poi_id": "poi/43617"
+        },
+        {
+          "name": "Parroquia de El Salvador",
+          "poi_id": "poi/9939"
+        },
+        {
+          "name": "Restaurante asador El Paraíso",
+          "poi_id": "poi/10156"
+        },
+        {
+          "name": "Restaurante El Descanso",
+          "poi_id": "poi/46875"
+        },
+        {
+          "name": "Finca Flores Amarillas",
+          "poi_id": "poi/45466"
+        },
+        {
+          "name": "Casa Rural Las Pelliquerinas",
+          "poi_id": "poi/10188"
+        },
+        {
+          "name": "Apartamento turístico Tres Torres",
+          "poi_id": "poi/45858"
+        },
+        {
+          "name": "Apartamento turístico El Gallinero",
+          "poi_id": "poi/45859"
+        }
+      ],
+      "itinerary": [
+        {
+          "step": "Puntos de Interés Ornitológico (PIOs)",
+          "items": []
+        },
+        {
+          "step": "PIO 10 Camino de la Cancha (Almoharín)",
+          "items": []
+        },
+        {
+          "step": "PIO 11 Regadíos de Almoharín\n",
+          "items": []
+        },
+        {
+          "step": "PIO 08 El Contadero (Arroyomolinos)",
+          "items": []
+        },
+        {
+          "step": "Otros puntos de interés",
+          "items": [
+            {
+              "name": "Ermita Sopetrán",
+              "poi_id": "poi/43617"
+            },
+            {
+              "name": "Parroquia de El Salvador",
+              "poi_id": "poi/9939"
+            }
+          ]
+        },
+        {
+          "step": "Dónde comer",
+          "items": [
+            {
+              "name": "Restaurante asador El Paraíso",
+              "poi_id": "poi/10156"
+            },
+            {
+              "name": "Restaurante El Descanso",
+              "poi_id": "poi/46875"
+            }
+          ]
+        },
+        {
+          "step": "Dónde dormir",
+          "items": [
+            {
+              "name": "Finca Flores Amarillas",
+              "poi_id": "poi/45466"
+            },
+            {
+              "name": "Casa Rural Las Pelliquerinas",
+              "poi_id": "poi/10188"
+            },
+            {
+              "name": "Apartamento turístico Tres Torres",
+              "poi_id": "poi/45858"
+            },
+            {
+              "name": "Apartamento turístico El Gallinero",
+              "poi_id": "poi/45859"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "path/646",
+      "name": "Ruta 5. Ruta Ornitológica Riscos y Torres ",
+      "description": "Se trata de un itinerario de 19 km que conecta varios Puntos de Interés Ornitológico (PIO) en Sierra de Fuentes, Torreorgaz, Torrequemada y Torremocha, atravesando hábitats diversos como bosque mediterráneo, cultivos, dehesas, pastizales, charcas y entornos urbanos. Recorre parte de la ZEPA Llanos de Cáceres y Sierra de Fuentes e incluye elementos culturales como Las Corralás (BIC) y patrimonio urbano. El PIO 13 Sierra del Risco ofrece vistas panorámicas desde la ermita del Risco y su mirador, ideal para observar rapaces en vuelo como águila calzada, buitre negro y cernícalo primilla. El entorno es un mosaico de bosque mediterráneo y crestones cuarcíticos, ubicado en la IBA 295. En el PIO 04 Cañada Real del Puerto del Pico, en Torreorgaz, se recorren 1,8 km entre pastizales y cultivos, hábitat del cernícalo primilla, carraca europea, avutarda y sisón. Es un pasillo natural entre los llanos y el río Salor, dentro de la ZEPA. El PIO 06 Las Corralás, en Torrequemada, combina dehesa y charcas temporales, lo que permite observar especies acuáticas, rapaces y aves de bosque. Las construcciones de piedra seca de Las Corralás aportan un valor etnológico singular. El PIO 23 Silo de Torremocha es un enclave urbano con colonias de cigüeña blanca, avión común, gorrión moruno y cernícalo primilla. El recorrido urbano permite conocer el patrimonio local, como la iglesia de la Asunción y la ermita del Cristo. Esta ruta une naturaleza, cultura y biodiversidad en un entorno accesible y muy variado.\n",
+      "url": "https://inventrip.com/montancheztamuja/trip/7951",
+      "waypoints": [
+        {
+          "name": "PIO 13 Sierra del Risco (Sierra de Fuentes)",
+          "poi_id": "poi/64900"
+        },
+        {
+          "name": "PIO 04 Cañada real del puerto del Pico (Torreorgaz)",
+          "poi_id": "poi/64901"
+        },
+        {
+          "name": "PIO 06 Las Corralás (Torrequemada)\n",
+          "poi_id": "poi/64902"
+        },
+        {
+          "name": "PIO 23 Silo de Torremocha\n",
+          "poi_id": "poi/64903"
+        },
+        {
+          "name": "Ermita del Cristo del Risco",
+          "poi_id": "poi/10004"
+        },
+        {
+          "name": "Mirador de El Risco",
+          "poi_id": "poi/10003"
+        },
+        {
+          "name": "Centro de recuperación de fauna Los Hornos",
+          "poi_id": "poi/10223"
+        },
+        {
+          "name": "Ermita del Humilladero",
+          "poi_id": "poi/9968"
+        },
+        {
+          "name": "Ermita de la Virgen del Salor",
+          "poi_id": "poi/9960"
+        },
+        {
+          "name": "Las corralás",
+          "poi_id": "poi/52381"
+        },
+        {
+          "name": "Punto de observación ornitológica \"El Silo\"",
+          "poi_id": "poi/64910"
+        },
+        {
+          "name": "Ermita del Cristo del  Humilladero",
+          "poi_id": "poi/9987"
+        },
+        {
+          "name": "Iglesia de la Asunción",
+          "poi_id": "poi/9982"
+        },
+        {
+          "name": "Bar-Restaurante Parador de los Llanos",
+          "poi_id": "poi/45828"
+        },
+        {
+          "name": "Mesón Pepe",
+          "poi_id": "poi/45570"
+        },
+        {
+          "name": "Bar León",
+          "poi_id": "poi/45569"
+        },
+        {
+          "name": "Cafetería Rayma",
+          "poi_id": "poi/45819"
+        },
+        {
+          "name": "Bar Restaurante La Plaza",
+          "poi_id": "poi/10219"
+        },
+        {
+          "name": "Restaurante Donde Manuel",
+          "poi_id": "poi/10218"
+        },
+        {
+          "name": "Hostal León",
+          "poi_id": "poi/45568"
+        },
+        {
+          "name": "Hostal Parador de los Llanos",
+          "poi_id": "poi/10153"
+        },
+        {
+          "name": "Bico de Rodas",
+          "poi_id": "poi/45445"
+        },
+        {
+          "name": "Casa Rural Las Avutardas",
+          "poi_id": "poi/10152"
+        },
+        {
+          "name": "Apartamento Turístico Casa Godoy",
+          "poi_id": "poi/46284"
+        },
+        {
+          "name": "Bico de Nona",
+          "poi_id": "poi/64187"
+        }
+      ],
+      "itinerary": [
+        {
+          "step": "Puntos de Interés Ornitológico (PIOs)",
+          "items": [
+            {
+              "name": "PIO 13 Sierra del Risco (Sierra de Fuentes)",
+              "poi_id": "poi/64900"
+            },
+            {
+              "name": "PIO 04 Cañada real del puerto del Pico (Torreorgaz)",
+              "poi_id": "poi/64901"
+            },
+            {
+              "name": "PIO 06 Las Corralás (Torrequemada)\n",
+              "poi_id": "poi/64902"
+            },
+            {
+              "name": "PIO 23 Silo de Torremocha\n",
+              "poi_id": "poi/64903"
+            }
+          ]
+        },
+        {
+          "step": "Otros puntos de interés",
+          "items": [
+            {
+              "name": "Ermita del Cristo del Risco",
+              "poi_id": "poi/10004"
+            },
+            {
+              "name": "Mirador de El Risco",
+              "poi_id": "poi/10003"
+            },
+            {
+              "name": "Centro de recuperación de fauna Los Hornos",
+              "poi_id": "poi/10223"
+            },
+            {
+              "name": "Ermita del Humilladero",
+              "poi_id": "poi/9968"
+            },
+            {
+              "name": "Ermita de la Virgen del Salor",
+              "poi_id": "poi/9960"
+            },
+            {
+              "name": "Las corralás",
+              "poi_id": "poi/52381"
+            },
+            {
+              "name": "Punto de observación ornitológica \"El Silo\"",
+              "poi_id": "poi/64910"
+            },
+            {
+              "name": "Ermita del Cristo del  Humilladero",
+              "poi_id": "poi/9987"
+            },
+            {
+              "name": "Iglesia de la Asunción",
+              "poi_id": "poi/9982"
+            }
+          ]
+        },
+        {
+          "step": "Dónde comer",
+          "items": [
+            {
+              "name": "Bar-Restaurante Parador de los Llanos",
+              "poi_id": "poi/45828"
+            },
+            {
+              "name": "Mesón Pepe",
+              "poi_id": "poi/45570"
+            },
+            {
+              "name": "Bar León",
+              "poi_id": "poi/45569"
+            },
+            {
+              "name": "Cafetería Rayma",
+              "poi_id": "poi/45819"
+            },
+            {
+              "name": "Bar Restaurante La Plaza",
+              "poi_id": "poi/10219"
+            },
+            {
+              "name": "Restaurante Donde Manuel",
+              "poi_id": "poi/10218"
+            }
+          ]
+        },
+        {
+          "step": "Dónde dormir",
+          "items": [
+            {
+              "name": "Hostal León",
+              "poi_id": "poi/45568"
+            },
+            {
+              "name": "Hostal Parador de los Llanos",
+              "poi_id": "poi/10153"
+            },
+            {
+              "name": "Bico de Rodas",
+              "poi_id": "poi/45445"
+            },
+            {
+              "name": "Casa Rural Las Avutardas",
+              "poi_id": "poi/10152"
+            },
+            {
+              "name": "Apartamento Turístico Casa Godoy",
+              "poi_id": "poi/46284"
+            },
+            {
+              "name": "Bico de Nona",
+              "poi_id": "poi/64187"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "path/647",
+      "name": "Ruta 6. Reservoir Birds",
+      "description": "Se trata de un itinerario de 36.9 kilómetros diseñado para enlazar varios puntos de interés en coche. Esta ruta combina tres hábitats principales: cauces y charcas (humedales), entornos urbanos y dehesas. El recorrido conecta cuatro Puntos de Interés Ornitológico (PIO) fundamentales: PIO 20 Embalse del Prado (o de Valdefuentes): Hábitats de cauces y dehesas densas. Aquí se observan aves como el ánade azulón, ánade friso, martín pescador, somormujo lavanco, garza real y ruiseñor común. PIO 23 Silo de Torremocha: Destaca por sus colonias de aves urbanas, incluyendo cigüeñas blancas, avión común y gorrión moruno. Es un punto clave para ver rapaces en vuelo (milanos negros o águilas calzadas) intentando alimentarse de estas colonias. Se encuentra en el límite de la ZEPA Llanos de Cáceres y Sierra de Fuentes. PIO 22 Embalse de Jarripa: Situado dentro de la ZEPA Llanos de Cáceres y Sierra de Fuentes. Es excelente para observar aves acuáticas y grandes rapaces en vuelo, como el águila imperial ibérica y la cigüeña negra. El entorno cuenta con una alta densidad de encinas. PIO 18 Embalse del Ayuela: Importante por ser una zona de invernada de grulla común en la comarca. El embalse está rodeado de dehesas y ofrece citas esporádicas de especies como el morito común y la avoceta común. Un recorrido de 8 km circunda el perímetro, discurriendo parte por el trazado de la Vía de la Plata.\n",
+      "url": "https://inventrip.com/montancheztamuja/trip/7961",
+      "waypoints": [
+        {
+          "name": "Ermita del Cristo del Amparo",
+          "poi_id": "poi/9646"
+        },
+        {
+          "name": "Iglesia Parroquial de San Pedro Apóstol",
+          "poi_id": "poi/9972"
+        },
+        {
+          "name": "Ermita de Nuestra Señora Torrealba",
+          "poi_id": "poi/43588"
+        },
+        {
+          "name": "Ermita de Nuestra Señora del Pilar",
+          "poi_id": "poi/9981"
+        },
+        {
+          "name": "Puente antiguo de Casas de Don Antonio",
+          "poi_id": "poi/45761"
+        },
+        {
+          "name": "Miliario XXV",
+          "poi_id": "poi/45831"
+        },
+        {
+          "name": "Miliario XXVIII",
+          "poi_id": "poi/45832"
+        },
+        {
+          "name": "Miliario XXX Via de la Plata",
+          "poi_id": "poi/45829"
+        },
+        {
+          "name": "Restaurante las Vegas",
+          "poi_id": "poi/45764"
+        },
+        {
+          "name": "Restaurante La Posada & Giraldo",
+          "poi_id": "poi/45765"
+        },
+        {
+          "name": "Restaurante Casa Rufino",
+          "poi_id": "poi/45768"
+        },
+        {
+          "name": "Dónde dormir"
+        },
+        {
+          "name": "Bico de Nona",
+          "poi_id": "poi/64187"
+        },
+        {
+          "name": "Casa rural El Pelaor",
+          "poi_id": "poi/45840"
+        },
+        {
+          "name": "Casa rural Piedras de Benquerencia",
+          "poi_id": "poi/10149"
+        },
+        {
+          "name": "Casa Rural Vía de la Plata",
+          "poi_id": "poi/10174"
+        },
+        {
+          "name": "Albergue Municipal Miliario del Verdinal",
+          "poi_id": "poi/55910"
+        }
+      ],
+      "itinerary": [
+        {
+          "step": "Puntos de Interés Ornitológico (PIOs)",
+          "items": []
+        },
+        {
+          "step": "PIO 20 Embalse del Prado o de Valdefuentes",
+          "items": []
+        },
+        {
+          "step": "PIO 23 Silo de Torremocha\n",
+          "items": []
+        },
+        {
+          "step": "PIO 22 Embalse de Jarripa\n",
+          "items": []
+        },
+        {
+          "step": "PIO 18 Embalse del Ayuela",
+          "items": []
+        },
+        {
+          "step": "Otros puntos de interés",
+          "items": [
+            {
+              "name": "Ermita del Cristo del Amparo",
+              "poi_id": "poi/9646"
+            },
+            {
+              "name": "Iglesia Parroquial de San Pedro Apóstol",
+              "poi_id": "poi/9972"
+            },
+            {
+              "name": "Ermita de Nuestra Señora Torrealba",
+              "poi_id": "poi/43588"
+            },
+            {
+              "name": "Ermita de Nuestra Señora del Pilar",
+              "poi_id": "poi/9981"
+            },
+            {
+              "name": "Puente antiguo de Casas de Don Antonio",
+              "poi_id": "poi/45761"
+            },
+            {
+              "name": "Miliario XXV",
+              "poi_id": "poi/45831"
+            },
+            {
+              "name": "Miliario XXVIII",
+              "poi_id": "poi/45832"
+            },
+            {
+              "name": "Miliario XXX Via de la Plata",
+              "poi_id": "poi/45829"
+            }
+          ]
+        },
+        {
+          "step": "Dónde comer",
+          "items": [
+            {
+              "name": "Restaurante las Vegas",
+              "poi_id": "poi/45764"
+            },
+            {
+              "name": "Restaurante La Posada & Giraldo",
+              "poi_id": "poi/45765"
+            },
+            {
+              "name": "Restaurante Casa Rufino",
+              "poi_id": "poi/45768"
+            },
+            {
+              "name": "Dónde dormir"
+            },
+            {
+              "name": "Bico de Nona",
+              "poi_id": "poi/64187"
+            },
+            {
+              "name": "Casa rural El Pelaor",
+              "poi_id": "poi/45840"
+            },
+            {
+              "name": "Casa rural Piedras de Benquerencia",
+              "poi_id": "poi/10149"
+            },
+            {
+              "name": "Casa Rural Vía de la Plata",
+              "poi_id": "poi/10174"
+            },
+            {
+              "name": "Albergue Municipal Miliario del Verdinal",
+              "poi_id": "poi/55910"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "path/648",
+      "name": "Ruta 7. Ruta de El Centinela",
+      "description": "Esta ruta conecta tres Puntos de Interés Ornitológico (PIO) en un itinerario de 17.5 kilómetros. Los puntos incluidos son: 15 Sierra del Centinela (junto a Santa Lucía del Trampal), 09 Finca municipal de Alcuéscar y 12 Área de peregrinos Loma del Caballo. Esta ruta tiene como hábitats principales el bosque mediterráneo y las dehesas. La ruta inicia, tiene una parada y finaliza dentro del Área Importante para la Conservación de las Aves (IBA) 287 Sierra de Montánchez-Embalse de Cornalvo. Entre las especies que pueden observarse en estos hábitats, destacadas por la presencia en los PIO de la ruta, se encuentran el buitre negro, el buitre leonado, el águila imperial ibérica, el águila calzada y el rabilargo ibérico. La ruta es susceptible de albergar una parada adicional en Alcuéscar para incluir la observación de aves de entornos urbanos.",
+      "url": "https://inventrip.com/montancheztamuja/trip/7962",
+      "waypoints": [
+        {
+          "name": "PIO 15 Sierra del Centinela (Alcuéscar)",
+          "poi_id": "poi/64954"
+        },
+        {
+          "name": "PIO 09 Finca municipal de Alcuéscar ",
+          "poi_id": "poi/64955"
+        },
+        {
+          "name": "PIO 12 Área de peregrinos Loma del Caballo (Montánchez)",
+          "poi_id": "poi/64956"
+        },
+        {
+          "name": "Basílica Santa Lucía del Trampal",
+          "poi_id": "poi/9642"
+        },
+        {
+          "name": "Centro de Interpretación Santa Lucia del Trampal",
+          "poi_id": "poi/46728"
+        },
+        {
+          "name": "Dehesa Boyal",
+          "poi_id": "poi/45918"
+        },
+        {
+          "name": "Restaurante El Marques",
+          "poi_id": "poi/45968"
+        },
+        {
+          "name": "Restaurante Cruce de las Herrerías",
+          "poi_id": "poi/46308"
+        },
+        {
+          "name": "Restaurante Alta Cuesta",
+          "poi_id": "poi/45969"
+        },
+        {
+          "name": "Apartamentos Rurales Ataecina",
+          "poi_id": "poi/64632"
+        },
+        {
+          "name": "La Tierra Verde Holiday Accommodations",
+          "poi_id": "poi/43621"
+        },
+        {
+          "name": "Albergue Vía de la Plata",
+          "poi_id": "poi/63630"
+        }
+      ],
+      "itinerary": [
+        {
+          "step": "Puntos de Interés Ornitológico (PIOs)",
+          "items": [
+            {
+              "name": "PIO 15 Sierra del Centinela (Alcuéscar)",
+              "poi_id": "poi/64954"
+            },
+            {
+              "name": "PIO 09 Finca municipal de Alcuéscar ",
+              "poi_id": "poi/64955"
+            },
+            {
+              "name": "PIO 12 Área de peregrinos Loma del Caballo (Montánchez)",
+              "poi_id": "poi/64956"
+            }
+          ]
+        },
+        {
+          "step": "Otros puntos de interés",
+          "items": [
+            {
+              "name": "Basílica Santa Lucía del Trampal",
+              "poi_id": "poi/9642"
+            },
+            {
+              "name": "Centro de Interpretación Santa Lucia del Trampal",
+              "poi_id": "poi/46728"
+            },
+            {
+              "name": "Dehesa Boyal",
+              "poi_id": "poi/45918"
+            }
+          ]
+        },
+        {
+          "step": "Dónde comer",
+          "items": [
+            {
+              "name": "Restaurante El Marques",
+              "poi_id": "poi/45968"
+            },
+            {
+              "name": "Restaurante Cruce de las Herrerías",
+              "poi_id": "poi/46308"
+            },
+            {
+              "name": "Restaurante Alta Cuesta",
+              "poi_id": "poi/45969"
+            }
+          ]
+        },
+        {
+          "step": "Dónde dormir",
+          "items": [
+            {
+              "name": "Apartamentos Rurales Ataecina",
+              "poi_id": "poi/64632"
+            },
+            {
+              "name": "La Tierra Verde Holiday Accommodations",
+              "poi_id": "poi/43621"
+            },
+            {
+              "name": "Albergue Vía de la Plata",
+              "poi_id": "poi/63630"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "path/414",
+      "name": "TBL_Ruta BTT Enlace Almoharín a Valdemorales",
+      "description": "Tamusia Bike Loop\nRuta BTT Enlace entre las localidades de Almoharín y Valdemorales donde se puede conectar directamente con la ruta 5 y en definitiva, con el resto de rutas señalizadas. \nDistancia: 4,48 km\nDificultad Técnica: Moderada\n",
+      "url": "https://inventrip.com/montancheztamuja/trip/7108",
+      "waypoints": [
+        {
+          "name": "Valdemorales",
+          "poi_id": "poi/42487"
+        },
+        {
+          "name": "Almoharín",
+          "poi_id": "poi/42486"
+        },
+        {
+          "name": "Exposición artística de Miguel Sansón",
+          "poi_id": "poi/45919"
+        },
+        {
+          "name": "Iglesia de San Andrés",
+          "poi_id": "poi/9924"
+        },
+        {
+          "name": "Punto de Información Turística",
+          "poi_id": "poi/9928"
+        }
+      ],
+      "itinerary": [
+        {
+          "step": "Municipios",
+          "items": [
+            {
+              "name": "Valdemorales",
+              "poi_id": "poi/42487"
+            },
+            {
+              "name": "Almoharín",
+              "poi_id": "poi/42486"
+            },
+            {
+              "name": "Lugares de interés (en el trayecto de la ruta)",
+              "items": [
+                {
+                  "name": "Exposición artística de Miguel Sansón",
+                  "poi_id": "poi/45919"
+                },
+                {
+                  "name": "Iglesia de San Andrés",
+                  "poi_id": "poi/9924"
+                },
+                {
+                  "name": "Punto de Información Turística",
+                  "poi_id": "poi/9928"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
   "interest_levels": {
     "1": "Imprescindible",
     "2": "Interesante",

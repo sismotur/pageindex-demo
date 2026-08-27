@@ -2,7 +2,7 @@
   {
     "id": "MT01",
     "title": "Senderismo y Naturaleza",
-    "description": "Visitor asks about hiking routes. The destination's route catalog does not resolve (declared route ids 404 upstream), so the assistant must say so truthfully rather than substituting a curated trip, then fall back to real nature/trail POIs, then recall the named 'ruta de los Molinos' from the destination overview.",
+    "description": "Visitor asks about hiking routes, backs off to nature/trail POIs when no exact match is found, then names a specific cataloged route ('ruta de los Molinos') that the assistant should retrieve directly (path/255).",
     "turns": [
       {
         "question": "¿Qué rutas de senderismo hay en la comarca y por dónde se empieza?"
