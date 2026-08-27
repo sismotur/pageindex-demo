@@ -1,0 +1,82 @@
+[
+  {
+    "id": "MT01",
+    "title": "Senderismo y Naturaleza",
+    "description": "Visitor asks about hiking routes. The destination's route catalog does not resolve (declared route ids 404 upstream), so the assistant must say so truthfully rather than substituting a curated trip, then fall back to real nature/trail POIs, then recall the named 'ruta de los Molinos' from the destination overview.",
+    "turns": [
+      {
+        "question": "¿Qué rutas de senderismo hay en la comarca y por dónde se empieza?"
+      },
+      {
+        "question": "Si no hay una ruta concreta catalogada, ¿qué lugares relacionados con la naturaleza o el senderismo puedo visitar de todas formas?"
+      },
+      {
+        "question": "¿Hay alguna ruta que pase por antiguos molinos, como la ruta de los Molinos entre Arroyomolinos y Montánchez?"
+      }
+    ]
+  },
+  {
+    "id": "MT02",
+    "title": "Cicloturismo y BTT",
+    "description": "Visitor interested in mountain biking asks about routes, bike rental, and route difficulty/terrain conditions.",
+    "turns": [
+      {
+        "question": "Soy aficionado al ciclismo de montaña, ¿qué rutas de BTT hay en la zona?"
+      },
+      {
+        "question": "¿Se puede alquilar una bicicleta en la comarca o hay que traerla?"
+      },
+      {
+        "question": "¿Qué nivel de dificultad tienen esas rutas y qué debo tener en cuenta por el terreno o el calor en verano?"
+      }
+    ]
+  },
+  {
+    "id": "MT03",
+    "title": "Patrimonio y el Castillo",
+    "description": "Visitor explores Montánchez's heritage starting from the castle, then asks about nearby religious/historic monuments.",
+    "turns": [
+      {
+        "question": "¿Qué se puede visitar en Montánchez? Cuéntame sobre el Castillo de Montánchez."
+      },
+      {
+        "question": "¿Por qué se conoce a ese castillo como el Balcón de Extremadura?"
+      },
+      {
+        "question": "¿Qué otros monumentos religiosos o históricos hay en la comarca, como la Basílica de Santa Lucía del Trampal?"
+      }
+    ]
+  },
+  {
+    "id": "MT04",
+    "title": "Gastronomía y Vino",
+    "description": "Visitor explores local gastronomy, drills into a winery for a tasting, then asks about nearby overnight accommodation.",
+    "turns": [
+      {
+        "question": "¿Qué productos gastronómicos son típicos de la Sierra de Montánchez y Tamuja?"
+      },
+      {
+        "question": "Me interesa el vino de pitarra, ¿dónde puedo visitar una bodega y hacer una cata?"
+      },
+      {
+        "question": "Después de la cata, ¿dónde puedo alojarme cerca para pasar la noche?"
+      }
+    ]
+  },
+  {
+    "id": "MT05",
+    "title": "Planificación Práctica",
+    "description": "Visitor plans logistics: parking or fuel, then health services if needed, then tourist information.",
+    "turns": [
+      {
+        "question": "Voy a ir en coche a Montánchez, ¿dónde puedo aparcar o repostar gasolina cerca?"
+      },
+      {
+        "question": "¿Hay alguna farmacia u hospital cercano por si lo necesito?"
+      },
+      {
+        "question": "¿Dónde puedo conseguir información turística o mapas de la zona?"
+      }
+    ]
+  }
+]

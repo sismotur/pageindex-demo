@@ -167,9 +167,12 @@ SOURCE_GROUNDING_TOOLS = frozenset({
 })
 GROUNDING_REQUIRED_INSTRUCTION = (
     "This is a tourist information request and requires current source "
-    "retrieval from the downloaded index before answering. Call the "
-    "appropriate retrieval tool now. Do not answer from previous "
-    "assistant prose or general knowledge."
+    "retrieval from the downloaded index before answering. You must call "
+    "one of get_section, filter_pois, search_pois, or find_poi_by_name "
+    "now — pick whichever best fits the topic, even for a general overview "
+    "question with no single named place. Do not answer, and do not stay "
+    "silent, without calling one of these tools first. Do not answer from "
+    "previous assistant prose or general knowledge."
 )
 SOCIAL_ONLY_MESSAGES = frozenset({
     "hola", "hello", "hi", "hey", "gracias", "thanks", "thank you",
@@ -212,9 +215,31 @@ GROUNDING_FAILURE_MESSAGES = {
     "uk": "Не вдалося отримати перевірену туристичну інформацію із завантажених даних.",
     "zh": "无法从已下载的数据中获取经过验证的旅游信息。",
 }
+RENTAL_INTENT_TERMS = frozenset({
+    # English
+    "rent", "rental", "hire",
+    # Spanish / Catalan / Galician / Basque
+    "alquilar", "alquiler", "lloguer", "alugar",
+    # Italian / French / Portuguese
+    "noleggiare", "noleggio", "louer", "location", "aluguer",
+    # German / Dutch
+    "mieten", "verleih", "huren",
+})
+
+
 def is_physical_route_request(question: str) -> bool:
-    """Detect a physical-route request across the supported app languages."""
+    """Detect a physical-route request across the supported app languages.
+
+    A bare transport-mode word ("bicicleta", "walking") is too weak a
+    signal on its own when the visitor is really asking about renting or
+    buying equipment rather than requesting a cataloged path — e.g. "can I
+    rent a bike here?" is not a route request even though it names a
+    transport mode.
+    """
     terms = tokenize(question)
+    term_set = set(terms)
+    if term_set & RENTAL_INTENT_TERMS:
+        return False
     return any(
         term in ROUTE_INTENT_TERMS
         or any(
@@ -282,8 +307,13 @@ TRIP_PLAN_INTENT_TERMS = frozenset({
     # English
     "plan", "itinerary", "itiner", "day", "days", "weekend",
     # Spanish / Catalan / Galician / Basque
+    # NOTE: "visita"/"visitar" is deliberately excluded — it is too
+    # generic a verb (used in ordinary "what can I visit" questions) to
+    # reliably signal an itinerary/plan request, and previously forced a
+    # curated-trip offer instead of real retrieval on plain sightseeing
+    # questions.
     "plan", "itinerario", "recorrido", "dia", "dias", "semana",
-    "detalle", "detalles", "visita",
+    "detalle", "detalles",
     # Italian / French / Portuguese
     "piano", "itinerario", "giorno", "giorni", "fine", "settimana",
     "programme", "jour", "jours", "semaine", "roteiro", "dia", "dias",
@@ -491,9 +521,9 @@ tool names, no filter parameter names, no catalog terminology, and no \
 raw IDs. Speak like a local tourism host, not a database interface.
 - Tag every point of interest you mention.  The tag WRAPS the name \
 (the name goes BETWEEN opening and closing tag): \
-  CORRECT: <poi id=5155 type=PlaceOfWorship>Church of San Nicolás</poi> \
-  WRONG:   Church of San Nicolás (<poi id=5155 type=PlaceOfWorship>) \
-  WRONG:   <poi id=5155 type=PlaceOfWorship> Church of San Nicolás \
+  CORRECT: <poi id=0 type=TouristAttraction>Example Landmark</poi> \
+  WRONG:   Example Landmark (<poi id=0 type=TouristAttraction>) \
+  WRONG:   <poi id=0 type=TouristAttraction> Example Landmark \
 Bare numeric id, no quotes.  Do NOT write the type or interest level \
 in the answer prose — they belong only in the tag attribute.  Never \
 show raw 'poi/…' ids outside a tag.

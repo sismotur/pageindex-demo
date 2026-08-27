@@ -966,6 +966,11 @@ def main() -> None:
                         help=argparse.SUPPRESS)  # legacy, hidden
     parser.add_argument("--conversation", default=None,
                         help="Run only this conversation ID (e.g. C01)")
+    parser.add_argument("--conversations-file", default=None,
+                        help=("Conversations JSON path (default: "
+                              f"{CONVERSATIONS_FILE.relative_to(PROJECT_ROOT)}). "
+                              "Use this to point scripted mode at a "
+                              "destination-specific thread file."))
     parser.add_argument("--output",       default=None,
                         help="Output path (default: results/conversations_<model>.json)")
     args = parser.parse_args()
@@ -1011,10 +1016,14 @@ def main() -> None:
         return
 
     # Scripted mode
-    if not CONVERSATIONS_FILE.exists():
-        print(f"[ERROR] Not found: {CONVERSATIONS_FILE}", file=sys.stderr)
+    conversations_path = Path(args.conversations_file) if args.conversations_file \
+                          else CONVERSATIONS_FILE
+    if not conversations_path.is_absolute():
+        conversations_path = PROJECT_ROOT / conversations_path
+    if not conversations_path.exists():
+        print(f"[ERROR] Not found: {conversations_path}", file=sys.stderr)
         sys.exit(1)
-    with open(CONVERSATIONS_FILE, encoding="utf-8") as f:
+    with open(conversations_path, encoding="utf-8") as f:
         threads = json.load(f)
 
     if args.conversation:
@@ -1031,7 +1040,7 @@ def main() -> None:
 
     print(f"[INFO] Model:         {args.model}")
     print(f"[INFO] Index:         {index_path.name}")
-    print(f"[INFO] Conversations: {len(threads)}")
+    print(f"[INFO] Conversations: {len(threads)} (from {conversations_path.name})")
     print(f"[INFO] Output:        {output_file}")
 
     results = []

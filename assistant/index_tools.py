@@ -1155,6 +1155,13 @@ def resolve_trip_query(question: str, index: dict) -> dict | None:
     editorial trip, not a physical path. Exact or contained source-title
     matches take precedence over generic route intent. Ambiguities are
     deliberately rejected.
+
+    A single-word title is never enough to count as a match: some
+    destinations have trips titled just the destination's own name (e.g.
+    “Montánchez”) or a generic term (e.g. “Comarca”), which would otherwise
+    match almost every question about that destination even though the
+    visitor never named the trip. Requiring at least two words keeps the
+    original ÚBEDA case working while rejecting those false positives.
     """
     query = normalize_text(question)
     if len(query) < 4:
@@ -1162,7 +1169,8 @@ def resolve_trip_query(question: str, index: dict) -> dict | None:
     matches = []
     for trip in index.get("trips") or []:
         name = normalize_text(trip.get("name") or "")
-        if len(name) >= 4 and (query == name or name in query):
+        if (len(name) >= 4 and len(name.split()) >= 2
+                and (query == name or name in query)):
             matches.append(trip)
     if len(matches) != 1:
         return None
