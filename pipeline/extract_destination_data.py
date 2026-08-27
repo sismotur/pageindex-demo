@@ -156,12 +156,21 @@ def fetch_destination(session, base_url: str, destination: str, lang: str) -> di
 
 
 def fetch_trips(session, base_url: str, destination: str, lang: str) -> list:
-    """Fetch all curated trips with full itineraries."""
+    """Fetch all curated trips with full itineraries.
+
+    Excludes route-trips (extras.path non-null) returned by this same bulk
+    listing: fetch_paths() fetches those separately so build_itineraries()
+    can mark both copies with is_route=True. Without this filter, a route
+    already present here creates an unflagged duplicate that shadows the
+    correctly flagged copy during get_trip() lookup.
+    """
     raw = fetch(session, f"{base_url}/v120/trips",
                 {"tourist_destination": destination,
                  "add_itinerary": "true", "limit": 100, "offset": 0})
     trips = []
     for t in (raw if isinstance(raw, list) else []):
+        if (t.get("extras") or {}).get("path"):
+            continue
         name     = get_localized(t.get("name", []), lang)
         desc     = get_localized(t.get("description", []), lang)
         itinerary = []
@@ -183,21 +192,6 @@ def fetch_trips(session, base_url: str, destination: str, lang: str) -> list:
     return trips
 
 
-def _flatten_waypoints(items: list[dict]) -> list[dict]:
-    """Return every POI-like leaf under a recursive item tree.
-
-    Kept only for the top-level `waypoints` compatibility field on paths.
-    """
-    out: list[dict] = []
-    for item in items or []:
-        children = item.get("items") or []
-        if children:
-            out.extend(_flatten_waypoints(children))
-        else:
-            out.append({k: v for k, v in item.items() if k != "items"})
-    return out
-
-
 def _parse_id_path(path_ref: str) -> str:
     """Extract the numeric id_path from a trip's extras.path reference.
 
@@ -212,12 +206,15 @@ def fetch_paths(session, base_url: str, route_ids: list, lang: str) -> list:
 
     Each id in `routes` is NOT a /v120/paths id_path — it is the id of a
     trip record. A route is simply a trip whose extras.path field
-    ('paths?id_path=N') is non-null; that field carries the real path id.
-    A trip with no extras.path is not a route and is skipped. Name,
-    description, and the ordered itinerary all come from the trip record
-    itself (add_itinerary=true), exactly like fetch_trips() — /v120/paths
-    only carries raw geometry (kml, length, elevation), no visitor text,
-    so it is not fetched here.
+    ('paths?id_path=N') is non-null; a trip with no extras.path is not a
+    route and is skipped. The tag shown to visitors uses this trip's own
+    numeric id — the destination's real, stable route identifier — never
+    the internal /v120/paths id_path, which has no meaning outside this
+    API and must not be exposed. Name, description, url, and itinerary
+    all come from the trip record itself (add_itinerary=true), exactly
+    like fetch_trips(); the runtime (index_tools._append_route_stops())
+    is responsible for dropping degenerate step labels when rendering,
+    not the extractor.
     """
     paths = []
     for rid in route_ids:
@@ -242,7 +239,6 @@ def fetch_paths(session, base_url: str, route_ids: list, lang: str) -> list:
         name = get_localized(trip.get("name", []), lang)
         desc = get_localized(trip.get("description", []), lang)
         itinerary = []
-        all_leaves: list[dict] = []
         for step in trip.get("itinerary") or []:
             step_name = get_localized(step.get("name", []), lang)
             items = extract_itinerary_items(
@@ -250,18 +246,15 @@ def fetch_paths(session, base_url: str, route_ids: list, lang: str) -> list:
             )
             if step_name or items:
                 itinerary.append({"step": step_name, "items": items})
-                all_leaves.extend(_flatten_waypoints(items))
 
         paths.append({
-            "id":          f"path/{id_path}",
+            "id":          f"trip/{rid}",
             "name":        name,
             "description": desc,
             "url":         (trip.get("url") or [""])[0],
-            "waypoints":   all_leaves,
             "itinerary":   itinerary,
         })
-        print(f"  [route {rid} -> path/{id_path}] \"{name}\"  "
-              f"({len(all_leaves)} waypoints)")
+        print(f"  [route {rid}] \"{name}\"  ({len(itinerary)} steps)")
     return paths
 
 

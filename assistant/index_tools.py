@@ -1054,13 +1054,18 @@ def _trip_tag_with_text(trip: dict, text: str) -> str:
 
 
 def _path_tag(path: dict) -> str:
-    """Return a physical-route tag sourced only from /v120/paths."""
-    bare_id = str(path.get("itinerary_id") or "").split("/", 1)[-1]
-    return f"<path id={bare_id}>{path.get('name') or '(unnamed route)'}</path>"
+    """Return the tag for a physical route sourced from /v120/paths.
+
+    A route is itself a trip in the source API — a route is simply a
+    trip whose extras.path field is non-null (see fetch_paths() in
+    extract_destination_data.py) — so it renders and resolves exactly
+    like a curated trip (<trip id=...>), never a separate <path> tag,
+    which would not resolve via get_trip() for a follow-up question.
+    """
+    return _trip_tag(path)
 def _path_tag_with_text(path: dict, text: str) -> str:
-    """Return a canonical path tag while preserving a visible label."""
-    bare_id = str(path.get("itinerary_id") or "").split("/", 1)[-1]
-    return f"<path id={bare_id}>{text}</path>"
+    """Return the trip tag for a physical route, preserving a visible label."""
+    return _trip_tag_with_text(path, text)
 
 
 def _itinerary_search_text(itinerary: dict, index: dict) -> str:
@@ -1270,6 +1275,44 @@ def resolve_history_selection(question: str, messages: list[dict],
         return None
     return best
 
+
+def resolve_sole_recent_source(messages: list[dict], index: dict) -> dict | None:
+    """Return the one trip/path shown in the immediately preceding
+    assistant turn, or None when that turn showed zero or more than one.
+
+    A generic plan/detail follow-up ("give me the itinerary") names
+    nothing itself, so the wording-based resolve_history_selection()
+    cannot match it against a shown label. But when exactly one trip or
+    path was just shown, it is the unambiguous referent — callers should
+    only use this as a fallback for that specific kind of generic
+    follow-up, not for arbitrary unrelated questions.
+    """
+    for message in reversed(messages):
+        if message.get("role") != "assistant":
+            continue
+        content = message.get("content") or ""
+        candidates: list[dict] = []
+        for match in TRIP_TAG_RE.finditer(content):
+            item = get_trip(index, f"trip/{match.group(1)}")
+            if item:
+                candidates.append({
+                    "kind": "trip",
+                    "id": item["itinerary_id"],
+                    "label": match.group(2).strip() or item.get("name", ""),
+                })
+        for match in PATH_TAG_RE.finditer(content):
+            item = get_path(index, f"path/{match.group(1)}")
+            if item:
+                candidates.append({
+                    "kind": "path",
+                    "id": item["itinerary_id"],
+                    "label": match.group(2).strip() or item.get("name", ""),
+                })
+        unique = {(c["kind"], c["id"]): c for c in candidates}
+        return next(iter(unique.values())) if len(unique) == 1 else None
+    return None
+
+
 def _curated_preview(item: dict, max_chars: int = 180) -> str:
     """Trim a curated trip/path description for search output."""
     description = (item.get("description") or "").strip()
@@ -1414,6 +1457,40 @@ def _render_curated_items(items: list[dict], index: dict,
         # stale or foreign-language and must not appear as tourist text.
 
 
+def _append_route_stops(lines: list[str], item: dict, index: dict) -> str:
+    """Append a route's real waypoints, dropping degenerate step headers.
+
+    A route's source itinerary steps are often just a location label or a
+    repeat of the route's own title, with no stops of their own (see
+    fetch_paths() in extract_destination_data.py) — those carry no
+    information and are dropped. A step that does carry real stops is
+    still shown, but without the day-by-day "N. Title" numbering
+    format_trip() uses for editorial trips: a route's stops are waypoints
+    along one path, not sequential options to choose between.
+    """
+    route_name = normalize_text(item.get("name") or "")
+    for step in item.get("steps") or []:
+        step_items = step.get("items")
+        poi_ids = step.get("poi_ids") or []
+        if not step_items and not poi_ids:
+            continue  # empty header/location label — nothing to show
+        lines.append("")  # separator before this block (and the description)
+        title = (step.get("title") or "").strip()
+        if title and normalize_text(title) != route_name:
+            lines.append(title)
+        if step_items:
+            _render_curated_items(step_items, index, lines, depth=0)
+        else:
+            for poi_id in poi_ids:
+                poi = get_poi(index, poi_id)
+                if poi:
+                    lines.append(f"- {_poi_tag(poi)}")
+        # `unresolved_poi_names` is retained in the index for QA only.
+        # It may be a stale or foreign-language source label, so never
+        # present it as a tourist-visible or app-openable place.
+    return "\n".join(lines)
+
+
 def _format_curated_detail(index: dict, itinerary_id: str, collection: str,
                            tag_builder, unavailable: str) -> str:
     """Render ordered trip/path stops, preserving unlinked source names."""
@@ -1424,6 +1501,11 @@ def _format_curated_detail(index: dict, itinerary_id: str, collection: str,
     description = (item.get("description") or "").strip()
     if description:
         lines.extend(["", description])
+    if item.get("is_route"):
+        # This applies regardless of whether the record was reached via
+        # get_trip() or get_path() — a route is duplicated into both
+        # collections (see build_itineraries() in pipeline/build_index.py).
+        return _append_route_stops(lines, item, index)
     steps = item.get("steps") or []
     if not steps:
         lines.extend(["", "No ordered stops are available for this item."])
@@ -1460,11 +1542,20 @@ def format_trip(index: dict, trip_id: str) -> str:
 
 
 def format_path(index: dict, path_id: str) -> str:
-    """Render one physical walking/biking route from /v120/paths."""
-    return _format_curated_detail(
-        index, path_id, "paths", _path_tag,
-        "That physical route is not available.",
-    )
+    """Render one physical walking/biking route from /v120/paths.
+
+    Unlike format_trip() on an ordinary editorial trip, a route's real
+    waypoints (if any) are shown without the day-by-day "N. Title"
+    numbering — see _append_route_stops().
+    """
+    item = _find_curated(index, path_id, "paths")
+    if not item:
+        return "That physical route is not available."
+    lines = [f"# {_path_tag(item)}"]
+    description = (item.get("description") or "").strip()
+    if description:
+        lines.extend(["", description])
+    return _append_route_stops(lines, item, index)
 
 # ── Weather ------------------------------------------------------------------
 #

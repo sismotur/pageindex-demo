@@ -748,6 +748,9 @@ def build_itineraries(dest_data: dict | None, name_index: dict[str, str],
         if not raw_steps and not raw_path.get("name"):
             continue
         itinerary_id = raw_path.get("id") or ""
+        steps = _resolve_itinerary_steps(
+            raw_steps, name_index, alias_name_index, valid_poi_ids
+        )
         paths.append({
             "itinerary_id": itinerary_id,
             "path_id":      itinerary_id,
@@ -756,9 +759,31 @@ def build_itineraries(dest_data: dict | None, name_index: dict[str, str],
             "name":         raw_path.get("name") or "",
             "description":  raw_path.get("description") or "",
             "url":          raw_path.get("url") or "",
-            "steps":        _resolve_itinerary_steps(
-                raw_steps, name_index, alias_name_index, valid_poi_ids
-            ),
+            "steps":        steps,
+            # See index_tools._format_curated_detail(): a route's steps
+            # are often degenerate (location labels, or a repeat of the
+            # route's own title), so rendering always skips them in
+            # favor of the free-text description, however this record
+            # is reached.
+            "is_route":     True,
+        })
+        # A route is itself a trip in the source API — a route is simply
+        # a trip whose extras.path is non-null (see fetch_paths() in
+        # extract_destination_data.py). Duplicate it into `trips` too so
+        # it is tagged and resolved exactly like a curated trip
+        # (get_trip(), <trip> tags, history-based follow-up selection);
+        # search_paths()/get_path() still find the same content via
+        # `paths` for physical-route intent routing.
+        trips.append({
+            "itinerary_id": itinerary_id,
+            "trip_id":      itinerary_id,
+            "kind":         "trip",
+            "source_type":  "TouristTrip",
+            "name":         raw_path.get("name") or "",
+            "description":  raw_path.get("description") or "",
+            "url":          raw_path.get("url") or "",
+            "steps":        steps,
+            "is_route":     True,
         })
 
     return trips, paths

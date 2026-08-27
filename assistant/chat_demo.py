@@ -71,6 +71,7 @@ from index_tools import (   # noqa: E402
     extract_poi_tags,
     format_trip_choice_offer,
     resolve_history_selection,
+    resolve_sole_recent_source,
     resolve_trip_query,
     search_trips,
     sanitize_tourist_answer,
@@ -205,9 +206,17 @@ def run_turn(question: str, messages: list[dict],
     # Resolve concise selections against validated tags from earlier
     # assistant turns before asking the model to answer. This prevents
     # "Secundaria 2" from being answered from paraphrased chat memory.
+    # A generic plan/detail follow-up ("give me the itinerary") names
+    # nothing itself, so it can only match the wording-based check above
+    # by coincidence — but when exactly one trip/path was just shown,
+    # that is the unambiguous referent, so only try it for that specific
+    # kind of follow-up (trip_detail_required), never for arbitrary
+    # unrelated questions.
     selection = (
         resolve_history_selection(question, messages[:-1], index)
         or resolve_trip_query(question, index)
+        or (resolve_sole_recent_source(messages[:-1], index)
+            if trip_detail_required else None)
     )
     if selection:
         tool_name, arg_name = {

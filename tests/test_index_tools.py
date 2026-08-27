@@ -42,6 +42,7 @@ from index_tools import (
     get_path,
     poi_uri,
     resolve_history_selection,
+    resolve_sole_recent_source,
     resolve_trip_query,
     search_pois,
     search_trips,
@@ -51,7 +52,11 @@ from index_tools import (
     strip_poi_tags,
 )
 from common.textnorm import normalize_text, tokenize
-from pipeline.build_index import _resolve_items, _resolve_itinerary_steps
+from pipeline.build_index import (
+    _resolve_items,
+    _resolve_itinerary_steps,
+    build_itineraries,
+)
 from pipeline.extract_destination_data import extract_itinerary_items
 from run_eval import (
     grounding_failure_message,
@@ -446,11 +451,16 @@ class TestCuratedItineraries:
         assert format_path(index, "path/999") == \
             "That physical route is not available."
 
-    def test_synthetic_path_never_appears_as_trip(self, index):
+    def test_synthetic_path_not_found_via_search_trips(self, index):
+        """A route is found only via search_paths(), never search_trips() —
+        but it still renders and resolves as a <trip> tag (see
+        test_route_is_tagged_and_resolved_as_a_trip), since a route is
+        itself a trip in the source API.
+        """
         synthetic = dict(index)
         synthetic["paths"] = [{
-            "itinerary_id": "path/9001",
-            "path_id": "path/9001",
+            "itinerary_id": "trip/9001",
+            "path_id": "trip/9001",
             "kind": "path",
             "source_type": "Path",
             "name": "Riverwalk9001 Walking Route",
@@ -465,11 +475,84 @@ class TestCuratedItineraries:
         }]
         assert search_trips(synthetic, "riverwalk9001") == []
         paths = search_paths(synthetic, "riverwalk9001")
-        assert [path["itinerary_id"] for path in paths] == ["path/9001"]
+        assert [path["itinerary_id"] for path in paths] == ["trip/9001"]
         out = format_path(synthetic, "9001")
-        assert out.startswith("# <path id=9001>Riverwalk9001 Walking Route</path>")
+        assert out.startswith("# <trip id=9001>Riverwalk9001 Walking Route</trip>")
+        assert "A walking route beside the river." in out
+        # A route's real stops still show (unlike a degenerate header step
+        # with no items — see test_route_reached_via_get_trip_shows_stops_
+        # without_numbering), but never the day-by-day "N. Title" numbering
+        # format_trip() uses for editorial trips, and never an unresolved
+        # source label (may be stale/foreign-language).
+        assert "1. Start" not in out
+        assert "Start" in out
         assert "<poi id=36026" in out
         assert "River viewpoint" not in out
+
+    def test_route_is_tagged_and_resolved_as_a_trip(self):
+        """build_itineraries() duplicates a route into `trips` too, so
+        get_trip()/search_trips() resolve the same content search_paths()/
+        get_path() find — a route is a trip whose extras.path is non-null.
+        """
+        dest_data = {
+            "trips": [],
+            "paths": [{
+                "id": "trip/6330",
+                "name": "PR-CC 27 Ruta de los Molinos",
+                "description": "La ruta tiene inicio en el panel informativo.",
+                "url": "",
+            }],
+        }
+        trips, paths = build_itineraries(
+            dest_data, name_index={}, alias_name_index={}, valid_poi_ids=set(),
+        )
+        assert len(trips) == 1 and len(paths) == 1
+        assert trips[0]["itinerary_id"] == paths[0]["itinerary_id"] == "trip/6330"
+        assert trips[0]["kind"] == "trip"
+        assert paths[0]["kind"] == "path"
+        assert trips[0]["is_route"] is True
+        assert paths[0]["is_route"] is True
+
+    def test_route_reached_via_get_trip_shows_stops_without_numbering(self, index):
+        """Regression: a route duplicated into `trips` must render the
+        same way through format_trip() as through format_path() — real
+        stops are shown, but never the day-by-day "N. Title" numbering
+        format_trip() uses for editorial trips, and a step title that
+        just repeats the route's own name is dropped rather than shown
+        twice.
+        """
+        synthetic = dict(index)
+        synthetic["trips"] = list(synthetic["trips"]) + [{
+            "itinerary_id": "trip/9003",
+            "trip_id": "trip/9003",
+            "kind": "trip",
+            "source_type": "TouristTrip",
+            "name": "Riverwalk9003 Walking Route",
+            "description": "A walking route beside the river.",
+            "url": "",
+            "is_route": True,
+            "steps": [
+                {"position": 1, "title": "Arroyomolinos", "poi_ids": []},
+                {"position": 2, "title": "Riverwalk9003 Walking Route",
+                 "poi_ids": []},
+                {"position": 3, "title": "Principales molinos:",
+                 "poi_ids": ["poi/36026"]},
+            ],
+        }]
+        out = format_trip(synthetic, "9003")
+        assert out.startswith("# <trip id=9003>Riverwalk9003 Walking Route</trip>")
+        assert "A walking route beside the river." in out
+        # The real stop shows, tag-ready.
+        assert "<poi id=36026" in out
+        assert "Principales molinos:" in out
+        # The two empty header steps (no items/poi_ids) are dropped
+        # entirely — including the one that just repeats the route's own
+        # name — and nothing is ever numbered like a day-by-day plan.
+        assert "Arroyomolinos" not in out
+        assert "1. " not in out
+        assert "2. " not in out
+        assert "3. " not in out
+
 
     def test_unresolved_waypoints_are_not_rendered_to_tourists(self, index):
         synthetic = dict(index)
@@ -499,6 +582,34 @@ class TestCuratedItineraries:
         )
         assert steps[0]["poi_ids"] == ["poi/30117"]
         assert steps[0]["poi_resolutions"][0]["resolution"] == "source_id"
+
+
+class TestSoleRecentSource:
+    """Anchor for generic plan/detail follow-ups ("give me the itinerary")."""
+
+    def test_resolves_the_one_trip_shown(self, index):
+        history = [{
+            "role": "assistant",
+            "content": "# <trip id=4407>Savor Úbeda</trip>\n\n...",
+        }]
+        assert resolve_sole_recent_source(history, index) == {
+            "kind": "trip", "id": "trip/4407", "label": "Savor Úbeda",
+        }
+
+    def test_returns_none_when_nothing_was_shown(self, index):
+        history = [{"role": "assistant", "content": "No tools were called."}]
+        assert resolve_sole_recent_source(history, index) is None
+
+    def test_returns_none_when_ambiguous(self, index):
+        history = [{
+            "role": "assistant",
+            "content": (
+                "<trip id=4407>Savor Úbeda</trip> "
+                "<trip id=4413>To Rest...</trip>"
+            ),
+        }]
+        assert resolve_sole_recent_source(history, index) is None
+
 
 class TestNestedItems:
     """Schema v6: itineraries preserve folder/POI hierarchy end-to-end."""
