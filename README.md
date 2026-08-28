@@ -1,29 +1,31 @@
 # Inventrip Offline Tourism Assistant with Gemma 4
 
 A self-contained framework that answers grounded tourism questions for
-**any tourist destination** in **any language** by combining a custom
-POI-aware index (built directly from the [Inventrip](https://inventrip.com)
-API) with the **Gemma 4** family.
+**any tourist destination** in **any language** using a custom POI-aware
+index (built from the [Inventrip](https://inventrip.com) API) with the
+**Gemma 4** family.
 
-The repository is split into the two parts of the production architecture:
+This repository is the **offline chatbot reference implementation**:
+eleven pure-lookup tools over a pre-built index plus the agentic loop.
+Runs against any OpenAI-compatible endpoint (oMLX, Ollama) and will be
+**reimplemented in Android/iOS with Gemma 4 E2B fully offline** — the
+phone only downloads index files (see `docs/mobile-offline-contract.md`).
 
-1. **`pipeline/` — data preparation.** LLM-free, deterministic scripts that
-   fetch the Inventrip API and build `indexes/{dest}_{lang}.json`. Being
-   ported to a **Cloudflare cron Worker** that publishes the same files to
-   R2 (see `docs/cloudflare-worker-spec.md`).
-2. **`assistant/` — offline chatbot.** The reference implementation of the
-   on-device runtime: six pure-lookup tools over the index plus the
-   agentic loop. Runs against any OpenAI-compatible endpoint (oMLX,
-   Ollama) and will be **reimplemented in Android/iOS with Gemma 4 E2B
-   fully offline** — the phone only downloads index files
-   (see `docs/mobile-offline-contract.md`).
+Data preparation — fetching the Inventrip API and building the
+POI-aware index — lives in the sibling
+[`inventrip-rag-data`](https://github.com/sismotur/inventrip-rag-data)
+repo, a Cloudflare Python Worker that publishes index and weather files
+to R2. This repo keeps small **committed fixture copies** of the built
+`indexes/`/`weather/` artifacts for local development and testing;
+refresh them by copying output from `inventrip-rag-data` when needed.
 
-The reference dataset is Úbeda, Spain — 367 POIs returned by `/v120/pois`
-under the [UNE 178503](https://www.une.org) Spanish tourism standard.
-
-The pipeline supports **multiple destinations** and **multiple languages**.
-All artifacts use the `{destination}_*_{lang}` naming convention so different
-`(destination, language)` pairs never overwrite each other.
+The reference destination is Úbeda, Spain — 367 POIs returned by
+`/v120/pois` under the [UNE 178503](https://www.une.org) Spanish tourism
+standard. The index format supports **multiple destinations** and
+**multiple languages** (currently also Sierra de Montánchez y Tamuja,
+Spanish-only); all artifacts use the `{destination}_*_{lang}` naming
+convention so different `(destination, language)` pairs never overwrite
+each other.
 
 ---
 
@@ -78,33 +80,19 @@ POI-aware index uses the structure that already exists in the source.
 
 ```
 ┌──────────────────────────────────────────────────────────────────────┐
-│                       Inventrip API (production)                     │
-│                  /v120/pois  ·  /v120/tourist-destinations           │
+│    inventrip-rag-data (sibling repo, Cloudflare Python Worker)       │
+│    fetches Inventrip API → builds POI-aware index → publishes to R2  │
 └─────────────────────────────┬────────────────────────────────────────┘
                               │
-        PART 1 — DATA PREPARATION (pipeline/, → Cloudflare cron Worker)
-                              ▼
-              ┌──────────────────────────────────┐
-              │  data/{dest}_pois_raw_{lang}.json│  pipeline/extract_pois.py
-              │  data/{dest}_destination_{lang}  │  pipeline/extract_destination_data.py
-              └──────────────┬───────────────────┘
-                             │
-                             ▼
-              ┌──────────────────────────────────┐
-              │  pipeline/build_index.py         │       deterministic, < 1 s
-              │  (no LLM calls, no Markdown)     │       no preprocessing wallclock
-              └──────────────┬───────────────────┘
-                             │
-                             ▼
               ┌──────────────────────────────────┐
               │  indexes/{dest}_{lang}.json      │ ← THE OFFLINE ARTIFACT
               │  meta · overview · trips · paths │   (phone downloads this
               │  sections (deterministic         │   once, then works with
-              │     summaries) · pois · facets · │   no internet connection)
-              │  name_index · search_terms       │
-              └──────────────┬───────────────────┘
+              │     summaries) · pois · facets · │   no internet connection;
+              │  name_index · search_terms       │   committed here as a
+              └──────────────┬───────────────────┘   local dev/test fixture)
                              │
-        PART 2 — ASSISTANT (assistant/, → Android/iOS, Gemma 4 E2B on-device)
+        ASSISTANT (assistant/, → Android/iOS, Gemma 4 E2B on-device)
                              ▼
               ┌──────────────────────────────────┐
               │  assistant/run_eval.py           │       litellm tool calls
@@ -119,13 +107,9 @@ POI-aware index uses the structure that already exists in the source.
               └─────────────────────────────────────┘
 ```
 
-`common/` (`lang_support.py`, `textnorm.py`) is shared by both parts and
-pins the constants/normalisation that the Cloudflare and mobile ports
-must reproduce byte-for-byte.
-
-The optional `pipeline/json_to_markdown.py` still exists as a
-human-readable export of the same data — useful for reading the corpus
-in a text editor — but no script consumes it.
+`common/` (`lang_support.py`, `textnorm.py`) is duplicated from the
+sibling `inventrip-rag-data` repo — both copies must reproduce the same
+constants/normalisation byte-for-byte, since mobile clients depend on it.
 
 ### Tools exposed to the LLM
 
@@ -170,10 +154,13 @@ assistant returns a localized safe failure instead of ungrounded advice.
 
 ## Data source
 
-POI data comes from the **Inventrip API** (`/v120/pois`), which wraps the
-PostgreSQL function `it.get_objects_une_v121`.
+Each index is built from the **Inventrip API** (`/v120/pois`, which wraps
+the PostgreSQL function `it.get_objects_une_v121`) by the sibling
+`inventrip-rag-data` repo — see that repo for extraction/build details.
+This repo only reads the already-built index.
 
-- **367 POIs** for Úbeda (production data, English) / 369 in Spanish
+- **367 POIs** for Úbeda (English) / 369 (Spanish); Sierra de Montánchez
+  y Tamuja is a smaller, Spanish-only second destination.
 - **Per-POI fields** (UNE 178503): `identifier`, `name`, `type`,
   `description`, `extras.id_interest_level` (1=Indispensable, 2, 3),
   `extras.zoom_level` (10–19), `extras.booking_url`, `touristType[]`,
@@ -199,42 +186,34 @@ pageindex-demo/
 ├── .env                               ← credentials (gitignored)
 ├── docs/
 │   ├── README-mobile.md               ← mobile team: API integration + index schema
-│   ├── mobile-offline-contract.md     ← Android/iOS port contract (offline E2B)
-│   └── cloudflare-worker-spec.md      ← Cloudflare data-prep + distribution spec
+│   └── mobile-offline-contract.md     ← Android/iOS port contract (offline E2B)
 │
-├── common/                            ← shared by both parts (port byte-for-byte)
+├── common/                            ← duplicated from inventrip-rag-data
+│   │                                     (port byte-for-byte, keep in sync)
 │   ├── lang_support.py                ← 16 languages: rules, recovery, display
 │   ├── textnorm.py                    ← normalize_text/tokenize (name search)
 │   └── models.py                      ← canonical oMLX model IDs + defaults
 │
-├── pipeline/                          ← PART 1: data preparation (→ Cloudflare)
-│   ├── extract_pois.py                ← Step 1a: fetch POIs (--destination, --lang)
-│   ├── extract_destination_data.py    ← Step 1b: fetch trips & taxonomies
-│   ├── build_index.py                 ← Step 2: build indexes/{dest}_{lang}.json
-│   ├── build_weather.py               ← Step 2b: daily weather/{dest}_{lang}.json
-│   └── json_to_markdown.py            ← optional human-readable export
-│
-├── assistant/                         ← PART 2: offline chatbot reference (→ mobile)
-│   ├── index_tools.py                 ← ten tools, evidence + trip/path retrieval
-│   ├── run_eval.py                    ← Step 3: agentic Q&A evaluation
+├── assistant/                         ← offline chatbot reference (→ mobile)
+│   ├── index_tools.py                 ← eleven tools, evidence + trip/path retrieval
+│   ├── run_eval.py                    ← agentic Q&A evaluation
 │   ├── chat_demo.py                   ← interactive / scripted chat demo
-│   └── score_results.py               ← Step 4: score grounding + retrieval
+│   └── score_results.py               ← score grounding + retrieval
 │
-├── data/                              ← raw API output, tracked in git
-│   ├── ubeda_pois_raw_{en,es,it}.json ← /v120/pois output (367–369 POIs)
-│   └── ubeda_destination_{en,es,it}.json
+├── indexes/                           ← committed fixture copies, refreshed from
+│   ├── ubeda_{en,es,it}.json             inventrip-rag-data's build output
+│   └── montancheztamuja_es.json
 │
-├── indexes/                           ← build_index.py output, tracked
-│   └── ubeda_{en,es,it}.json          ← POI-aware index (~1.0–1.1 MB; ~135 KB gzip)
-│
-├── weather/                           ← build_weather.py output, tracked
-│   └── ubeda_{en,es,it}.json          ← 7-day forecast (~1 KB; daily refresh)
+├── weather/                           ← same fixture-copy convention as indexes/
+│   ├── ubeda_{en,es,it}.json
+│   └── montancheztamuja_es.json
 │
 ├── eval/
 │   ├── questions.json                 ← 20 curated visitor questions (English)
 │   ├── questions_es.json              ← Spanish translations
 │   ├── questions_it.json              ← Italian translations
-│   └── conversations.json             ← multi-turn conversation threads
+│   ├── conversations.json             ← multi-turn conversation threads (Úbeda)
+│   └── conversations_montancheztamuja.json
 │
 └── results/                           ← gitignored; eval/conversation outputs
 ```
@@ -242,9 +221,8 @@ pageindex-demo/
 ### Naming convention
 
 ```
-data/{destination}_pois_raw_{lang}.json
-data/{destination}_destination_{lang}.json
 indexes/{destination}_{lang}.json
+weather/{destination}_{lang}.json
 results/eval_{model}_{lang}.json     (results/ is gitignored)
 ```
 
@@ -261,7 +239,6 @@ results/eval_{model}_{lang}.json     (results/ is gitignored)
     `gemma-4-E2B-it-MLX-8bit` (the mobile deployment target)
   - or [Ollama](https://ollama.com) (`http://localhost:11434/v1`) —
     `ollama pull gemma4:26b` / `gemma4:e4b` / `gemma4:e2b`
-- An Inventrip API key (only needed when re-extracting data)
 
 ### Installation
 
@@ -270,7 +247,7 @@ git clone https://github.com/sismotur/pageindex-demo.git
 cd pageindex-demo
 
 python3 -m venv .venv
-.venv/bin/pip install litellm requests python-dotenv pytest
+.venv/bin/pip install litellm python-dotenv pytest
 ```
 
 ### Environment variables
@@ -286,11 +263,10 @@ OPENAI_API_BASE=http://127.0.0.1:8000/v1
 # Ollama alternative:
 # OPENAI_API_KEY=ollama
 # OPENAI_API_BASE=http://localhost:11434/v1
-
-# Inventrip API (only for pipeline/extract_*.py)
-INVENTRIP_API_BASE_URL=https://api.inventrip.com
-INVENTRIP_API_KEY=your_api_key_here
 ```
+
+Re-extracting or rebuilding an index requires an Inventrip API key, but
+that only happens in the sibling `inventrip-rag-data` repo now.
 
 ### Technical configuration
 
@@ -306,30 +282,16 @@ INVENTRIP_API_KEY=your_api_key_here
 
 ---
 
-## Running the pipeline
+## Running the assistant
 
 ### Úbeda in English (default)
 
 ```bash
-# 1a. Fetch POIs from the Inventrip API
-.venv/bin/python pipeline/extract_pois.py --destination ubeda --lang en
-
-# 1b. Fetch destination metadata (trips, taxonomies)
-.venv/bin/python pipeline/extract_destination_data.py --destination ubeda --lang en
-
-# 2. Build the POI-aware index (deterministic, sub-second, no LLM)
-.venv/bin/python pipeline/build_index.py --destination ubeda --lang en
-# → indexes/ubeda_en.json
-
-# 2b. Refresh the daily weather artifact (~1 KB per language)
-.venv/bin/python pipeline/build_weather.py --destination ubeda --lang en
-# → weather/ubeda_en.json
-
-# 3. Run the Q&A evaluation (server model ~10 min; E2B ~75 s on oMLX)
+# Run the Q&A evaluation (server model ~10 min; E2B ~75 s on oMLX)
 .venv/bin/python assistant/run_eval.py \
   --model openai/gemma-4-26B-A4B-it-MLX-4bit --index indexes/ubeda_en.json
 
-# 4. Score and summarise
+# Score and summarise
 .venv/bin/python assistant/score_results.py \
   --file results/eval_gemma-4-26B-A4B-it-MLX-4bit.json
 
@@ -338,13 +300,9 @@ INVENTRIP_API_KEY=your_api_key_here
   --model openai/gemma-4-26B-A4B-it-MLX-4bit
 ```
 
-### Spanish
+### Spanish / other languages
 
 ```bash
-.venv/bin/python pipeline/extract_pois.py             --destination ubeda --lang es
-.venv/bin/python pipeline/extract_destination_data.py --destination ubeda --lang es
-.venv/bin/python pipeline/build_index.py              --destination ubeda --lang es
-
 .venv/bin/python assistant/run_eval.py \
   --model openai/gemma-4-26B-A4B-it-MLX-4bit \
   --questions eval/questions_es.json \
@@ -357,22 +315,15 @@ INVENTRIP_API_KEY=your_api_key_here
   --lang es
 ```
 
-### Adding a new destination
+### Adding a new destination or refreshing an index
 
-Replace `caceres` with your destination slug. No code changes required.
-
-```bash
-.venv/bin/python pipeline/extract_pois.py             --destination caceres --lang en
-.venv/bin/python pipeline/extract_destination_data.py --destination caceres --lang en
-.venv/bin/python pipeline/build_index.py              --destination caceres --lang en
-
-.venv/bin/python assistant/run_eval.py \
-  --model openai/gemma-4-26B-A4B-it-MLX-4bit \
-  --index indexes/caceres_en.json
-```
-
-The destination display name is taken from the index's `meta.destination_display`
-field, which is sourced from `/v120/tourist-destinations`.
+Run the pipeline in the sibling
+[`inventrip-rag-data`](https://github.com/sismotur/inventrip-rag-data)
+repo (`src/pipeline/extract_pois.py` → `extract_destination_data.py` →
+`build_index.py`), then copy the resulting `indexes/{dest}_{lang}.json`
+(and `weather/{dest}_{lang}.json`) here. No code changes are required in
+this repo — the destination display name comes from the index's own
+`meta.destination_display` field.
 
 ---
 
@@ -432,20 +383,15 @@ titles.
   `LANG_RULES`. The corpus language is independent — a French question
   over the Spanish corpus works because the model handles cross-lingual
   synthesis.
-- Tourist-type display names come from
-  `data/{dest}_destination_{lang}.json`'s `tourist_types` map, which is
-  a per-language code → label dictionary returned by
-  `/v120/tourist-types?language={lang}`.
-  `extract_destination_data.py` now picks the requested-language entry
-  from each multilingual list (previously it always preferred English).
-- Interest-level labels (Indispensable / Interesting / Outstanding /
-  their localised equivalents) come from the same file's
-  `interest_levels` map.
-  - To check which languages your API instance currently exposes:
-  `curl "$INVENTRIP_API_BASE_URL/v100/configuration-languages?is_active_app=true&api_key=$INVENTRIP_API_KEY"`.
-  If the API list ever drifts from the 16 codes hard-coded here,
-  update `common/lang_support.py` (the import-time self-check will
-  refuse to load with missing translations).
+- Tourist-type display names and interest-level labels (Indispensable /
+  Interesting / Outstanding / their localised equivalents) are baked
+  into each index's `tourist_type_display` and `interest_levels` maps,
+  originally sourced per-language from `/v120/tourist-types` and
+  `/v120/interest-levels` by the inventrip-rag-data pipeline.
+  If the Inventrip API's supported-language list ever drifts from the
+  16 codes hard-coded here, update `common/lang_support.py` in both this
+  repo and inventrip-rag-data (the import-time self-check will refuse to
+  load with missing translations).
 
 ---
 
@@ -468,9 +414,14 @@ titles.
   against the same POI before the assistant claims a relationship; when
   direct evidence is absent, the loop retrieves complementary options
   without inventing one.
-- **Cloudflare Worker port of `pipeline/`** — spec in
-  `docs/cloudflare-worker-spec.md`; the §4.4 contract test keeps the TS
-  build byte-equivalent to the Python reference.
+- **Cloudflare data-prep Worker** — done, see the sibling
+  [`inventrip-rag-data`](https://github.com/sismotur/inventrip-rag-data)
+  repo (a Python Cloudflare Worker; not deployed to production yet).
+- **POI section taxonomy** — the `SECTIONS` grouping in
+  inventrip-rag-data's `pipeline/build_index.py` was extended with 22
+  UNE type codes discovered while onboarding Montánchez y Tamuja; a
+  couple of low-confidence placements (`Cemetery`, `Street`) are
+  provisional and flagged for review.
 - **Android/iOS ports of `assistant/`** — contract in
   `docs/mobile-offline-contract.md`; verification harness is the existing
   20-question eval.

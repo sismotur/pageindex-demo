@@ -104,6 +104,12 @@ DEFAULT_INDEX   = PROJECT_ROOT / "indexes" / "ubeda_en.json"
 RESULTS_DIR     = PROJECT_ROOT / "results"
 DEFAULT_MODEL   = DEFAULT_EVAL_MODEL   # oMLX E2B; the mobile deployment target
 MAX_TOOL_ROUNDS = 14
+MAX_TOOL_RESULT_CHARS = 24_000
+MAX_TOOL_HISTORY_CHARS = 120_000
+COMPACTED_TOOL_RESULT = (
+    "[Earlier tool result omitted to preserve E2B context. "
+    "Retrieve the source again when needed.]"
+)
 NO_DIRECT_EVIDENCE_PREFIX = "No place record explicitly mentions all of:"
 COMPLEMENTARY_SEARCH_INSTRUCTION = (
     "The direct evidence search did not find one place that combines all "
@@ -582,7 +588,7 @@ TOOL_DEFS = [
                     "limit": {
                         "type": "integer",
                         "description": ("Max POIs to return (default 50; "
-                                        "20 for large sections that show a group map)."),
+                                        "20 for grouped sections; hard maximum 50)."),
                     },
                 },
                 "required": ["section_id"],
@@ -597,8 +603,8 @@ TOOL_DEFS = [
                 "Return the full record of one POI: address, phone, "
                 "coordinates, links, AND the full description paragraph.  "
                 "Pass the full id ('poi/12345'), the bare number, or "
-                "several comma-separated ids ('poi/123,poi/456') to fetch "
-                "multiple POIs in one call."
+                "up to five comma-separated ids ('poi/123,poi/456') to "
+                "fetch multiple POIs in one call."
             ),
             "parameters": {
                 "type": "object",
@@ -619,7 +625,7 @@ TOOL_DEFS = [
             "name": "find_poi_by_name",
             "description": (
                 "Fuzzy POI name lookup.  Diacritic-insensitive.  Returns "
-                "id + name + section + preview for up to `limit` matches.  "
+                "id + name + section + preview for up to five matches.  "
                 "With detail=\"full\" the best match's complete record is "
                 "included in the same response — no follow-up get_poi() "
                 "needed.  With the default \"brief\", follow up with "
@@ -634,7 +640,7 @@ TOOL_DEFS = [
                     },
                     "limit": {
                         "type": "integer",
-                        "description": "Max results (default 5).",
+                        "description": "Max results (default and maximum 5).",
                     },
                     "detail": {
                         "type": "string",
@@ -681,7 +687,7 @@ TOOL_DEFS = [
                     },
                     "limit": {
                         "type": "integer",
-                        "description": "Max POIs to return (default 20).",
+                        "description": "Max POIs to return (default and maximum 20).",
                     },
                 },
             },
@@ -851,6 +857,42 @@ TOOL_DEFS = [
 
 # ── Tool dispatch ──────────────────────────────────────────────────────────
 
+def bound_tool_result(result: str) -> str:
+    """Keep one tool result within E2B's per-call context budget."""
+    if len(result) <= MAX_TOOL_RESULT_CHARS:
+        return result
+    boundary = result.rfind("\n", 0, MAX_TOOL_RESULT_CHARS)
+    if boundary <= 0:
+        boundary = MAX_TOOL_RESULT_CHARS
+    return (
+        result[:boundary]
+        + "\n[INFO] Tool result truncated to preserve E2B context. "
+          "Refine the lookup or retrieve a specific source.]"
+    )
+
+
+def compact_tool_history(messages: list[dict]) -> int:
+    """Replace oldest retained tool payloads after the E2B history budget.
+
+    Tool messages stay in place, preserving the assistant tool-call /
+    tool-result pairing required by OpenAI-compatible tool transports.
+    The function returns the number of compacted payloads for diagnostics.
+    """
+    retained_chars = 0
+    compacted = 0
+    for message in reversed(messages):
+        if message.get("role") != "tool":
+            continue
+        content = message.get("content") or ""
+        if content == COMPACTED_TOOL_RESULT:
+            continue
+        if retained_chars + len(content) <= MAX_TOOL_HISTORY_CHARS:
+            retained_chars += len(content)
+            continue
+        message["content"] = COMPACTED_TOOL_RESULT
+        compacted += 1
+    return compacted
+
 def execute_tool(name: str, args: dict, index: dict,
                  sections_text: str, cache: dict,
                  weather: dict | None = None) -> tuple[str, bool]:
@@ -860,8 +902,19 @@ def execute_tool(name: str, args: dict, index: dict,
     a session and is keyed by (tool, normalised-arg-tuple). `weather` is
     the optional loaded weather artifact used by `get_weather`.
     """
+    def result_limit(key: str, default: int) -> int:
+        try:
+            return int(args.get(key, default))
+        except (TypeError, ValueError):
+            return default
+
+    def store(key: tuple, result: str) -> tuple[str, bool]:
+        bounded = bound_tool_result(result)
+        cache[key] = bounded
+        return bounded, False
+
     if name == "list_sections":
-        return sections_text, True   # always pre-warmed
+        return bound_tool_result(sections_text), True   # always pre-warmed
 
     if name == "get_section":
         section_id = (args.get("section_id") or "").strip()
@@ -870,90 +923,75 @@ def execute_tool(name: str, args: dict, index: dict,
         # default (20 for grouped sections, 50 for flat ones).  The cache
         # key preserves None so the prewarmed entry matches.
         raw_limit = args.get("limit")
-        limit = int(raw_limit) if raw_limit not in (None, "") else None
+        limit = result_limit("limit", 0) if raw_limit not in (None, "") else None
         key = ("get_section", section_id.lower(), sort, limit)
         if key in cache:
             return cache[key], True
-        result = format_section(index, section_id, sort=sort, limit=limit)
-        cache[key] = result
-        return result, False
+        return store(key, format_section(index, section_id, sort=sort, limit=limit))
 
     if name == "get_poi":
         poi_id = (args.get("poi_id") or "").strip()
         key = ("get_poi", poi_id)
         if key in cache:
             return cache[key], True
-        result = format_poi(index, poi_id)
-        cache[key] = result
-        return result, False
+        return store(key, format_poi(index, poi_id))
 
     if name == "find_poi_by_name":
         query = (args.get("query") or "").strip()
-        limit = int(args.get("limit") or 5)
+        limit = result_limit("limit", 5)
         detail = (args.get("detail") or "brief").lower()
         key = ("find_poi_by_name", query.lower(), limit, detail)
         if key in cache:
             return cache[key], True
-        result = format_find_poi_by_name(index, query, limit=limit,
-                                         detail=detail)
-        cache[key] = result
-        return result, False
+        return store(key, format_find_poi_by_name(
+            index, query, limit=limit, detail=detail
+        ))
 
     if name == "filter_pois":
         active = {k: v for k, v in args.items()
                   if v not in (None, "", [], {})}
-        limit = int(active.pop("limit", 20))
+        limit = result_limit("limit", 20)
+        active.pop("limit", None)
         key = ("filter_pois", tuple(sorted(active.items())), limit)
         if key in cache:
             return cache[key], True
-        result = format_filter_pois(index, limit=limit, **active)
-        cache[key] = result
-        return result, False
+        return store(key, format_filter_pois(index, limit=limit, **active))
     if name == "search_pois":
         query = (args.get("query") or "").strip()
         section_id = (args.get("section_id") or "").strip() or None
-        limit = int(args.get("limit") or 10)
+        limit = result_limit("limit", 10)
         key = ("search_pois", query.lower(), section_id, limit)
         if key in cache:
             return cache[key], True
-        result = format_search_pois(index, query, section_id=section_id,
-                                    limit=limit)
-        cache[key] = result
-        return result, False
+        return store(key, format_search_pois(
+            index, query, section_id=section_id, limit=limit
+        ))
     if name == "search_trips":
         query = (args.get("query") or "").strip()
-        limit = int(args.get("limit") or 10)
+        limit = result_limit("limit", 10)
         key = ("search_trips", query.lower(), limit)
         if key in cache:
             return cache[key], True
-        result = format_search_trips(index, query, limit=limit)
-        cache[key] = result
-        return result, False
+        return store(key, format_search_trips(index, query, limit=limit))
     if name == "get_trip":
         trip_id = (args.get("trip_id") or "").strip()
         key = ("get_trip", trip_id)
         if key in cache:
             return cache[key], True
-        result = format_trip(index, trip_id)
-        cache[key] = result
-        return result, False
+        return store(key, format_trip(index, trip_id))
     if name == "search_paths":
         query = (args.get("query") or "").strip()
-        limit = int(args.get("limit") or 10)
+        limit = result_limit("limit", 10)
         key = ("search_paths", query.lower(), limit)
         if key in cache:
             return cache[key], True
-        result = format_search_paths(index, query, limit=limit)
-        cache[key] = result
-        return result, False
+        return store(key, format_search_paths(index, query, limit=limit))
     if name == "get_path":
         path_id = (args.get("path_id") or "").strip()
         key = ("get_path", path_id)
         if key in cache:
             return cache[key], True
-        result = format_path(index, path_id)
-        cache[key] = result
-        return result, False
+        return store(key, format_path(index, path_id))
     if name == "get_weather":
         day = (args.get("day") or "").strip() or None
         key = ("get_weather", (day or "").lower())
@@ -965,8 +1003,7 @@ def execute_tool(name: str, args: dict, index: dict,
         # dump, since "too hot" needs one temperature to compare.
         if day and is_forecast_too_hot(get_weather_entry(weather, day)):
             result = f"{result}\n{OUTDOOR_HEAT_NOTE}"
-        cache[key] = result
-        return result, False
+        return store(key, result)
 
     return f"[ERROR] Unknown tool: {name}", False
 
@@ -1177,6 +1214,7 @@ def run_agentic_loop(question: str, system_prompt: str,
             answer = sanitize_tourist_answer(source_detail_answer, index)
             messages.append({"role": "assistant", "content": answer})
             break
+        compact_tool_history(messages)
         try:
             response = litellm.completion(
                 model=model,
@@ -1443,6 +1481,7 @@ def run_agentic_loop(question: str, system_prompt: str,
     if not answer and not error:
         msg = recovery_msg or _RECOVERY_MSGS["en"]
         try:
+            compact_tool_history(messages)
             recovery = litellm.completion(
                 model=model,
                 messages=messages + [{"role": "user", "content": msg}],

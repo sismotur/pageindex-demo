@@ -761,6 +761,42 @@ grounding ≥ 70% AND content-fetch ≥ 70%. Any port must reproduce these
 on the 20-question English set before shipping (§8).
 
 ---
+## 7.1 E2B context guardrails (required)
+
+The phone parses the complete index JSON into app memory. The LLM must
+**never** receive the full index as prompt context. A Portuguese Alandroal
+fixture (173 POIs, 403 KB JSON) measures about 142K tokens with the
+reference approximation, above E2B's 128K context window. The tool layer
+must expose only bounded source slices.
+
+Apply these hard maximums in the Kotlin and Swift ports:
+
+| Tool | Default | Maximum |
+|---|---:|---:|
+| `get_section` | 20 grouped / 50 flat | 50 POIs |
+| `filter_pois` | 20 | 20 POIs |
+| `find_poi_by_name` | 5 | 5 POIs |
+| `search_pois` | 10 | 10 POIs |
+| `search_trips` / `search_paths` | 10 | 10 results |
+| `get_poi` | 1 | 5 comma-separated POIs |
+
+The Python reference also enforces two text limits:
+
+- A complete tool result is capped at **24,000 characters**. Truncate at a
+  newline when possible and append a concise internal instruction to refine
+  the lookup or retrieve one source.
+- Retain at most **120,000 characters** across prior tool messages.
+  Replace older tool-message content with a concise omission marker; do not
+  delete the tool message, because its assistant tool-call pairing must
+  remain valid for OpenAI-compatible transports.
+
+Apply caps even when the model passes a larger explicit `limit`. Tell the
+model to refine filters or perform a name search; do not invite it to raise
+the limit. The current Alandroal reference stays comfortably bounded:
+initial prompt plus schemas ≈4.3K tokens, largest default section ≈1.3K,
+largest POI ≈0.8K, and largest trip detail ≈2.2K.
+
+---
 
 ## 8. Verifying a port
 

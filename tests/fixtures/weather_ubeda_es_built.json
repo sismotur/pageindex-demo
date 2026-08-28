@@ -1,0 +1,84 @@
+{
+  "meta": {
+    "destination": "ubeda",
+    "lang": "es",
+    "latitude": 38.01,
+    "longitude": -3.37,
+    "units": "metric",
+    "fetched_at": "2026-08-25T12:00:00Z",
+    "expires_at": "2026-08-26T12:00:00Z",
+    "schema_version": 1
+  },
+  "forecast": [
+    {
+      "date": "2026-08-25",
+      "iso_weekday": 2,
+      "day_label": "Mar 25",
+      "temp_min_c": 31.6,
+      "temp_max_c": 46.0,
+      "condition": "Cielo claro",
+      "condition_code": "2119bfd6-a006-4577-e0f0-bba80a256700",
+      "icon_url": "https://inventrip.com/cdn-cgi/imagedelivery/1uR-_-pRcywf3k74xlcyMg/2119bfd6-a006-4577-e0f0-bba80a256700/public"
+    },
+    {
+      "date": "2026-08-26",
+      "iso_weekday": 3,
+      "day_label": "Mié 26",
+      "temp_min_c": 33.8,
+      "temp_max_c": 46.1,
+      "condition": "Cielo claro",
+      "condition_code": "2119bfd6-a006-4577-e0f0-bba80a256700",
+      "icon_url": "https://inventrip.com/cdn-cgi/imagedelivery/1uR-_-pRcywf3k74xlcyMg/2119bfd6-a006-4577-e0f0-bba80a256700/public"
+    },
+    {
+      "date": "2026-08-27",
+      "iso_weekday": 4,
+      "day_label": "Jue 27",
+      "temp_min_c": 32.9,
+      "temp_max_c": 45.3,
+      "condition": "Cielo claro",
+      "condition_code": "2119bfd6-a006-4577-e0f0-bba80a256700",
+      "icon_url": "https://inventrip.com/cdn-cgi/imagedelivery/1uR-_-pRcywf3k74xlcyMg/2119bfd6-a006-4577-e0f0-bba80a256700/public"
+    },
+    {
+      "date": "2026-08-28",
+      "iso_weekday": 5,
+      "day_label": "Vie 28",
+      "temp_min_c": 32.8,
+      "temp_max_c": 45.2,
+      "condition": "Cielo claro",
+      "condition_code": "2119bfd6-a006-4577-e0f0-bba80a256700",
+      "icon_url": "https://inventrip.com/cdn-cgi/imagedelivery/1uR-_-pRcywf3k74xlcyMg/2119bfd6-a006-4577-e0f0-bba80a256700/public"
+    },
+    {
+      "date": "2026-08-29",
+      "iso_weekday": 6,
+      "day_label": "Sáb 29",
+      "temp_min_c": 33.8,
+      "temp_max_c": 44.7,
+      "condition": "Nubes dispersas",
+      "condition_code": "67e6fc98-6ef1-4dea-f575-952dd8ae6500",
+      "icon_url": "https://inventrip.com/cdn-cgi/imagedelivery/1uR-_-pRcywf3k74xlcyMg/67e6fc98-6ef1-4dea-f575-952dd8ae6500/public"
+    },
+    {
+      "date": "2026-08-30",
+      "iso_weekday": 7,
+      "day_label": "Dom 30",
+      "temp_min_c": 32.2,
+      "temp_max_c": 44.0,
+      "condition": "Cielo claro",
+      "condition_code": "2119bfd6-a006-4577-e0f0-bba80a256700",
+      "icon_url": "https://inventrip.com/cdn-cgi/imagedelivery/1uR-_-pRcywf3k74xlcyMg/2119bfd6-a006-4577-e0f0-bba80a256700/public"
+    },
+    {
+      "date": "2026-08-31",
+      "iso_weekday": 1,
+      "day_label": "Lun 31",
+      "temp_min_c": 31.8,
+      "temp_max_c": 44.4,
+      "condition": "Cielo claro",
+      "condition_code": "2119bfd6-a006-4577-e0f0-bba80a256700",
+      "icon_url": "https://inventrip.com/cdn-cgi/imagedelivery/1uR-_-pRcywf3k74xlcyMg/2119bfd6-a006-4577-e0f0-bba80a256700/public"
+    }
+  ]
+}

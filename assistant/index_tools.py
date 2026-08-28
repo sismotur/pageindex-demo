@@ -455,6 +455,22 @@ def _poi_section_title(index: dict, poi_id: str) -> str:
 # flat sections keep the full listing for browse-style questions.
 SECTION_LIMIT_FLAT = 50
 SECTION_LIMIT_GROUPED = 20
+MAX_SECTION_LIMIT = 50
+MAX_FILTER_LIMIT = 20
+MAX_NAME_SEARCH_LIMIT = 5
+MAX_EVIDENCE_SEARCH_LIMIT = 10
+MAX_CURATED_SEARCH_LIMIT = 10
+MAX_POI_BATCH = 5
+
+
+def _bounded_limit(value: int | None, default: int, maximum: int) -> int:
+    """Return a positive caller limit clamped to a context-safe maximum."""
+    if value is None:
+        return default
+    try:
+        return max(1, min(int(value), maximum))
+    except (TypeError, ValueError):
+        return default
 
 
 def _short_preview(poi: dict, max_chars: int = 120) -> str:
@@ -481,16 +497,19 @@ def format_section(index: dict, section_key: str,
     filter_pois(type=..., section_id=...) call.
 
     `limit=None` applies the adaptive default: SECTION_LIMIT_GROUPED (20)
-    for grouped sections, SECTION_LIMIT_FLAT (50) otherwise.  An explicit
-    limit always wins.
+    for grouped sections, SECTION_LIMIT_FLAT (50) otherwise. An explicit
+    limit is capped at MAX_SECTION_LIMIT (50).
     """
     sec = find_section(index, section_key)
     if not sec:
         avail = ", ".join(s.get("title", "") for s in index.get("sections", []))
         return f"[ERROR] Section '{section_key}' not found. Available: {avail}"
 
-    if limit is None:
-        limit = SECTION_LIMIT_GROUPED if sec.get("groups") else SECTION_LIMIT_FLAT
+    limit = _bounded_limit(
+        limit,
+        SECTION_LIMIT_GROUPED if sec.get("groups") else SECTION_LIMIT_FLAT,
+        MAX_SECTION_LIMIT,
+    )
 
     poi_ids = list(sec.get("poi_ids") or [])
     pois = [get_poi(index, pid) for pid in poi_ids]
@@ -537,7 +556,10 @@ def format_section(index: dict, section_key: str,
         else:
             lines.append(f"  {_poi_tag(p)}")
     if truncated:
-        lines.append(f"  …{len(sec.get('poi_ids') or []) - limit} more (raise --limit to see all)")
+        lines.append(
+            f"  …{len(sec.get('poi_ids') or []) - limit} more; "
+            "refine with filters or a name search."
+        )
     return "\n".join(lines)
 
 
@@ -600,16 +622,18 @@ def _format_single_poi(index: dict, p: dict) -> str:
 
 
 def format_poi(index: dict, poi_id: str) -> str:
-    """Render full POI record(s). No truncation, no line slicing.
+    """Render full POI records, capped at MAX_POI_BATCH with no line slicing.
 
     Accepts a single id ('poi/5155' or '5155') or several comma-separated
-    ids ('poi/5155,poi/65804') — the batch form lets the model fetch
-    several POIs in one tool call, saving LLM round-trips on comparison
-    and synthesis questions.  Multiple records are joined with a
+    ids ('poi/123,poi/456') — at most five records per call. The batch
+    form saves LLM round-trips on comparison and synthesis questions.
+    Multiple records are joined with a
     '\\n\\n---\\n\\n' separator; unknown ids render an inline [ERROR] block
     without failing the whole batch.
     """
     ids = [part.strip() for part in str(poi_id).split(",") if part.strip()]
+    omitted = max(0, len(ids) - MAX_POI_BATCH)
+    ids = ids[:MAX_POI_BATCH]
     if len(ids) <= 1:
         p = get_poi(index, poi_id)
         if not p:
@@ -624,6 +648,11 @@ def format_poi(index: dict, poi_id: str) -> str:
             blocks.append(_format_single_poi(index, p))
         else:
             blocks.append(f"[ERROR] POI '{pid}' not found.")
+    if omitted:
+        blocks.append(
+            f"[INFO] {omitted} additional POI request(s) omitted; "
+            f"get_poi accepts at most {MAX_POI_BATCH} records per call."
+        )
     return "\n\n---\n\n".join(blocks)
 
 
@@ -680,7 +709,9 @@ def find_poi_by_name(index: dict, query: str, limit: int = 5) -> list[dict]:
     for _, p in tier3:
         if p not in out:
             out.append(p)
-    return out[: max(1, limit)]
+    return out[:_bounded_limit(
+        limit, MAX_NAME_SEARCH_LIMIT, MAX_NAME_SEARCH_LIMIT
+    )]
 
 
 def format_find_poi_by_name(index: dict, query: str, limit: int = 5,
@@ -691,6 +722,7 @@ def format_find_poi_by_name(index: dict, query: str, limit: int = 5,
     candidate list, fusing the classic find_poi_by_name -> get_poi pair
     into one tool call (one fewer LLM round on lookup questions).
     """
+    limit = _bounded_limit(limit, MAX_NAME_SEARCH_LIMIT, MAX_NAME_SEARCH_LIMIT)
     matches = find_poi_by_name(index, query, limit=limit)
     if not matches:
         return (f"[INFO] No POI matches '{query}'. "
@@ -885,13 +917,18 @@ def search_pois(index: dict, query: str, section_id: str | None = None,
             "matched_terms": terms,
             "evidence": _evidence_snippet(poi, terms),
         }
-        for poi in matches[:max(1, limit)]
+        for poi in matches[:_bounded_limit(
+            limit, MAX_EVIDENCE_SEARCH_LIMIT, MAX_EVIDENCE_SEARCH_LIMIT
+        )]
     ]
 
 
 def format_search_pois(index: dict, query: str, section_id: str | None = None,
                        limit: int = 10) -> str:
     """Render evidence-backed search results without catalog internals."""
+    limit = _bounded_limit(
+        limit, MAX_EVIDENCE_SEARCH_LIMIT, MAX_EVIDENCE_SEARCH_LIMIT
+    )
     matches = search_pois(index, query, section_id=section_id, limit=limit)
     terms = [term for term in tokenize(query) if len(term) >= 3]
     if not matches:
@@ -1113,7 +1150,9 @@ def _search_curated(index: dict, query: str, collection: str,
         normalize_text(item.get("name") or ""),
         item.get("itinerary_id") or "",
     ))
-    return matches[:max(1, limit)]
+    return matches[:_bounded_limit(
+        limit, MAX_CURATED_SEARCH_LIMIT, MAX_CURATED_SEARCH_LIMIT
+    )]
 
 
 def search_trips(index: dict, query: str, limit: int = 10) -> list[dict]:
@@ -1803,6 +1842,7 @@ def is_forecast_too_hot(entry: dict | None) -> bool:
 
 def format_filter_pois(index: dict, limit: int = 20, **filters: Any) -> str:
     """Render facet-filter results without exposing filter internals."""
+    limit = _bounded_limit(limit, MAX_FILTER_LIMIT, MAX_FILTER_LIMIT)
     # Drop None/empty filters to decide whether this is a valid request.
     active = {k: v for k, v in filters.items() if v not in (None, "", [], {})}
     if not active:
@@ -1823,5 +1863,5 @@ def format_filter_pois(index: dict, limit: int = 20, **filters: Any) -> str:
         else:
             lines.append(f"  {_poi_tag(p)}")
     if truncated:
-        lines.append(f"  …more matches available (raise limit)")
+        lines.append("  …more matches available; refine the filters.")
     return "\n".join(lines)

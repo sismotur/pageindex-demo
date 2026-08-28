@@ -52,13 +52,13 @@ from index_tools import (
     strip_poi_tags,
 )
 from common.textnorm import normalize_text, tokenize
-from pipeline.build_index import (
-    _resolve_items,
-    _resolve_itinerary_steps,
-    build_itineraries,
-)
-from pipeline.extract_destination_data import extract_itinerary_items
 from run_eval import (
+    COMPACTED_TOOL_RESULT,
+    MAX_TOOL_HISTORY_CHARS,
+    MAX_TOOL_RESULT_CHARS,
+    bound_tool_result,
+    compact_tool_history,
+    execute_tool,
     grounding_failure_message,
     is_physical_route_request,
     requires_current_turn_grounding,
@@ -330,7 +330,7 @@ class TestContextReduction:
         preview_lines = [l for l in out.splitlines()
                          if l.startswith("  <poi ")]
         assert len(preview_lines) == 20
-        assert "more (raise --limit" in out               # truncation note
+        assert "refine with filters or a name search" in out
 
     def test_flat_section_default_limit_keeps_all(self, index):
         # museums-and-culture has 5 POIs, no groups → flat default 50
@@ -338,7 +338,7 @@ class TestContextReduction:
         preview_lines = [l for l in out.splitlines()
                          if l.startswith("  <poi ")]
         assert len(preview_lines) == 5
-        assert "more (raise --limit" not in out
+        assert "refine with filters or a name search" not in out
 
     def test_explicit_limit_overrides_default(self, index):
         out = format_section(index, "shopping", limit=5)
@@ -453,9 +453,10 @@ class TestCuratedItineraries:
 
     def test_synthetic_path_not_found_via_search_trips(self, index):
         """A route is found only via search_paths(), never search_trips() —
-        but it still renders and resolves as a <trip> tag (see
-        test_route_is_tagged_and_resolved_as_a_trip), since a route is
-        itself a trip in the source API.
+        but it still renders and resolves as a <trip> tag, since a route
+        is itself a trip in the source API (build_itineraries() duplicates
+        it into both collections — see the sibling inventrip-rag-data
+        repo's tests/test_build_index.py).
         """
         synthetic = dict(index)
         synthetic["paths"] = [{
@@ -488,30 +489,6 @@ class TestCuratedItineraries:
         assert "Start" in out
         assert "<poi id=36026" in out
         assert "River viewpoint" not in out
-
-    def test_route_is_tagged_and_resolved_as_a_trip(self):
-        """build_itineraries() duplicates a route into `trips` too, so
-        get_trip()/search_trips() resolve the same content search_paths()/
-        get_path() find — a route is a trip whose extras.path is non-null.
-        """
-        dest_data = {
-            "trips": [],
-            "paths": [{
-                "id": "trip/6330",
-                "name": "PR-CC 27 Ruta de los Molinos",
-                "description": "La ruta tiene inicio en el panel informativo.",
-                "url": "",
-            }],
-        }
-        trips, paths = build_itineraries(
-            dest_data, name_index={}, alias_name_index={}, valid_poi_ids=set(),
-        )
-        assert len(trips) == 1 and len(paths) == 1
-        assert trips[0]["itinerary_id"] == paths[0]["itinerary_id"] == "trip/6330"
-        assert trips[0]["kind"] == "trip"
-        assert paths[0]["kind"] == "path"
-        assert trips[0]["is_route"] is True
-        assert paths[0]["is_route"] is True
 
     def test_route_reached_via_get_trip_shows_stops_without_numbering(self, index):
         """Regression: a route duplicated into `trips` must render the
@@ -573,17 +550,6 @@ class TestCuratedItineraries:
         }]
         assert "Uncatalogued meeting point" not in format_trip(synthetic, "9002")
 
-    def test_source_identifier_has_priority_over_names(self):
-        steps = _resolve_itinerary_steps(
-            [{"step": "One", "pois": [{"name": "Wrong title", "poi_id": "30117"}]}],
-            name_index={"wrong title": "poi/999"},
-            alias_name_index={"wrong title": "poi/998"},
-            valid_poi_ids={"poi/30117"},
-        )
-        assert steps[0]["poi_ids"] == ["poi/30117"]
-        assert steps[0]["poi_resolutions"][0]["resolution"] == "source_id"
-
-
 class TestSoleRecentSource:
     """Anchor for generic plan/detail follow-ups ("give me the itinerary")."""
 
@@ -612,88 +578,13 @@ class TestSoleRecentSource:
 
 
 class TestNestedItems:
-    """Schema v6: itineraries preserve folder/POI hierarchy end-to-end."""
+    """Schema v6: itineraries preserve folder/POI hierarchy end-to-end.
 
-    def test_extractor_recurses_folder_children(self):
-        raw = [{
-            "identifier": None,
-            "type":       ["ItemList"],
-            "name":       [{"language": "es",
-                            "value": "1.1 Plaza Vázquez de Molina"}],
-            "itemListElement": [{
-                "identifier": "poi/30536",
-                "name":       [{"language": "es",
-                                "value":    "Plaza Vázquez de Molina"}],
-            }],
-        }]
-        out = extract_itinerary_items(raw, "es")
-        assert len(out) == 1
-        folder = out[0]
-        # Folder itself never carries a POI id.
-        assert folder["name"] == "1.1 Plaza Vázquez de Molina"
-        assert "poi_id" not in folder
-        # Its child is a resolved leaf.
-        child = folder["items"][0]
-        assert child == {
-            "name":   "Plaza Vázquez de Molina",
-            "poi_id": "poi/30536",
-        }
-
-    def test_extractor_skips_language_only_folder_headers(self):
-        # A folder with no localized name and no children collapses away.
-        raw = [{
-            "identifier": None,
-            "name":       [{"language": "en", "value": "only english"}],
-            "itemListElement": [],
-        }]
-        assert extract_itinerary_items(raw, "es") == []
-
-    def test_builder_classifies_folder_poi_and_unresolved(self):
-        raw_items = [
-            {
-                "name": "1.1 Plaza Vázquez de Molina",
-                "items": [
-                    {"name": "Real POI",     "poi_id": "30117"},
-                    {"name": "Ghost lodging"},
-                ],
-            },
-            {"name": "Direct POI", "poi_id": "5155"},
-        ]
-        flat_ids: list[str] = []
-        flat_res: list[dict] = []
-        flat_sub: list[str] = []
-        flat_unres: list[str] = []
-        resolved = _resolve_items(
-            raw_items,
-            name_index={},
-            alias_name_index={},
-            valid_poi_ids={"poi/30117", "poi/5155"},
-            flat_poi_ids=flat_ids,
-            flat_resolutions=flat_res,
-            flat_subfolders=flat_sub,
-            flat_unresolved=flat_unres,
-        )
-        kinds = [item["kind"] for item in resolved]
-        assert kinds == ["folder", "poi"]
-        folder = resolved[0]
-        assert [c["kind"] for c in folder["items"]] == ["poi", "unresolved"]
-        # Flat accumulators are populated in reading order.
-        assert flat_ids == ["poi/30117", "poi/5155"]
-        assert flat_sub == ["1.1 Plaza Vázquez de Molina"]
-        assert flat_unres == ["Ghost lodging"]
-
-    def test_builder_accepts_legacy_flat_pois(self):
-        """Rebuilding an old snapshot without re-extraction must still work."""
-        steps = _resolve_itinerary_steps(
-            [{"step": "Stops", "pois": ["Plain string entry"]}],
-            name_index={"plain string entry": "poi/5155"},
-            alias_name_index={},
-            valid_poi_ids={"poi/5155"},
-        )
-        assert steps[0]["poi_ids"] == ["poi/5155"]
-        # The nested tree mirrors the flat resolution so newer renderers
-        # still have something to walk.
-        assert steps[0]["items"][0]["kind"] == "poi"
+    The extraction/building half of this hierarchy (extract_itinerary_items,
+    _resolve_items, _resolve_itinerary_steps) now lives in the sibling
+    inventrip-rag-data repo's tests/test_build_index.py; these tests cover
+    the rendering half against an already-built index.
+    """
 
     def test_renderer_indents_nested_folders(self, spanish_index):
         rendered = format_trip(spanish_index, "trip/4444")

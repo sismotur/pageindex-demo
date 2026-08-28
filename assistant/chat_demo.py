@@ -44,6 +44,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 from run_eval import (   # noqa: E402
     TOOL_DEFS,
     MAX_TOOL_ROUNDS,
+    compact_tool_history,
     execute_tool,
     make_system_prompt,
     DEFAULT_INDEX,
@@ -320,6 +321,7 @@ def run_turn(question: str, messages: list[dict],
             answer = sanitize_tourist_answer(source_detail_answer, index)
             messages.append({"role": "assistant", "content": answer})
             break
+        compact_tool_history(messages)
 
         if stream:
             # ── Streaming round ──────────────────────────────────────────
