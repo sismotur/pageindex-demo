@@ -411,6 +411,96 @@ class TestEvidenceSearch:
 
 # ── Curated trip suggestions and physical paths ─────────────────────────────
 
+
+class TestRagDataSchemaCompat:
+    """Forward-compat with inventrip-rag-data index shape changes.
+
+    Routes live only under paths (get_trip falls back). Editorial trips may
+    carry is_route=false. New sections appear only when the destination has
+    matching POIs; tools must resolve them by id/title without hardcoding.
+    Optional top-level type_display must not break loaders/formatters.
+    """
+
+    def test_path_only_route_resolves_via_get_trip(self, index):
+        synthetic = dict(index)
+        synthetic["paths"] = list(synthetic.get("paths") or []) + [{
+            "itinerary_id": "trip/88001",
+            "path_id": "trip/88001",
+            "kind": "path",
+            "source_type": "Path",
+            "name": "Compat Cliff Path",
+            "description": "Coastal walk.",
+            "url": "",
+            "is_route": True,
+            "steps": [],
+        }]
+        synthetic["trips"] = [
+            t for t in (synthetic.get("trips") or [])
+            if t.get("itinerary_id") != "trip/88001"
+        ]
+        item = get_trip(synthetic, "88001")
+        assert item is not None
+        assert item["is_route"] is True
+        assert item["kind"] == "path"
+        out = format_trip(synthetic, "88001")
+        assert "Compat Cliff Path" in out
+        assert search_trips(synthetic, "compat cliff path") == []
+
+    def test_editorial_trip_is_route_false_still_formats(self, index):
+        synthetic = dict(index)
+        trip = {
+            "itinerary_id": "trip/88002",
+            "trip_id": "trip/88002",
+            "kind": "trip",
+            "source_type": "TouristTrip",
+            "name": "Compat Day Plan",
+            "description": "A themed day.",
+            "url": "",
+            "is_route": False,
+            "steps": [{
+                "position": 1,
+                "title": "Morning",
+                "poi_ids": [],
+                "unresolved_poi_names": [],
+            }],
+        }
+        synthetic["trips"] = list(synthetic.get("trips") or []) + [trip]
+        out = format_trip(synthetic, "88002")
+        assert out.startswith("# <trip id=88002>Compat Day Plan</trip>")
+        assert "1. Morning" in out
+
+    def test_new_section_ids_resolve_and_overview_lists_them(self, index):
+        synthetic = dict(index)
+        synthetic["sections"] = list(synthetic.get("sections") or []) + [
+            {
+                "section_id": "emergency-services",
+                "title": "Emergency Services",
+                "summary": "2 POIs.",
+                "poi_ids": [],
+            },
+            {
+                "section_id": "transport-and-access",
+                "title": "Transport and Access",
+                "summary": "3 POIs.",
+                "poi_ids": [],
+            },
+        ]
+        from index_tools import find_section, format_sections_overview
+        assert find_section(synthetic, "emergency-services")["title"] == "Emergency Services"
+        assert find_section(synthetic, "Transport and Access")["section_id"] == "transport-and-access"
+        overview = format_sections_overview(synthetic)
+        assert "[emergency-services] Emergency Services" in overview
+        assert "[transport-and-access] Transport and Access" in overview
+
+    def test_optional_type_display_top_level_ignored_safely(self, index):
+        synthetic = dict(index)
+        synthetic["type_display"] = {"Museum": "Museum"}
+        # load path is dict already; formatters must not require the key
+        synthetic.pop("type_display", None)
+        from index_tools import format_sections_overview
+        assert "SECTIONS:" in format_sections_overview(synthetic)
+
+
 class TestCuratedItineraries:
     """Trips are suggestions; paths are physical routes from /v120/paths."""
 
