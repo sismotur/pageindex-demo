@@ -452,11 +452,11 @@ class TestCuratedItineraries:
             "That physical route is not available."
 
     def test_synthetic_path_not_found_via_search_trips(self, index):
-        """A route is found only via search_paths(), never search_trips() —
-        but it still renders and resolves as a <trip> tag, since a route
-        is itself a trip in the source API (build_itineraries() duplicates
-        it into both collections — see the sibling inventrip-rag-data
-        repo's tests/test_build_index.py).
+        """A route is found only via search_paths(), never search_trips().
+
+        It still renders as a <trip id=…> tag (source API routes are trip
+        records). get_trip() falls back to paths so tag follow-up works
+        without dual-listing the JSON record under trips.
         """
         synthetic = dict(index)
         synthetic["paths"] = [{
@@ -467,6 +467,7 @@ class TestCuratedItineraries:
             "name": "Riverwalk9001 Walking Route",
             "description": "A walking route beside the river.",
             "url": "",
+            "is_route": True,
             "steps": [{
                 "position": 1,
                 "title": "Start",
@@ -477,6 +478,7 @@ class TestCuratedItineraries:
         assert search_trips(synthetic, "riverwalk9001") == []
         paths = search_paths(synthetic, "riverwalk9001")
         assert [path["itinerary_id"] for path in paths] == ["trip/9001"]
+        assert get_trip(synthetic, "9001") is paths[0]
         out = format_path(synthetic, "9001")
         assert out.startswith("# <trip id=9001>Riverwalk9001 Walking Route</trip>")
         assert "A walking route beside the river." in out
@@ -491,19 +493,16 @@ class TestCuratedItineraries:
         assert "River viewpoint" not in out
 
     def test_route_reached_via_get_trip_shows_stops_without_numbering(self, index):
-        """Regression: a route duplicated into `trips` must render the
-        same way through format_trip() as through format_path() — real
-        stops are shown, but never the day-by-day "N. Title" numbering
-        format_trip() uses for editorial trips, and a step title that
-        just repeats the route's own name is dropped rather than shown
-        twice.
+        """Regression: a path-only route opened via get_trip/format_trip
+        must render like format_path — real stops, no day-by-day numbering,
+        and a step title that repeats the route name is dropped.
         """
         synthetic = dict(index)
-        synthetic["trips"] = list(synthetic["trips"]) + [{
+        synthetic["paths"] = list(synthetic.get("paths") or []) + [{
             "itinerary_id": "trip/9003",
-            "trip_id": "trip/9003",
-            "kind": "trip",
-            "source_type": "TouristTrip",
+            "path_id": "trip/9003",
+            "kind": "path",
+            "source_type": "Path",
             "name": "Riverwalk9003 Walking Route",
             "description": "A walking route beside the river.",
             "url": "",
@@ -530,7 +529,6 @@ class TestCuratedItineraries:
         assert "2. " not in out
         assert "3. " not in out
 
-
     def test_unresolved_waypoints_are_not_rendered_to_tourists(self, index):
         synthetic = dict(index)
         synthetic["trips"] = [{
@@ -549,6 +547,7 @@ class TestCuratedItineraries:
             }],
         }]
         assert "Uncatalogued meeting point" not in format_trip(synthetic, "9002")
+
 
 class TestSoleRecentSource:
     """Anchor for generic plan/detail follow-ups ("give me the itinerary")."""

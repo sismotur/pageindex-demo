@@ -1183,8 +1183,17 @@ def _find_curated(index: dict, itinerary_id: str,
 
 
 def get_trip(index: dict, trip_id: str) -> dict | None:
-    """Return one curated suggestion by full or bare trip id."""
-    return _find_curated(index, trip_id, "trips")
+    """Return one curated suggestion by full or bare trip id.
+
+    Physical routes live only under `paths` (no JSON dual-listing), but
+    format_path still emits <trip id=…> tags because source API routes are
+    trip records. Fall back to `paths` so history follow-up and get_trip
+    keep resolving those tags without putting routes in `trips`.
+    """
+    item = _find_curated(index, trip_id, "trips")
+    if item is not None:
+        return item
+    return _find_curated(index, trip_id, "paths")
 
 
 def get_path(index: dict, path_id: str) -> dict | None:
@@ -1533,7 +1542,11 @@ def _append_route_stops(lines: list[str], item: dict, index: dict) -> str:
 def _format_curated_detail(index: dict, itinerary_id: str, collection: str,
                            tag_builder, unavailable: str) -> str:
     """Render ordered trip/path stops, preserving unlinked source names."""
-    item = _find_curated(index, itinerary_id, collection)
+    if collection == "trips":
+        # Prefer editorial trips; fall back to paths for route <trip> tags.
+        item = get_trip(index, itinerary_id)
+    else:
+        item = _find_curated(index, itinerary_id, collection)
     if not item:
         return unavailable
     lines = [f"# {tag_builder(item)}"]
@@ -1541,9 +1554,8 @@ def _format_curated_detail(index: dict, itinerary_id: str, collection: str,
     if description:
         lines.extend(["", description])
     if item.get("is_route"):
-        # This applies regardless of whether the record was reached via
-        # get_trip() or get_path() — a route is duplicated into both
-        # collections (see build_itineraries() in pipeline/build_index.py).
+        # Route may be opened via get_trip() (tag follow-up) or get_path();
+        # always render with route stop rules when is_route is true.
         return _append_route_stops(lines, item, index)
     steps = item.get("steps") or []
     if not steps:
