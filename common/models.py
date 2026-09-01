@@ -40,8 +40,9 @@ MODELS: dict[str, dict] = {
     },
 }
 
-# Defaults used by the entry points.  Eval targets the mobile model (that
-# is the deployment constraint); interactive chat defaults to the server
-# model for answer quality.
+# Defaults used by the entry points.  Both target the mobile model: E2B
+# is what the Android/iOS apps will ship, so eval and chat run against
+# the deployment constraint by default.  Pass --model with MODEL_26B for
+# a server-side quality ceiling.
 DEFAULT_EVAL_MODEL = MODEL_E2B
-DEFAULT_CHAT_MODEL = MODEL_26B
+DEFAULT_CHAT_MODEL = MODEL_E2B

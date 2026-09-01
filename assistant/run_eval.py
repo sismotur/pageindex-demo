@@ -171,14 +171,22 @@ SOURCE_GROUNDING_TOOLS = frozenset({
     "search_pois", "search_trips", "get_trip", "search_paths", "get_path",
     "get_weather",
 })
-GROUNDING_REQUIRED_INSTRUCTION = (
-    "This is a tourist information request and requires current source "
-    "retrieval from the downloaded index before answering. You must call "
+GROUNDING_RECOVERY_INSTRUCTION = (
+    "Look at the visitor's question once more.\n"
+    "If it is a broad overview question that names no specific place, "
+    "fact, or date — such as \"What can I see?\" or \"What is there to "
+    "do?\" — write the answer right now, in the visitor's language, using "
+    "only the destination overview and the section catalogue from the "
+    "system prompt: summarize the highlights and mention the most "
+    "interesting sections. Never answer a broad overview question with a "
+    "failure message.\n"
+    "If the question names a specific place, fact, date, or listing, call "
     "one of get_section, filter_pois, search_pois, or find_poi_by_name "
-    "now — pick whichever best fits the topic, even for a general overview "
-    "question with no single named place. Do not answer, and do not stay "
-    "silent, without calling one of these tools first. Do not answer from "
-    "previous assistant prose or general knowledge."
+    "now instead of answering from memory — when the question names a "
+    "place, the right call is find_poi_by_name with the place name.\n"
+    "Never promise to search later, and never ask the visitor to repeat "
+    "or choose; reply with the visitor-facing answer or a tool call, "
+    "nothing else."
 )
 SOCIAL_ONLY_MESSAGES = frozenset({
     "hola", "hello", "hi", "hey", "gracias", "thanks", "thank you",
@@ -358,6 +366,35 @@ def grounding_failure_message(index: dict) -> str:
     return GROUNDING_FAILURE_MESSAGES.get(lang, GROUNDING_FAILURE_MESSAGES["en"])
 
 
+def question_names_known_poi(question: str, index: dict) -> str | None:
+    """Return the `name_index` entry the question explicitly names, if any.
+
+    Language-agnostic 'specific question' probe: no keyword lists to
+    translate — the destination's own POI names are the lexicon.  Used as
+    the last-resort backstop when a small model twice declines to
+    retrieve on a question that names a known place (e.g. it answers
+    \"tell me if you want details\" instead of fetching the castle).
+    """
+    normalized = normalize_text(question)
+    if not normalized:
+        return None
+    best = None
+    for name in (index.get("name_index") or {}):
+        if " " not in name and len(name) < 8:
+            continue  # short single words match too casually
+        if name in normalized and (best is None or len(name) > len(best)):
+            best = name
+    return best
+
+
+NAMED_POI_LOOKUP_INSTRUCTION = (
+    "The visitor's question names this known place, whose record has just "
+    "been retrieved. Answer the question from this record now, in the "
+    "visitor's language — do not promise to search later and do not ask "
+    "the visitor to repeat or choose."
+)
+
+
 def history_followup_answer(question: str, messages: list[dict],
                             index: dict, limit: int = 6) -> str:
     """Build a deterministic follow-up answer, or empty string on miss.
@@ -400,7 +437,11 @@ questions using the {destination} POI index, which is a structured catalogue \
 of every point of interest, trip and itinerary in the destination.
 
 The full section catalogue is listed below — you do NOT need to call any \
-tool to discover it.  Use this information directly.
+tool to discover it.  Use this information directly.  Generic overview \
+questions (\"What can I see?\", \"What is there to do?\") that name no \
+specific place, fact, or date can and should be answered from the \
+destination overview and this catalogue alone: present the highlights \
+and point the visitor to the most interesting sections.
 
 You have ELEVEN tools. Pick the one that fits the question:
 
@@ -1390,7 +1431,7 @@ def run_agentic_loop(question: str, system_prompt: str,
                     grounding_retry_enforced = True
                     messages.append({
                         "role": "user",
-                        "content": GROUNDING_REQUIRED_INSTRUCTION,
+                        "content": GROUNDING_RECOVERY_INSTRUCTION,
                     })
                     continue
                 fallback = history_followup_answer(question, messages, index)
@@ -1409,7 +1450,55 @@ def run_agentic_loop(question: str, system_prompt: str,
                     answer = sanitize_tourist_answer(fallback, index)
                     assistant_msg["content"] = answer
                     break
-                answer = grounding_failure_message(index)
+                # Last-resort backstop for small models: if the question
+                # explicitly names a known place, fetch its record
+                # deterministically instead of accepting a brush-off.
+                named_poi = question_names_known_poi(question, index)
+                if named_poi:
+                    named_id = (index.get("name_index") or {})[named_poi]
+                    result, hit = execute_tool(
+                        "get_poi", {"poi_id": named_id}, index,
+                        sections_text, cache, weather=weather,
+                    )
+                    if hit:
+                        cache_hits += 1
+                    tool_calls_made.append({
+                        "tool": "get_poi",
+                        "args": {"poi_id": named_id},
+                        "result_preview": result[:300],
+                        "cache_hit": hit,
+                        "automatic": True,
+                        "source_selection": {
+                            "kind": "poi",
+                            "id": named_id,
+                            "label": named_poi,
+                        },
+                    })
+                    grounded = True
+                    if "get_poi" not in grounding_tools:
+                        grounding_tools.append("get_poi")
+                    automatic_source_calls.append({
+                        "tool": "get_poi",
+                        "args": {"poi_id": named_id},
+                        "source_selection": {
+                            "kind": "poi",
+                            "id": named_id,
+                            "label": named_poi,
+                        },
+                    })
+                    messages.append({
+                        "role": "user",
+                        "content": (NAMED_POI_LOOKUP_INSTRUCTION
+                                    + "\n\n" + result),
+                    })
+                    continue
+                # The model declined retrieval after the recovery prompt and
+                # no known place is named: trust its generic-question
+                # classification and deliver the answer it composed from
+                # the preloaded overview/catalogue.
+                answer = sanitize_tourist_answer(
+                    (message.content or "").strip(), index
+                )
                 break
             answer = sanitize_tourist_answer((message.content or "").strip(), index)
             break

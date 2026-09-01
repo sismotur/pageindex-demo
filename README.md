@@ -276,8 +276,8 @@ that only happens in the sibling `inventrip-rag-data` repo now.
 | Python          | 3.14 in `.venv`                                          |
 | LLM serving     | oMLX on `http://127.0.0.1:8000/v1` (OpenAI-compatible)   |
 | LLM client      | `litellm` (`openai/<model-id>` model strings)            |
-| Server model    | `openai/gemma-4-26B-A4B-it-MLX-4bit` (MoE, 4B active)    |
-| Mobile model    | `openai/gemma-4-E2B-it-MLX-8bit` (the on-device target)  |
+| Default model   | `openai/gemma-4-E2B-it-MLX-8bit` (the on-device target; default for eval + chat) |
+| Server ceiling  | `openai/gemma-4-26B-A4B-it-MLX-4bit` (MoE, 4B active, opt-in via `--model`) |
 | Index rebuild   | `< 1 s` per `(destination, language)` pair              |
 
 ---
@@ -287,30 +287,27 @@ that only happens in the sibling `inventrip-rag-data` repo now.
 ### Úbeda in English (default)
 
 ```bash
-# Run the Q&A evaluation (server model ~10 min; E2B ~75 s on oMLX)
-.venv/bin/python assistant/run_eval.py \
-  --model openai/gemma-4-26B-A4B-it-MLX-4bit --index indexes/ubeda_en.json
+# Run the Q&A evaluation (defaults to the E2B mobile model, ~75 s on oMLX;
+# the 26B server ceiling is opt-in via --model openai/gemma-4-26B-A4B-it-MLX-4bit)
+.venv/bin/python assistant/run_eval.py --index indexes/ubeda_en.json
 
 # Score and summarise
 .venv/bin/python assistant/score_results.py \
-  --file results/eval_gemma-4-26B-A4B-it-MLX-4bit.json
+  --file results/eval_gemma-4-E2B-it-MLX-8bit.json
 
 # Optional: interactive chat
-.venv/bin/python assistant/chat_demo.py --interactive \
-  --model openai/gemma-4-26B-A4B-it-MLX-4bit
+.venv/bin/python assistant/chat_demo.py --interactive
 ```
 
 ### Spanish / other languages
 
 ```bash
 .venv/bin/python assistant/run_eval.py \
-  --model openai/gemma-4-26B-A4B-it-MLX-4bit \
   --questions eval/questions_es.json \
   --index indexes/ubeda_es.json \
   --lang es
 
 .venv/bin/python assistant/chat_demo.py --interactive \
-  --model openai/gemma-4-26B-A4B-it-MLX-4bit \
   --index indexes/ubeda_es.json \
   --lang es
 ```

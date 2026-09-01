@@ -55,7 +55,9 @@ from run_eval import (   # noqa: E402
     no_path_answer_instruction,
     route_lookup_context,
     SOURCE_GROUNDING_TOOLS,
-    GROUNDING_REQUIRED_INSTRUCTION,
+    GROUNDING_RECOVERY_INSTRUCTION,
+    NAMED_POI_LOOKUP_INSTRUCTION,
+    question_names_known_poi,
     requires_current_turn_grounding,
     grounding_failure_message,
     history_followup_answer,
@@ -89,7 +91,7 @@ from common.models import DEFAULT_CHAT_MODEL   # noqa: E402
 # ── Constants ──────────────────────────────────────────────────────────────────
 CONVERSATIONS_FILE = PROJECT_ROOT / "eval" / "conversations.json"
 RESULTS_DIR        = PROJECT_ROOT / "results"
-DEFAULT_MODEL      = DEFAULT_CHAT_MODEL   # oMLX 26B; server/quality model
+DEFAULT_MODEL      = DEFAULT_CHAT_MODEL   # oMLX E2B; the mobile deployment target
 
 
 # ── Spinner (background thread) ─────────────────────────────────────────
@@ -477,7 +479,7 @@ def run_turn(question: str, messages: list[dict],
                         grounding_retry_enforced = True
                         messages.append({
                             "role": "user",
-                            "content": GROUNDING_REQUIRED_INSTRUCTION,
+                            "content": GROUNDING_RECOVERY_INSTRUCTION,
                         })
                         continue
                     fallback = history_followup_answer(
@@ -498,7 +500,55 @@ def run_turn(question: str, messages: list[dict],
                         answer = sanitize_tourist_answer(fallback, index)
                         assistant_msg["content"] = answer
                         break
-                    answer = grounding_failure_message(index)
+                    # Last-resort backstop for small models: if the
+                    # question explicitly names a known place, fetch its
+                    # record deterministically instead of accepting a
+                    # brush-off.
+                    named_poi = question_names_known_poi(question, index)
+                    if named_poi:
+                        named_id = (index.get("name_index") or {})[named_poi]
+                        result, hit = execute_tool(
+                            "get_poi", {"poi_id": named_id}, index,
+                            sections_text, cache, weather=weather,
+                        )
+                        if hit:
+                            cache_hits += 1
+                        tool_calls_made.append({
+                            "tool": "get_poi",
+                            "args": {"poi_id": named_id},
+                            "result_preview": result[:250],
+                            "cache_hit": hit,
+                            "automatic": True,
+                            "source_selection": {
+                                "kind": "poi",
+                                "id": named_id,
+                                "label": named_poi,
+                            },
+                        })
+                        grounded = True
+                        if "get_poi" not in grounding_tools:
+                            grounding_tools.append("get_poi")
+                        automatic_source_calls.append({
+                            "tool": "get_poi",
+                            "args": {"poi_id": named_id},
+                            "source_selection": {
+                                "kind": "poi",
+                                "id": named_id,
+                                "label": named_poi,
+                            },
+                        })
+                        messages.append({
+                            "role": "user",
+                            "content": (NAMED_POI_LOOKUP_INSTRUCTION
+                                        + "\n\n" + result),
+                        })
+                        continue
+                    # The model declined retrieval after the recovery
+                    # prompt and no known place is named: trust its
+                    # generic-question classification and deliver the
+                    # answer it composed from the preloaded
+                    # overview/catalogue.
+                    answer = sanitize_tourist_answer(acc_content.strip(), index)
                     assistant_msg["content"] = answer
                     break
                 answer = sanitize_tourist_answer(acc_content.strip(), index)
@@ -644,7 +694,7 @@ def run_turn(question: str, messages: list[dict],
                         grounding_retry_enforced = True
                         messages.append({
                             "role": "user",
-                            "content": GROUNDING_REQUIRED_INSTRUCTION,
+                            "content": GROUNDING_RECOVERY_INSTRUCTION,
                         })
                         continue
                     fallback = history_followup_answer(
@@ -665,7 +715,58 @@ def run_turn(question: str, messages: list[dict],
                         answer = sanitize_tourist_answer(fallback, index)
                         assistant_msg["content"] = answer
                         break
-                    answer = grounding_failure_message(index)
+                    # Last-resort backstop for small models: if the
+                    # question explicitly names a known place, fetch its
+                    # record deterministically instead of accepting a
+                    # brush-off.
+                    named_poi = question_names_known_poi(question, index)
+                    if named_poi:
+                        named_id = (index.get("name_index") or {})[named_poi]
+                        result, hit = execute_tool(
+                            "get_poi", {"poi_id": named_id}, index,
+                            sections_text, cache, weather=weather,
+                        )
+                        if hit:
+                            cache_hits += 1
+                        tool_calls_made.append({
+                            "tool": "get_poi",
+                            "args": {"poi_id": named_id},
+                            "result_preview": result[:250],
+                            "cache_hit": hit,
+                            "automatic": True,
+                            "source_selection": {
+                                "kind": "poi",
+                                "id": named_id,
+                                "label": named_poi,
+                            },
+                        })
+                        grounded = True
+                        if "get_poi" not in grounding_tools:
+                            grounding_tools.append("get_poi")
+                        automatic_source_calls.append({
+                            "tool": "get_poi",
+                            "args": {"poi_id": named_id},
+                            "source_selection": {
+                                "kind": "poi",
+                                "id": named_id,
+                                "label": named_poi,
+                            },
+                        })
+                        messages.append({
+                            "role": "user",
+                            "content": (NAMED_POI_LOOKUP_INSTRUCTION
+                                        + "\n\n" + result),
+                        })
+                        continue
+                    # The model declined retrieval after the recovery
+                    # prompt and no known place is named: trust its
+                    # generic-question classification and deliver the
+                    # answer it composed from the preloaded
+                    # overview/catalogue.
+                    answer = sanitize_tourist_answer(
+                        (message.content or "").strip(), index
+                    )
+                    assistant_msg["content"] = answer
                     break
                 answer = sanitize_tourist_answer((message.content or "").strip(), index)
                 assistant_msg["content"] = answer

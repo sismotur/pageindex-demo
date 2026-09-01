@@ -62,7 +62,10 @@ loops; mean including outliers is 132.5 s.
 E2B on the current **oMLX** stack (`gemma-4-E2B-it-MLX-8bit`,
 2026-08-16): composite **0.820**, grounding **72.5%**, content-fetch
 **95%**, **3.7 s**/question EN — pass at ~4× lower latency than the
-Ollama baseline.
+Ollama baseline. After the 2026-09-01 grounding-recovery change (model
+self-classifies generic overview questions instead of forced retrieval):
+composite **0.845**, grounding **77.5%**, content-fetch **90%**,
+**3.5 s**/question EN.
 
 The **same** Gemma 4 E2B model that scored 54.1% grounding on the old
 PageIndex pipeline scores 85.0% / 77.5% / 72.5% on EN/ES/IT with the
@@ -101,9 +104,12 @@ validate `--lang` against this list and refuse unknown codes (the
 sibling `inventrip-rag-data` repo's pipeline scripts do the same with
 their own copy of `common/`).
 
-Decision: keep `gemma4:26b` as the recommended model. All four Gemma 4
-variants (`e2b`, `e4b`, `26b`, `31b`) fit in this machine's 128 GB
-unified memory; escalation is unnecessary for this corpus size.
+Decision: `gemma-4-E2B` is the **default model for every entry point**
+(`run_eval.py`, `chat_demo.py`) — it is the model the Android/iOS apps
+will ship, so all evaluation and chatting runs against the deployment
+constraint. `gemma-4-26B` remains available via `--model` as the
+server-side quality ceiling. All four Gemma 4 variants (`e2b`, `e4b`,
+`26b`, `31b`) fit in this machine's 128 GB unified memory.
 
 ---
 
@@ -208,9 +214,9 @@ interest level, top tourist types, and the three notable POIs:
 
 - Base URL: `http://127.0.0.1:8000/v1`
 - API key: read from `~/.omlx/settings.json` → `auth.api_key`
-- Model strings: `openai/gemma-4-26B-A4B-it-MLX-4bit` (server),
-  `openai/gemma-4-E4B-it-MLX-4bit`, `openai/gemma-4-E2B-it-MLX-8bit`
-  (the mobile deployment target)
+- Model strings: `openai/gemma-4-E2B-it-MLX-8bit` (the mobile
+  deployment target — **default**), `openai/gemma-4-E4B-it-MLX-4bit`,
+  `openai/gemma-4-26B-A4B-it-MLX-4bit` (server quality ceiling)
 
 Ollama (`http://localhost:11434/v1`, model strings like
 `openai/gemma4:26b`) remains a supported alternative — point
@@ -225,80 +231,35 @@ Ollama (`http://localhost:11434/v1`, model strings like
 
 ---
 
-## Implementation steps
+## Data preparation (sibling repo)
 
-### Step 1 — Extract from the Inventrip API
-
-Two scripts, both accept `--destination` and `--lang`:
-
-```bash
-.venv/bin/python src/pipeline/extract_pois.py             --destination ubeda --lang en
-.venv/bin/python src/pipeline/extract_destination_data.py --destination ubeda --lang en
-```
-
-Outputs:
-
-- `data/{destination}_pois_raw_{lang}.json` (`src/data/...` in the
-  sibling repo) — raw `/v120/pois` array.
-- `data/{destination}_destination_{lang}.json` — destination overview,
-  trips, paths, interest-level taxonomy, tourist-type display-name map.
-
-The relevant query parameters (from `params-builder.js`):
-
-- `tourist_destination` → `filter.name_implan`
-- `language` → `id_language`
-- `strip_nulls=true` → drop null fields from the response
-
-### Step 2 — Build the POI-aware index
-
-```bash
-.venv/bin/python src/pipeline/build_index.py --destination ubeda --lang en
-# → indexes/ubeda_en.json   (~1.1 MB / ~135 KB gzip; sub-second; deterministic)
-```
-
-`pipeline/build_index.py` consumes only the two JSON artifacts from
-Step 1. No LLM calls. No Markdown intermediate. Re-runnable any time
-without side effects.
-
-### Step 2b — Build the daily weather artifact
-
-```bash
-.venv/bin/python src/pipeline/build_weather.py --destination ubeda --lang en
-.venv/bin/python src/pipeline/build_weather.py --destination ubeda --all-languages
-# → weather/ubeda_{lang}.json   (~1.1 KB; deterministic per language)
-```
-
-`pipeline/build_weather.py` is the reference for the Cloudflare daily
-cron branch. It reads the destination coordinates from any available
-`data/{destination}_destination_{lang}.json`, calls
-`/v100/weather-daily`, and writes a normalised `weather/{destination}_
-{lang}.json` (schema v1) that the phone downloads independently of the
-weekly index.
-
-Steps 1–2b above run in the sibling
+This repo contains **no pipeline code**. Index and weather artifacts are
+produced by the sibling
 [`inventrip-rag-data`](https://github.com/sismotur/inventrip-rag-data)
-repo now (same commands, at `src/pipeline/*.py` there — see that repo's
-AGENTS.md). Copy the resulting `indexes/{dest}_{lang}.json` and
-`weather/{dest}_{lang}.json` here to use them.
+repo (`src/pipeline/extract_pois.py` → `extract_destination_data.py` →
+`build_index.py`, plus `build_weather.py` — see that repo's AGENTS.md).
+To add or refresh a destination, run the pipeline there and copy the
+resulting `indexes/{dest}_{lang}.json` and `weather/{dest}_{lang}.json`
+here. No code changes are needed in this repo — the destination display
+name comes from the index's own `meta.destination_display` field.
 
-### Step 3 — Run the agentic Q&A evaluation
+## Running the assistant
+
+### Run the agentic Q&A evaluation
 
 ```bash
-# English (default)
-.venv/bin/python assistant/run_eval.py \
-  --model openai/gemma-4-26B-A4B-it-MLX-4bit \
-  --index indexes/ubeda_en.json
+# English (default). --model defaults to the E2B mobile model; pass
+# --model openai/gemma-4-26B-A4B-it-MLX-4bit for the server ceiling.
+.venv/bin/python assistant/run_eval.py --index indexes/ubeda_en.json
 
 # Spanish
 .venv/bin/python assistant/run_eval.py \
-  --model openai/gemma-4-26B-A4B-it-MLX-4bit \
   --questions eval/questions_es.json \
   --index indexes/ubeda_es.json \
   --lang es
 
 # Interactive chat
-.venv/bin/python assistant/chat_demo.py --interactive \
-  --model openai/gemma-4-26B-A4B-it-MLX-4bit
+.venv/bin/python assistant/chat_demo.py --interactive
 .venv/bin/python assistant/chat_demo.py --interactive --lang es \
   --index indexes/ubeda_es.json
 ```
@@ -307,7 +268,7 @@ AGENTS.md). Copy the resulting `indexes/{dest}_{lang}.json` and
 given an old `results/{name}_structure.json` path, it remaps to
 `indexes/{name}.json` if that exists.
 
-### Step 4 — Score and report
+### Score and report
 
 ```bash
 .venv/bin/python assistant/score_results.py --file results/eval_gemma4-26b.json
@@ -352,10 +313,16 @@ Typical flows handled by the model:
 - **Physical route intent** is guarded deterministically: one
   `search_paths` lookup is forced, then the assistant answers once. This
   prevents repeated clarification/instruction loops on small models.
-- **Strict grounding**: every non-social tourist turn needs a current-turn
-  source-bearing retrieval. Prior `<poi>`, `<trip>`, and `<path>` tag
-  selections resolve directly to `get_*`; after one failed grounding retry,
-  return a localized safe failure rather than model-memory advice.
+- **Strict grounding**: specific questions (named places, facts,
+  listings) need a current-turn source-bearing retrieval; prior `<poi>`,
+  `<trip>`, and `<path>` tag selections resolve directly to `get_*`.
+  Generic overview questions ("what can I see?") may be answered from the
+  destination overview and section catalogue preloaded in the system
+  prompt — that content is itself index-derived, so no tool call is
+  required. When a turn ends without retrieval, the model self-classifies
+  once (generic → answer from the catalogue; specific → call a tool); the
+  localized safe failure remains only for turns that never produce an
+  answer.
 
 Pre-warm: every section's `get_section(id, "interest", 50)` result is
 cached at session start, so subsequent calls are instant.
@@ -396,7 +363,8 @@ pageindex-demo/
 │   ├── questions.json                 ← 20 visitor questions (English)
 │   ├── questions_es.json              ← Spanish translations
 │   ├── questions_it.json              ← Italian translations
-│   └── conversations.json             ← multi-turn threads for chat_demo
+│   ├── conversations.json             ← multi-turn threads (Úbeda)
+│   └── conversations_montancheztamuja.json  ← multi-turn threads (Montánchez)
 │
 ├── tests/
 │   ├── test_index_tools.py            ← index schema + tool-layer regression tests

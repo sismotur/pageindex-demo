@@ -54,6 +54,7 @@ from index_tools import (
 from common.textnorm import normalize_text, tokenize
 from run_eval import (
     COMPACTED_TOOL_RESULT,
+    GROUNDING_RECOVERY_INSTRUCTION,
     MAX_TOOL_HISTORY_CHARS,
     MAX_TOOL_RESULT_CHARS,
     bound_tool_result,
@@ -61,6 +62,7 @@ from run_eval import (
     execute_tool,
     grounding_failure_message,
     is_physical_route_request,
+    question_names_known_poi,
     requires_current_turn_grounding,
     requires_trip_detail,
 )
@@ -144,6 +146,31 @@ class TestStrictGrounding:
         spanish = dict(index)
         spanish["meta"] = dict(index["meta"], lang="es")
         assert grounding_failure_message(spanish).startswith("No he podido")
+
+    def test_recovery_instruction_offers_generic_and_specific_paths(self):
+        # The model self-classifies the question: generic overview turns
+        # may be answered from the preloaded overview/catalogue (never
+        # with a failure message), while specific questions must still
+        # retrieve.  Guard against a regression to the old unconditional
+        # retrieval demand, which made small models fail broad questions
+        # like "¿Qué puedo ver?".
+        text = GROUNDING_RECOVERY_INSTRUCTION.lower()
+        assert "never" in text and "failure message" in text
+        assert "find_poi_by_name" in text
+
+    def test_named_poi_probe_detects_named_place(self, spanish_index):
+        # The language-agnostic backstop: a question explicitly naming a
+        # POI from the destination's name_index is detected without any
+        # keyword lists.
+        name_index = spanish_index.get("name_index") or {}
+        multi = next(n for n in name_index if " " in n and len(n) >= 8)
+        assert question_names_known_poi(
+            f"¿En qué año se construyó {multi}?", spanish_index
+        ) == multi
+
+    def test_named_poi_probe_ignores_generic_questions(self, spanish_index):
+        assert question_names_known_poi("¿Qué puedo ver?", spanish_index) is None
+        assert question_names_known_poi("What is there to do?", spanish_index) is None
 
     def test_resolves_unique_trip_selection_from_history(self, spanish_index):
         from index_tools import resolve_history_selection
