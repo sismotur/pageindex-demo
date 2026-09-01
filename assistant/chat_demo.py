@@ -844,7 +844,7 @@ def run_turn(question: str, messages: list[dict],
                 break
 
     if not answer and not error:
-        msg = recovery_msg or _RECOVERY_MSGS["en"]
+        msg = recovery_msg or _recovery_msg("en")
         try:
             recovery = litellm.completion(
                 model=model,

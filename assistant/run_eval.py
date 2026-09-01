@@ -89,8 +89,6 @@ from index_tools import (
 )
 from common.lang_support import (
     SUPPORTED_LANGS,
-    LANG_RULES as _LANG_RULES,         # re-exported for chat_demo.py
-    RECOVERY_MSGS as _RECOVERY_MSGS,   # re-exported for chat_demo.py
     lang_rule,
     recovery_msg,
     is_supported,
@@ -172,7 +170,10 @@ SOURCE_GROUNDING_TOOLS = frozenset({
     "get_weather",
 })
 GROUNDING_RECOVERY_INSTRUCTION = (
-    "Look at the visitor's question once more.\n"
+    "Look at the visitor's message once more.\n"
+    "If it is just a greeting, thanks, or small talk, respond warmly and "
+    "briefly in the visitor's language and offer your help — no tool call "
+    "is needed.\n"
     "If it is a broad overview question that names no specific place, "
     "fact, or date — such as \"What can I see?\" or \"What is there to "
     "do?\" — write the answer right now, in the visitor's language, using "
@@ -188,21 +189,28 @@ GROUNDING_RECOVERY_INSTRUCTION = (
     "or choose; reply with the visitor-facing answer or a tool call, "
     "nothing else."
 )
-SOCIAL_ONLY_MESSAGES = frozenset({
-    "hola", "hello", "hi", "hey", "gracias", "thanks", "thank you",
-    "adios", "adiós", "bye", "bonjour", "ciao", "hallo", "ola",
-})
 # Localized preamble used when the runtime deterministically answers a
 # follow-up question from the POIs already shown in the recent history
 # (safety net for small models that decline to call tools on broad
-# follow-ups).
+# follow-ups).  Visitor-facing, so it stays an i18n table; coverage for
+# every supported language is guarded by tests/test_i18n.py.
 HISTORY_FOLLOWUP_LEADS: dict[str, str] = {
+    "ca": "D'entre els llocs que ja t'he esmentat, aquests encaixen amb la teva pregunta:",
+    "de": "Von den bereits genannten Orten passen diese zu Ihrer Frage:",
     "en": "Based on the places I already mentioned, these match your question:",
     "es": "De los lugares que ya te he mencionado, estos encajan con tu pregunta:",
+    "eu": "Jada aipatutako lekuen artean, hauek datoz bat zure galderarekin:",
+    "fr": "Parmi les lieux déjà mentionnés, voici ceux qui correspondent à votre demande :",
+    "gl": "Dos lugares que xa mencionei, estes encaixan coa túa pregunta:",
+    "hi": "जिन जगहों का मैंने पहले उल्लेख किया है, उनमें से ये आपके प्रश्न से मेल खाती हैं:",
+    "hr": "Od mjesta koja sam već spomenuo, ova odgovaraju vašem pitanju:",
     "it": "Fra i luoghi che ho già menzionato, questi corrispondono alla tua richiesta:",
-    "fr": "Parmi les lieux déjà mentionnés, voici ceux qui correspondent à votre demande :",
-    "de": "Von den bereits genannten Orten passen diese zu Ihrer Frage:",
+    "ja": "すでにご紹介した場所の中で、ご質問に合うのはこちらです:",
+    "nl": "Van de plaatsen die ik al noemde, passen deze bij je vraag:",
     "pt": "Entre os locais já mencionados, estes correspondem à sua pergunta:",
+    "ru": "Из уже упомянутых мест вашему вопросу соответствуют:",
+    "uk": "З місць, які я вже згадував, вашому запитанню відповідають:",
+    "zh": "在我已经提到的地点中，以下符合您的问题：",
 }
 
 
@@ -342,9 +350,16 @@ TRIP_DETAIL_REQUIRED_INSTRUCTION = (
     "get_trip now. Base the final plan only on that retrieved trip detail."
 )
 def requires_current_turn_grounding(question: str) -> bool:
-    """True for all non-social requests in the tourist assistant."""
-    normalized = normalize_text(question)
-    return bool(normalized) and normalized not in SOCIAL_ONLY_MESSAGES
+    """True for every non-empty visitor message.
+
+    There is deliberately no hardcoded greeting/social list to translate:
+    greetings and small talk go through the same recovery path as any
+    other message, where GROUNDING_RECOVERY_INSTRUCTION's small-talk
+    branch lets the model answer them in the visitor's language.  The
+    runtime stays language-agnostic — any language the LLM understands
+    works, not just the ones a keyword list covers.
+    """
+    return bool(normalize_text(question))
 
 
 def requires_trip_detail(question: str) -> bool:

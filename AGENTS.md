@@ -18,10 +18,13 @@ tool calls against a local OpenAI-compatible server (**oMLX**,
 running **Gemma 4 E2B fully offline** — the phone only downloads index
 files; see `docs/mobile-offline-contract.md`.
 
-`common/` (`lang_support.py`, `textnorm.py`) is **duplicated** from
-`inventrip-rag-data` (not shared via a package/submodule — it's small
-and low-churn). Both copies, plus the Cloudflare and mobile ports, must
-reproduce it byte-for-byte.
+`common/textnorm.py` is **duplicated** from `inventrip-rag-data` (not
+shared via a package/submodule — it's small and low-churn). Both copies,
+plus the Cloudflare and mobile ports, must reproduce it byte-for-byte —
+it defines how POI names are normalised at build time and matched at
+runtime. `common/lang_support.py` and `common/models.py` are
+runtime-side configuration and may diverge from the sibling's copies
+(the pipeline only needs the language-code list).
 
 Repository: <https://github.com/sismotur/pageindex-demo>
 Data-prep repository: <https://github.com/sismotur/inventrip-rag-data>
@@ -97,12 +100,16 @@ The index format targets the **16 languages** the API exposes under
 `ja` Japanese, `nl` Dutch, `pt` Portuguese, `ru` Russian,
 `uk` Ukrainian, `zh` Chinese.
 
-`common/lang_support.py` is the single source of truth: it carries one
-system-prompt rule and one recovery message per code, plus the native
-display name used by the chat banner. `run_eval.py` and `chat_demo.py`
-validate `--lang` against this list and refuse unknown codes (the
-sibling `inventrip-rag-data` repo's pipeline scripts do the same with
-their own copy of `common/`).
+`common/lang_support.py` is the single source of truth: the supported
+codes (default 16, overridable via the `SUPPORTED_LANGS` env var as a
+comma-separated list), the native display names used by the chat banner,
+and the model-facing text — a pair of English templates
+(`lang_rule`/`recovery_msg`) parameterised with the language's English
+name, so no per-language translations are needed and any language the
+LLM understands works. `run_eval.py` and `chat_demo.py` validate
+`--lang` against the list and refuse unknown codes. Visitor-facing
+strings stay in per-language i18n tables whose completeness is guarded
+by `tests/test_i18n.py` (no missing translations for any listed code).
 
 Decision: `gemma-4-E2B` is the **default model for every entry point**
 (`run_eval.py`, `chat_demo.py`) — it is the model the Android/iOS apps

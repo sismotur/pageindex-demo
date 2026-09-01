@@ -1402,6 +1402,16 @@ def format_search_paths(index: dict, query: str, limit: int = 10) -> str:
 # plan/itinerary and several curated trips could match. English is used
 # as the safe fallback for languages not explicitly listed.
 _TRIP_CHOICE_MESSAGES: dict[str, dict[str, str]] = {
+    "ca": {
+        "lead":       "Aquí tens algunes suggerències que podrien encaixar amb la teva petició:",
+        "highlights": "Destacats",
+        "outro":      "Digues-me el nom o el número de la suggerència que vols veure.",
+    },
+    "de": {
+        "lead":       "Hier sind einige kuratierte Vorschläge, die zu Ihrer Anfrage passen könnten:",
+        "highlights": "Highlights",
+        "outro":      "Nennen Sie mir den Namen oder die Nummer des Vorschlags, den Sie sehen möchten.",
+    },
     "en": {
         "lead":       "Here are a few curated trips that could match your request:",
         "highlights": "Highlights",
@@ -1412,10 +1422,65 @@ _TRIP_CHOICE_MESSAGES: dict[str, dict[str, str]] = {
         "highlights": "Destacan",
         "outro":      "Dime el nombre o el número del viaje que prefieras.",
     },
+    "eu": {
+        "lead":       "Hona hemen zure eskariarekin bat datozkeen proposamen batzuk:",
+        "highlights": "Nabarmenak",
+        "outro":      "Esadazu ikusi nahi duzun proposamenaren izena edo zenbakia.",
+    },
+    "fr": {
+        "lead":       "Voici quelques suggestions qui pourraient correspondre à votre demande :",
+        "highlights": "À ne pas manquer",
+        "outro":      "Dites-moi le nom ou le numéro de la suggestion que vous souhaitez voir.",
+    },
+    "gl": {
+        "lead":       "Aquí tes algunhas suxestións que poderían encaixar coa túa petición:",
+        "highlights": "Destacados",
+        "outro":      "Dime o nome ou o número da suxestión que queres ver.",
+    },
+    "hi": {
+        "lead":       "आपके अनुरोध से मेल खाते कुछ चुनिंदा सुझाव यहाँ हैं:",
+        "highlights": "मुख्य आकर्षण",
+        "outro":      "बताइए आप कौन-सा सुझाव देखना चाहेंगे, नाम या नंबर से।",
+    },
+    "hr": {
+        "lead":       "Evo nekoliko prijedloga koji bi mogli odgovarati vašem upitu:",
+        "highlights": "Istaknuto",
+        "outro":      "Recite mi naziv ili broj prijedloga koji želite vidjeti.",
+    },
     "it": {
         "lead":       "Ho trovato alcune proposte curate che potrebbero corrispondere:",
         "highlights": "In evidenza",
         "outro":      "Dimmi il nome o il numero del viaggio che preferisci.",
+    },
+    "ja": {
+        "lead":       "ご希望に合いそうなおすすめプランがいくつか見つかりました:",
+        "highlights": "見どころ",
+        "outro":      "ご覧になりたいプランの名前または番号を教えてください。",
+    },
+    "nl": {
+        "lead":       "Hier zijn een paar samengestelde suggesties die bij je verzoek kunnen passen:",
+        "highlights": "Hoogtepunten",
+        "outro":      "Vertel me de naam of het nummer van de suggestie die je wilt zien.",
+    },
+    "pt": {
+        "lead":       "Aqui estão algumas sugestões que podem corresponder ao seu pedido:",
+        "highlights": "Destaques",
+        "outro":      "Diga-me o nome ou o número da sugestão que quer ver.",
+    },
+    "ru": {
+        "lead":       "Вот несколько подобранных вариантов, которые могут подойти к вашему запросу:",
+        "highlights": "Главное",
+        "outro":      "Назовите название или номер варианта, который хотите посмотреть.",
+    },
+    "uk": {
+        "lead":       "Ось кілька підібраних варіантів, які можуть відповідати вашому запиту:",
+        "highlights": "Головне",
+        "outro":      "Назвіть назву або номер варіанта, який хочете переглянути.",
+    },
+    "zh": {
+        "lead":       "以下是几个可能符合您需求的精选建议:",
+        "highlights": "亮点",
+        "outro":      "请告诉我您想查看的建议名称或编号。",
     },
 }
 
@@ -1620,21 +1685,41 @@ FORECAST_TAG_RE = re.compile(
 )
 
 WEATHER_UNAVAILABLE_MESSAGES: dict[str, str] = {
+    "ca": "Les dades descarregades no inclouen una previsió vigent.",
+    "de": "Die heruntergeladenen Daten enthalten keine aktuelle Vorhersage.",
     "en": "The downloaded data has no current forecast.",
     "es": "Los datos descargados no incluyen una previsión vigente.",
-    "it": "I dati scaricati non includono una previsione attuale.",
+    "eu": "Deskargatutako datuek ez dute indarreko aurreikuspenik.",
     "fr": "Les données téléchargées ne contiennent pas de prévisions actuelles.",
-    "de": "Die heruntergeladenen Daten enthalten keine aktuelle Vorhersage.",
+    "gl": "Os datos descargados non inclúen unha previsión vixente.",
+    "hi": "डाउनलोड किए गए डेटा में कोई वर्तमान पूर्वानुमान नहीं है।",
+    "hr": "Preuzeti podaci ne sadrže aktualnu prognozu.",
+    "it": "I dati scaricati non includono una previsione attuale.",
+    "ja": "ダウンロード済みデータに現在の予報は含まれていません。",
+    "nl": "De gedownloade gegevens bevatten geen actuele voorspelling.",
     "pt": "Os dados transferidos não incluem uma previsão atual.",
+    "ru": "В загруженных данных нет актуального прогноза.",
+    "uk": "Завантажені дані не містять актуального прогнозу.",
+    "zh": "已下载的数据中没有当前预报。",
 }
 
 _WEATHER_STALE_MESSAGES: dict[str, str] = {
+    "ca": "Previsió estimada obtinguda fa {n} dies",
+    "de": "Geschätzte Vorhersage vor {n} Tagen abgerufen",
     "en": "Estimated forecast fetched {n}d ago",
     "es": "Previsión estimada obtenida hace {n} días",
-    "it": "Previsione stimata recuperata {n} giorni fa",
+    "eu": "Duela {n} egun eskuratutako aurreikuspen estimatua",
     "fr": "Prévisions estimées récupérées il y a {n}j",
-    "de": "Geschätzte Vorhersage vor {n} Tagen abgerufen",
+    "gl": "Previsión estimada obtida hai {n} días",
+    "hi": "{n} दिन पहले प्राप्त अनुमानित पूर्वानुमान",
+    "hr": "Procijenjena prognoza preuzeta prije {n} d.",
+    "it": "Previsione stimata recuperata {n} giorni fa",
+    "ja": "{n}日前に取得した推定予報",
+    "nl": "Geschatte voorspelling van {n} dagen geleden",
     "pt": "Previsão estimada obtida há {n} dias",
+    "ru": "Оценочный прогноз, получен {n} дн. назад",
+    "uk": "Оціночний прогноз, отримано {n} дн. тому",
+    "zh": "{n}天前获取的估计预报",
 }
 
 _WEEKDAY_ALIASES: dict[str, int] = {

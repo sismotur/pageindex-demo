@@ -371,13 +371,21 @@ titles.
     `fr` French, `gl` Galician, `hi` Hindi, `hr` Croatian, `it` Italian,
     `ja` Japanese, `nl` Dutch, `pt` Portuguese, `ru` Russian,
     `uk` Ukrainian, `zh` Chinese.
-  - The 16 codes have a per-language **system-prompt rule** and **recovery
-    message** in `common/lang_support.py` (`LANG_RULES`, `RECOVERY_MSGS`).
+  - Model-facing language text is generated from **English templates**
+    (`common/lang_support.py::lang_rule`/`recovery_msg`) parameterised
+    with the language's English name — no per-language translations to
+    maintain, and any language the LLM understands (160+) works. The
+    16-code whitelist can be overridden via the `SUPPORTED_LANGS`
+    environment variable (comma-separated codes, e.g. in `.env`).
+    Visitor-facing strings (failure message, follow-up lead, weather
+    prefixes, trip-offer wrappers) stay in i18n tables whose completeness
+    for every listed language is guarded by `tests/test_i18n.py`.
     Smoke-tested in 26B for Italian; Spanish and English are part of the
     full eval baselines.
 - Every artifact name carries a `_{lang}` suffix. Pairs never overwrite.
-- The system prompt template ends with a per-language rule from
-  `LANG_RULES`. The corpus language is independent — a French question
+- The system prompt template ends with the language rule from
+  `lang_rule()` (English template, e.g. "Always respond in Spanish…").
+  The corpus language is independent — a French question
   over the Spanish corpus works because the model handles cross-lingual
   synthesis.
 - Tourist-type display names and interest-level labels (Indispensable /
@@ -386,9 +394,10 @@ titles.
   originally sourced per-language from `/v120/tourist-types` and
   `/v120/interest-levels` by the inventrip-rag-data pipeline.
   If the Inventrip API's supported-language list ever drifts from the
-  16 codes hard-coded here, update `common/lang_support.py` in both this
-  repo and inventrip-rag-data (the import-time self-check will refuse to
-  load with missing translations).
+  16 default codes, set `SUPPORTED_LANGS` accordingly (or update the
+  default in `common/lang_support.py`); the import-time self-check
+  requires a display name per code, and `tests/test_i18n.py` fails on
+  any missing visitor-facing translation.
 
 ---
 

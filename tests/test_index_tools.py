@@ -129,10 +129,14 @@ class TestRouteIntent:
 
 
 class TestStrictGrounding:
-    def test_social_messages_do_not_require_retrieval(self):
-        assert not requires_current_turn_grounding("hola")
-        assert not requires_current_turn_grounding("Thanks")
+    def test_every_message_goes_through_grounding_decision(self):
+        # No hardcoded social list to translate: greetings take the
+        # recovery instruction's small-talk branch like any other turn.
+        assert requires_current_turn_grounding("hola")
+        assert requires_current_turn_grounding("Thanks")
         assert requires_current_turn_grounding("hoteles cerca del ayuntamiento")
+        assert not requires_current_turn_grounding("")
+        assert not requires_current_turn_grounding("   ")
 
     @pytest.mark.parametrize("question", [
         "dame un plan de cosas que ver en dos días",
@@ -157,6 +161,8 @@ class TestStrictGrounding:
         text = GROUNDING_RECOVERY_INSTRUCTION.lower()
         assert "never" in text and "failure message" in text
         assert "find_poi_by_name" in text
+        # Small talk is handled by the model, not a translated list.
+        assert "small talk" in text
 
     def test_named_poi_probe_detects_named_place(self, spanish_index):
         # The language-agnostic backstop: a question explicitly naming a
@@ -852,13 +858,23 @@ class TestTripChoiceOffer:
         assert "Dime el nombre o el número" in offer
 
     def test_offer_falls_back_to_english_for_unknown_lang(self, spanish_index):
-        # Clone the index and pretend the runtime is set to Japanese.
+        # Clone the index and pretend the runtime is set to a language
+        # outside the supported set.
+        idx = dict(spanish_index)
+        idx["meta"] = dict(spanish_index["meta"], lang="xx")
+        matches = search_trips(spanish_index, "plan dos días", limit=2)
+        offer = format_trip_choice_offer(idx, matches[:2])
+        assert offer.startswith("Here are a few curated trips")
+
+    def test_offer_is_localized_for_supported_languages(self, spanish_index):
+        # Every supported language has its own strings (tests/test_i18n.py
+        # guards completeness); spot-check Japanese here.
         idx = dict(spanish_index)
         idx["meta"] = dict(spanish_index["meta"], lang="ja")
         matches = search_trips(spanish_index, "plan dos días", limit=2)
         offer = format_trip_choice_offer(idx, matches[:2])
-        assert offer.startswith("Here are a few curated trips")
-        assert "Highlights:" in offer
+        assert offer.startswith("ご希望に合いそうなおすすめプラン")
+        assert "見どころ:" in offer
 
     def test_offer_omits_period_after_ellipsis(self, spanish_index):
         matches = search_trips(spanish_index, "plan dos días", limit=3)
