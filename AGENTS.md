@@ -11,6 +11,12 @@ imports the same pipeline code directly) that publishes index and
 weather files to R2. See that repo's `docs/cloudflare-worker-spec.md`
 for the full data-prep design.
 
+**Hard boundary: all edits stay inside this repository.** Never modify
+the sibling `inventrip-rag-data` repo or any other project on disk —
+if something looks wrong there, report it instead of fixing it. When
+the sibling's build output changes, refresh the fixture copies here;
+the sibling itself is only ever changed from its own checkout.
+
 **`assistant/`** is the reference implementation of the on-device
 runtime (eleven pure-lookup tools + agentic loop), driven by `litellm`
 tool calls against a local OpenAI-compatible server (**oMLX**,
