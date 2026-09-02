@@ -23,9 +23,9 @@ The reference destination is Úbeda, Spain — 367 POIs returned by
 `/v120/pois` under the [UNE 178503](https://www.une.org) Spanish tourism
 standard. The index format supports **multiple destinations** and
 **multiple languages** (currently also Sierra de Montánchez y Tamuja,
-Spanish-only); index and eval artifacts are grouped one subfolder per
-destination (`indexes/{dest}/{lang}.json`, `eval/{dest}/…`), while
-weather files keep the flat `{destination}_{lang}` name, so different
+Spanish-only); index, weather, and eval artifacts are grouped one
+subfolder per destination (`indexes/{dest}/{lang}.json`,
+`weather/{dest}/{lang}.json`, `eval/{dest}/…`), so different
 `(destination, language)` pairs never overwrite each other.
 
 ---
@@ -212,8 +212,12 @@ pageindex-demo/
 │       └── es.json
 │
 ├── weather/                           ← same fixture-copy convention as indexes/
-│   ├── ubeda_{en,es,it}.json
-│   └── montancheztamuja_es.json
+│   ├── ubeda/
+│   │   ├── en.json
+│   │   ├── es.json
+│   │   └── it.json
+│   └── montancheztamuja/
+│       └── es.json
 │
 ├── eval/                              ← one subfolder per destination
 │   ├── ubeda/
@@ -231,7 +235,7 @@ pageindex-demo/
 
 ```
 indexes/{destination}/{lang}.json
-weather/{destination}_{lang}.json
+weather/{destination}/{lang}.json
 eval/{destination}/questions_{lang}.json    (English: questions.json, no suffix)
 eval/{destination}/conversations.json
 results/eval_{model}_{lang}.json            (results/ is gitignored)
@@ -330,7 +334,7 @@ Run the pipeline in the sibling
 repo (`src/pipeline/extract_pois.py` → `extract_destination_data.py` →
 `build_index.py`), then copy the resulting index here as
 `indexes/{dest}/{lang}.json` (one subfolder per destination) and the
-weather file as `weather/{dest}_{lang}.json`. No code changes are
+weather file as `weather/{dest}/{lang}.json`. No code changes are
 required in this repo — the destination display name comes from the
 index's own `meta.destination_display` field.
 
@@ -394,8 +398,8 @@ titles.
     for every listed language is guarded by `tests/test_i18n.py`.
     Smoke-tested in 26B for Italian; Spanish and English are part of the
     full eval baselines.
-- Indexes and eval assets are grouped in one subfolder per destination;
-  weather and results files carry a flat `_{lang}` suffix. Pairs never
+- Indexes, weather, and eval assets are grouped in one subfolder per
+  destination; results files carry a flat `_{lang}` suffix. Pairs never
   overwrite.
 - The system prompt template ends with the language rule from
   `lang_rule()` (English template, e.g. "Always respond in Spanish…").

@@ -249,9 +249,9 @@ repo (`src/pipeline/extract_pois.py` → `extract_destination_data.py` →
 To add or refresh a destination, run the pipeline there and copy the
 resulting `indexes/{dest}_{lang}.json` here as
 `indexes/{dest}/{lang}.json` (one subfolder per destination), and
-`weather/{dest}_{lang}.json` as-is. No code changes are needed in this
-repo — the destination display name comes from the index's own
-`meta.destination_display` field.
+`weather/{dest}_{lang}.json` as `weather/{dest}/{lang}.json`. No code
+changes are needed in this repo — the destination display name comes
+from the index's own `meta.destination_display` field.
 
 ## Running the assistant
 
@@ -380,8 +380,12 @@ pageindex-demo/
 │       └── es.json
 │
 ├── weather/                           ← same fixture-copy convention as indexes/
-│   ├── ubeda_{en,es,it}.json
-│   └── montancheztamuja_es.json
+│   ├── ubeda/
+│   │   ├── en.json
+│   │   ├── es.json
+│   │   └── it.json
+│   └── montancheztamuja/
+│       └── es.json
 │
 ├── eval/                              ← one subfolder per destination
 │   ├── ubeda/
@@ -405,7 +409,7 @@ pageindex-demo/
 
 ```
 indexes/{destination}/{lang}.json
-weather/{destination}_{lang}.json
+weather/{destination}/{lang}.json
 eval/{destination}/questions_{lang}.json    (English: questions.json, no suffix)
 eval/{destination}/conversations.json
 results/eval_{model}_{lang}.json            (results/ is gitignored)

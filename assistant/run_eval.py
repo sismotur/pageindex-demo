@@ -1864,7 +1864,7 @@ def main() -> None:
     sections_text = format_sections_overview(index)
     overview_text = index.get("destination_overview", "")
     dest_slug = (index.get("meta") or {}).get("destination") or ""
-    weather_path = PROJECT_ROOT / "weather" / f"{dest_slug}_{args.lang}.json"
+    weather_path = PROJECT_ROOT / "weather" / dest_slug / f"{args.lang}.json"
     weather = load_weather(weather_path) if dest_slug else None
     hint_text = weather_hint(weather, destination_display) if weather else ""
     system_prompt = make_system_prompt(

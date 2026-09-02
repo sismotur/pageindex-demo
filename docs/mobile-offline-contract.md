@@ -21,10 +21,10 @@ locally.
 ┌─────────────────────────────────────────────────────────────┐
 │ Mobile app                                                  │
 │                                                             │
-│  indexes/{dest}_{lang}.json   ← downloaded once (ETag       │
+│  indexes/{dest}/{lang}.json   ← downloaded once (ETag       │
 │                                 refresh when online)        │
 │                                                             │
-│  weather/{dest}_{lang}.json  ← refreshed daily (ETag)      │
+│  weather/{dest}/{lang}.json  ← refreshed daily (ETag)      │
 │                                                             │
 │  Tool layer  ← port of assistant/index_tools.py             │
 │    list_sections / get_section / get_poi /                  │
@@ -50,7 +50,7 @@ deployment target; expect ≥ the 70% rubric thresholds on EN/ES/IT.
 
 ---
 
-## 2. The index file (`indexes/{dest}_{lang}.json`)
+## 2. The index file (`indexes/{dest}/{lang}.json`)
 
 One JSON object, `meta.schema_version == 6`. Sizes: ~0.7–1.3 MB per pair
 (367 POIs, Úbeda). Parse it fully into memory at session start.
@@ -165,7 +165,7 @@ Notes for ports:
 
 ---
 
-## 2.4 The weather file (`weather/{dest}_{lang}.json`)
+## 2.4 The weather file (`weather/{dest}/{lang}.json`)
 
 One small JSON per `(destination, language)`, refreshed daily by the
 Cloudflare Worker (see `docs/cloudflare-worker-spec.md` §4–5). The phone
