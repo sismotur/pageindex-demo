@@ -494,4 +494,4 @@ the manifest is the source of truth.
 | Server-side build & distribution spec | `docs/cloudflare-worker-spec.md` |
 | Reference implementation (Python) | `assistant/` (tools) · `pipeline/` (index builder) |
 | Sample index files | `indexes/ubeda_{en,es,it}.json` (tracked in git) |
-| Sample question sets for QA | `eval/questions_{,es_,it_}json` |
+| Sample question sets for QA | `eval/ubeda/questions_{,es_,it_}json` |

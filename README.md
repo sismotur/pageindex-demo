@@ -208,12 +208,14 @@ pageindex-demo/
 │   ├── ubeda_{en,es,it}.json
 │   └── montancheztamuja_es.json
 │
-├── eval/
-│   ├── questions.json                 ← 20 curated visitor questions (English)
-│   ├── questions_es.json              ← Spanish translations
-│   ├── questions_it.json              ← Italian translations
-│   ├── conversations.json             ← multi-turn conversation threads (Úbeda)
-│   └── conversations_montancheztamuja.json
+├── eval/                              ← one subfolder per destination
+│   ├── ubeda/
+│   │   ├── questions.json             ← 20 curated visitor questions (English)
+│   │   ├── questions_es.json          ← Spanish translations
+│   │   ├── questions_it.json          ← Italian translations
+│   │   └── conversations.json         ← multi-turn conversation threads
+│   └── montancheztamuja/
+│       └── conversations.json         ← multi-turn conversation threads
 │
 └── results/                           ← gitignored; eval/conversation outputs
 ```
@@ -223,7 +225,9 @@ pageindex-demo/
 ```
 indexes/{destination}_{lang}.json
 weather/{destination}_{lang}.json
-results/eval_{model}_{lang}.json     (results/ is gitignored)
+eval/{destination}/questions_{lang}.json    (English: questions.json, no suffix)
+eval/{destination}/conversations.json
+results/eval_{model}_{lang}.json            (results/ is gitignored)
 ```
 
 ---
@@ -303,7 +307,7 @@ that only happens in the sibling `inventrip-rag-data` repo now.
 
 ```bash
 .venv/bin/python assistant/run_eval.py \
-  --questions eval/questions_es.json \
+  --questions eval/ubeda/questions_es.json \
   --index indexes/ubeda_es.json \
   --lang es
 
@@ -328,10 +332,10 @@ this repo — the destination display name comes from the index's own
 
 ### Question set
 
-20 questions in `eval/questions.json` across three difficulty tiers and
-seven categories (overview, monument lookup, category browse, practical
+20 questions in `eval/ubeda/questions.json` across three difficulty tiers
+and seven categories (overview, monument lookup, category browse, practical
 info, gastronomy, accommodation, events, synthesis). Spanish translations
-in `eval/questions_es.json`.
+in `eval/ubeda/questions_es.json`.
 
 ### Scoring rubric
 

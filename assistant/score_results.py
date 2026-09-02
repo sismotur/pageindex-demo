@@ -23,10 +23,11 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).parent.parent
 RESULTS_DIR  = PROJECT_ROOT / "results"
 
-# Load current expected sections from questions.json as the authoritative source.
-# These override whatever expected_section is stored inside a result file,
-# so rubric corrections to questions.json take effect without re-running the eval.
-_QUESTIONS_FILE = PROJECT_ROOT / "eval" / "questions.json"
+# Load current expected sections from the Úbeda questions file as the
+# authoritative source.  These override whatever expected_section is stored
+# inside a result file, so rubric corrections to the questions file take
+# effect without re-running the eval.
+_QUESTIONS_FILE = PROJECT_ROOT / "eval" / "ubeda" / "questions.json"
 EXPECTED_SECTIONS: dict[str, str] = {}
 if _QUESTIONS_FILE.exists():
     with open(_QUESTIONS_FILE, encoding="utf-8") as _qf:

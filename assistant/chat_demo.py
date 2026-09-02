@@ -3,7 +3,7 @@
 assistant/chat_demo.py — Multi-turn conversation demo over the POI-aware index.
 
 Two modes:
-  • Scripted: runs every conversation thread in eval/conversations.json,
+  • Scripted: runs every conversation thread in eval/ubeda/conversations.json,
     carrying the full message history across turns within a thread.
   • Interactive: --interactive launches a chat where you type questions
     and the answer streams back; the conversation context carries
@@ -93,7 +93,7 @@ from common.lang_support import (   # noqa: E402
 from common.models import DEFAULT_CHAT_MODEL   # noqa: E402
 
 # ── Constants ──────────────────────────────────────────────────────────────────
-CONVERSATIONS_FILE = PROJECT_ROOT / "eval" / "conversations.json"
+CONVERSATIONS_FILE = PROJECT_ROOT / "eval" / "ubeda" / "conversations.json"
 RESULTS_DIR        = PROJECT_ROOT / "results"
 DEFAULT_MODEL      = DEFAULT_CHAT_MODEL   # oMLX E2B; the mobile deployment target
 

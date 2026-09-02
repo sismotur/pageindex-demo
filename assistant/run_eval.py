@@ -3,7 +3,8 @@
 assistant/run_eval.py — Q&A evaluation runner over the POI-aware index.
 
 Loads indexes/{destination}_{lang}.json (built by pipeline/build_index.py)
-and runs each question in eval/questions.json through litellm tool calling.
+and runs each question in eval/ubeda/questions.json through litellm tool
+calling.
 
 Six tools are exposed to the model:
 
@@ -31,7 +32,7 @@ Usage:
     .venv/bin/python assistant/run_eval.py
     .venv/bin/python assistant/run_eval.py --model openai/gemma-4-E2B-it-MLX-8bit
     .venv/bin/python assistant/run_eval.py --lang es \
-        --questions eval/questions_es.json --index indexes/ubeda_es.json
+        --questions eval/ubeda/questions_es.json --index indexes/ubeda_es.json
 """
 
 from __future__ import annotations
@@ -98,7 +99,7 @@ from common.models import DEFAULT_EVAL_MODEL
 from common.textnorm import normalize_text, tokenize
 
 # ── Constants ───────────────────────────────────────────────────────────────────────
-QUESTIONS_FILE  = PROJECT_ROOT / "eval" / "questions.json"
+QUESTIONS_FILE  = PROJECT_ROOT / "eval" / "ubeda" / "questions.json"
 DEFAULT_INDEX   = PROJECT_ROOT / "indexes" / "ubeda_en.json"
 RESULTS_DIR     = PROJECT_ROOT / "results"
 DEFAULT_MODEL   = DEFAULT_EVAL_MODEL   # oMLX E2B; the mobile deployment target
@@ -1830,7 +1831,7 @@ def main() -> None:
     parser.add_argument("--model", default=DEFAULT_MODEL,
                         help=f"litellm model string (default: {DEFAULT_MODEL})")
     parser.add_argument("--questions", default=None,
-                        help="Path to questions JSON (default: eval/questions.json)")
+                        help="Path to questions JSON (default: eval/ubeda/questions.json)")
     parser.add_argument("--index", default=None,
                         help=f"Path to POI index JSON (default: {DEFAULT_INDEX})")
     parser.add_argument("--structure", default=None,

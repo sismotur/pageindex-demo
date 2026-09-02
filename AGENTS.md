@@ -166,7 +166,7 @@ Each POI value contains the raw API fields plus computed fields:
 `find_poi_by_name`).
 
 Section titles match the `expected_section` strings in
-`eval/questions.json`, so the rubric does not need to change.
+`eval/ubeda/questions.json`, so the rubric does not need to change.
 
 ### Section grouping
 
@@ -261,7 +261,7 @@ name comes from the index's own `meta.destination_display` field.
 
 # Spanish
 .venv/bin/python assistant/run_eval.py \
-  --questions eval/questions_es.json \
+  --questions eval/ubeda/questions_es.json \
   --index indexes/ubeda_es.json \
   --lang es
 
@@ -374,12 +374,14 @@ pageindex-demo/
 │   ├── ubeda_{en,es,it}.json
 │   └── montancheztamuja_es.json
 │
-├── eval/
-│   ├── questions.json                 ← 20 visitor questions (English)
-│   ├── questions_es.json              ← Spanish translations
-│   ├── questions_it.json              ← Italian translations
-│   ├── conversations.json             ← multi-turn threads (Úbeda)
-│   └── conversations_montancheztamuja.json  ← multi-turn threads (Montánchez)
+├── eval/                              ← one subfolder per destination
+│   ├── ubeda/
+│   │   ├── questions.json             ← 20 visitor questions (English)
+│   │   ├── questions_es.json          ← Spanish translations
+│   │   ├── questions_it.json          ← Italian translations
+│   │   └── conversations.json         ← multi-turn threads (Úbeda)
+│   └── montancheztamuja/
+│       └── conversations.json         ← multi-turn threads (Montánchez)
 │
 ├── tests/
 │   ├── test_index_tools.py            ← index schema + tool-layer regression tests
@@ -395,7 +397,9 @@ pageindex-demo/
 ```
 indexes/{destination}_{lang}.json
 weather/{destination}_{lang}.json
-results/eval_{model}_{lang}.json     (results/ is gitignored)
+eval/{destination}/questions_{lang}.json    (English: questions.json, no suffix)
+eval/{destination}/conversations.json
+results/eval_{model}_{lang}.json            (results/ is gitignored)
 ```
 
 ---
