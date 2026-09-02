@@ -1004,6 +1004,23 @@ def is_brush_off_answer(text: str) -> bool:
     return is_pure_reask(text) or is_promise_to_search_later(text)
 
 
+def final_answer_needs_recovery(draft: str, messages: list[dict],
+                                question: str) -> bool:
+    """True when a would-be final answer is still a brush-off or parrot.
+
+    Covers bare re-asks, promise-to-search-later, and (in ongoing chats)
+    verbatim repeats of the previous visitor-facing assistant turn —
+    including warm greetings with "!" that `is_pure_reask` deliberately
+    ignores.
+    """
+    if is_brush_off_answer(draft):
+        return True
+    return (
+        reask_fallback_applies(messages, question)
+        and is_repeat_of_previous_answer(draft, messages, question)
+    )
+
+
 def is_repeat_of_previous_answer(answer: str, messages: list[dict],
                                  question: str = "") -> bool:
     """True when `answer` duplicates the assistant's previous VISITOR turn.
@@ -1064,6 +1081,45 @@ def execute_reask_fallback(question: str, index: dict, sections_text: str,
         "filter_pois", args, index, sections_text, cache, weather=weather,
     )
     return result, hit, "filter_pois", args
+
+
+def serve_deterministic_recovery_answer(
+    question: str,
+    index: dict,
+    sections_text: str,
+    cache: dict,
+    weather: dict | None,
+    tool_calls_made: list,
+    grounding_tools: list[str],
+    automatic_source_calls: list,
+    preview_chars: int = 300,
+) -> tuple[str, int]:
+    """Build the visitor answer from retrieval when the model still parrots.
+
+    After one recovery inject, a temp=0 model can re-emit the previous
+    greeting/brush-off instead of using the supplied records.  Do not
+    ask it again — present the deterministic lookup result directly.
+    Returns (answer, cache_hit_delta).
+    """
+    result, hit, fb_tool, fb_args = execute_reask_fallback(
+        question, index, sections_text, cache, weather=weather,
+    )
+    tool_calls_made.append({
+        "tool": fb_tool,
+        "args": fb_args,
+        "result_preview": result[:preview_chars],
+        "cache_hit": hit,
+        "automatic": True,
+        "deterministic_present": True,
+    })
+    if fb_tool not in grounding_tools:
+        grounding_tools.append(fb_tool)
+    automatic_source_calls.append({
+        "tool": fb_tool,
+        "args": fb_args,
+        "deterministic_present": True,
+    })
+    return sanitize_tourist_answer(result, index), (1 if hit else 0)
 
 
 def reask_fallback_applies(messages: list[dict], question: str) -> bool:
@@ -1942,7 +1998,7 @@ def run_agentic_loop(question: str, system_prompt: str,
     grounding_required = requires_current_turn_grounding(question)
     grounded = False
     grounding_retry_enforced = False
-    brushoff_recovery_enforced = False
+    content_recovery_enforced = False
     grounding_tools: list[str] = []
     automatic_source_calls: list[dict] = []
     trip_detail_required = requires_trip_detail(question)
@@ -2258,14 +2314,22 @@ def run_agentic_loop(question: str, system_prompt: str,
                     answer = sanitize_tourist_answer(fallback, index)
                     assistant_msg["content"] = answer
                     break
-                # The model answered the recovery prompt with yet
-                # another clarifying question — a brush-off.  A bare
-                # re-ask is never an acceptable final answer, on ANY turn
-                # (greetings survive: warm greeting replies carry "!"
-                # markers, which is_pure_reask rejects).  Retrieve real
-                # content deterministically and make the model present it.
+                # Brush-off or parrot: recover once by injecting records;
+                # if the model still declines after that, present the
+                # lookup result deterministically (no further LLM round).
                 draft = (message.content or "").strip()
-                if is_brush_off_answer(draft):
+                if final_answer_needs_recovery(draft, messages, question):
+                    if content_recovery_enforced:
+                        answer, hit_delta = serve_deterministic_recovery_answer(
+                            question, index, sections_text, cache, weather,
+                            tool_calls_made, grounding_tools,
+                            automatic_source_calls,
+                        )
+                        cache_hits += hit_delta
+                        grounded = True
+                        assistant_msg["content"] = answer
+                        break
+                    content_recovery_enforced = True
                     result, hit, fb_tool, fb_args = execute_reask_fallback(
                         question, index, sections_text, cache, weather=weather,
                     )
@@ -2297,12 +2361,20 @@ def run_agentic_loop(question: str, system_prompt: str,
                 # the preloaded overview/catalogue.
                 answer = sanitize_tourist_answer(draft, index)
                 break
-            # Even after usable tool results, a pure reask / promise-to-
-            # search-later answer is a brush-off — recover once.
+            # Even after usable tool results, a brush-off or previous-turn
+            # parrot is not an acceptable final answer.
             draft = (message.content or "").strip()
-            if (not brushoff_recovery_enforced
-                    and is_brush_off_answer(draft)):
-                brushoff_recovery_enforced = True
+            if final_answer_needs_recovery(draft, messages, question):
+                if content_recovery_enforced:
+                    answer, hit_delta = serve_deterministic_recovery_answer(
+                        question, index, sections_text, cache, weather,
+                        tool_calls_made, grounding_tools,
+                        automatic_source_calls,
+                    )
+                    cache_hits += hit_delta
+                    grounded = True
+                    break
+                content_recovery_enforced = True
                 injected, hit_delta = inject_named_poi_backstop(
                     question, messages, index, sections_text, cache,
                     weather, tool_calls_made, grounding_tools,

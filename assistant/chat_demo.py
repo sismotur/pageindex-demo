@@ -65,6 +65,7 @@ from run_eval import (   # noqa: E402
     chant_repeat_prefix,
     execute_reask_fallback,
     inject_named_poi_backstop,
+    final_answer_needs_recovery,
     is_brush_off_answer,
     is_pure_reask,
     is_repeat_tool_call,
@@ -74,6 +75,7 @@ from run_eval import (   # noqa: E402
     history_followup_answer,
     is_repeat_of_previous_answer,
     selected_source_context,
+    serve_deterministic_recovery_answer,
     requires_trip_detail,
     tool_call_key,
     tool_result_is_usable,
@@ -219,7 +221,7 @@ def run_turn(question: str, messages: list[dict],
     grounding_required = requires_current_turn_grounding(question)
     grounded = False
     grounding_retry_enforced = False
-    brushoff_recovery_enforced = False
+    content_recovery_enforced = False
     grounding_tools: list[str] = []
     automatic_source_calls: list[dict] = []
     trip_detail_required = requires_trip_detail(question)
@@ -615,23 +617,24 @@ def run_turn(question: str, messages: list[dict],
                         answer = sanitize_tourist_answer(fallback, index)
                         assistant_msg["content"] = answer
                         break
-                    # The model answered the recovery prompt with yet
-                    # another clarifying question — a brush-off. In an
-                    # ongoing conversation, retrieve real content
-                    # deterministically and make it answer from that
-                    # instead of re-asking.
-                    # A repeated previous answer is a brush-off just like
-                    # a bare re-ask (temp=0 models can re-emit their last
-                    # reply); intercept both with the same deterministic
-                    # retrieval instead of serving them.  A bare re-ask
-                    # is intercepted on ANY turn (greetings survive via
-                    # their "!" warmth markers); a repeat can only exist
-                    # in an ongoing conversation, hence the gate there.
+                    # Brush-off or parrot: recover once by injecting
+                    # records; if the model still declines, present the
+                    # lookup result deterministically.
                     draft = acc_content.strip()
-                    if (is_brush_off_answer(draft)
-                            or (reask_fallback_applies(messages, question)
-                                and is_repeat_of_previous_answer(
-                                    draft, messages, question))):
+                    if final_answer_needs_recovery(draft, messages, question):
+                        if content_recovery_enforced:
+                            answer, hit_delta = (
+                                serve_deterministic_recovery_answer(
+                                    question, index, sections_text, cache,
+                                    weather, tool_calls_made, grounding_tools,
+                                    automatic_source_calls, preview_chars=250,
+                                )
+                            )
+                            cache_hits += hit_delta
+                            grounded = True
+                            assistant_msg["content"] = answer
+                            break
+                        content_recovery_enforced = True
                         result, hit, fb_tool, fb_args = execute_reask_fallback(
                             question, index, sections_text, cache,
                             weather=weather,
@@ -666,12 +669,21 @@ def run_turn(question: str, messages: list[dict],
                     answer = sanitize_tourist_answer(draft, index)
                     assistant_msg["content"] = answer
                     break
-                # Even after usable tool results, a pure reask /
-                # promise-to-search-later answer is a brush-off.
+                # Even after usable tool results, a brush-off or previous-
+                # turn parrot is not an acceptable final answer.
                 draft = acc_content.strip()
-                if (not brushoff_recovery_enforced
-                        and is_brush_off_answer(draft)):
-                    brushoff_recovery_enforced = True
+                if final_answer_needs_recovery(draft, messages, question):
+                    if content_recovery_enforced:
+                        answer, hit_delta = serve_deterministic_recovery_answer(
+                            question, index, sections_text, cache, weather,
+                            tool_calls_made, grounding_tools,
+                            automatic_source_calls, preview_chars=250,
+                        )
+                        cache_hits += hit_delta
+                        grounded = True
+                        assistant_msg["content"] = answer
+                        break
+                    content_recovery_enforced = True
                     injected, hit_delta = inject_named_poi_backstop(
                         question, messages, index, sections_text, cache,
                         weather, tool_calls_made, grounding_tools,
@@ -918,17 +930,24 @@ def run_turn(question: str, messages: list[dict],
                         answer = sanitize_tourist_answer(fallback, index)
                         assistant_msg["content"] = answer
                         break
-                    # The model answered the recovery prompt with yet
-                    # another clarifying question — a brush-off. In an
-                    # ongoing conversation, retrieve real content
-                    # deterministically and make it answer from that
-                    # instead of re-asking.
-                    # Same brush-off interception as the streaming path.
+                    # Brush-off or parrot: recover once by injecting
+                    # records; if the model still declines, present the
+                    # lookup result deterministically.
                     draft = (message.content or "").strip()
-                    if (is_brush_off_answer(draft)
-                            or (reask_fallback_applies(messages, question)
-                                and is_repeat_of_previous_answer(
-                                    draft, messages, question))):
+                    if final_answer_needs_recovery(draft, messages, question):
+                        if content_recovery_enforced:
+                            answer, hit_delta = (
+                                serve_deterministic_recovery_answer(
+                                    question, index, sections_text, cache,
+                                    weather, tool_calls_made, grounding_tools,
+                                    automatic_source_calls, preview_chars=250,
+                                )
+                            )
+                            cache_hits += hit_delta
+                            grounded = True
+                            assistant_msg["content"] = answer
+                            break
+                        content_recovery_enforced = True
                         result, hit, fb_tool, fb_args = execute_reask_fallback(
                             question, index, sections_text, cache,
                             weather=weather,
@@ -963,12 +982,21 @@ def run_turn(question: str, messages: list[dict],
                     answer = sanitize_tourist_answer(draft, index)
                     assistant_msg["content"] = answer
                     break
-                # Even after usable tool results, a pure reask /
-                # promise-to-search-later answer is a brush-off.
+                # Even after usable tool results, a brush-off or previous-
+                # turn parrot is not an acceptable final answer.
                 draft = (message.content or "").strip()
-                if (not brushoff_recovery_enforced
-                        and is_brush_off_answer(draft)):
-                    brushoff_recovery_enforced = True
+                if final_answer_needs_recovery(draft, messages, question):
+                    if content_recovery_enforced:
+                        answer, hit_delta = serve_deterministic_recovery_answer(
+                            question, index, sections_text, cache, weather,
+                            tool_calls_made, grounding_tools,
+                            automatic_source_calls, preview_chars=250,
+                        )
+                        cache_hits += hit_delta
+                        grounded = True
+                        assistant_msg["content"] = answer
+                        break
+                    content_recovery_enforced = True
                     injected, hit_delta = inject_named_poi_backstop(
                         question, messages, index, sections_text, cache,
                         weather, tool_calls_made, grounding_tools,

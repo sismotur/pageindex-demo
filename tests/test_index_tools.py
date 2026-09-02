@@ -70,6 +70,7 @@ from run_eval import (
     compact_tool_history,
     execute_reask_fallback,
     execute_tool,
+    final_answer_needs_recovery,
     grounding_failure_message,
     is_brush_off_answer,
     is_designation_question,
@@ -1768,6 +1769,43 @@ class TestRepeatAnswerGuard:
         # Every generation call carries the answer-length cap.
         assert all(c.get("max_tokens") == MAX_ANSWER_TOKENS
                    for c in captured)
+
+    def test_parrot_after_fallback_serves_deterministic_content(
+            self, index, monkeypatch):
+        """Residual: model parrots the greeting AGAIN after reask fallback
+        injects records.  Must not serve the greeting — present the
+        deterministic lookup result with no further LLM round.
+        """
+        from chat_demo import run_turn
+        captured: list = []
+        # 1) ungrounded first attempt → recovery instruction
+        # 2) parrot previous greeting → reask fallback inject
+        # 3) parrot AGAIN → deterministic present (no 4th LLM call)
+        replies = ["A genuine first attempt.", self.PREV, self.PREV]
+
+        def fake(*args, **kwargs):
+            captured.append(kwargs)
+            content = replies[min(len(captured), len(replies)) - 1]
+            return SimpleNamespace(
+                choices=[SimpleNamespace(message=SimpleNamespace(
+                    content=content, tool_calls=None))],
+                usage=None,
+            )
+
+        monkeypatch.setattr(litellm, "completion", fake)
+        result = run_turn("What can I see?", self._history(), index, "",
+                          "fake-model", {})
+        assert result["answer"] != self.PREV
+        assert self.PREV not in (result["answer"] or "")
+        assert len(captured) == 3   # no 4th generation after 2nd parrot
+        assert any(
+            c.get("automatic") and c.get("deterministic_present")
+            for c in result["tool_calls"]
+        )
+        assert final_answer_needs_recovery(
+            self.PREV, self._history() + [
+                {"role": "user", "content": "What can I see?"},
+            ], "What can I see?")
 
 
 # ── Designation-question guard ────────────────────────────────────────────
