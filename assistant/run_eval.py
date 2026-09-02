@@ -91,6 +91,7 @@ from common.lang_support import (
     SUPPORTED_LANGS,
     lang_rule,
     recovery_msg,
+    recovery_msg as _recovery_msg,
     is_supported,
 )
 from common.models import DEFAULT_EVAL_MODEL
@@ -171,6 +172,12 @@ SOURCE_GROUNDING_TOOLS = frozenset({
 })
 GROUNDING_RECOVERY_INSTRUCTION = (
     "Look at the visitor's message once more.\n"
+    "If it is a short confirmation (\"yes\", \"sí\", \"ok\", \"go ahead\") "
+    "answering a question or offer YOU made in your previous message, it is "
+    "NOT small talk: act on your own offer now — call find_poi_by_name for "
+    "each place you just named (or the tool matching what you offered) and "
+    "answer from the retrieved records. Never answer a confirmation with "
+    "another \"what would you like to know?\" question.\n"
     "If it is just a greeting, thanks, or small talk, respond warmly and "
     "briefly in the visitor's language and offer your help — no tool call "
     "is needed.\n"
@@ -403,11 +410,136 @@ def question_names_known_poi(question: str, index: dict) -> str | None:
 
 
 NAMED_POI_LOOKUP_INSTRUCTION = (
-    "The visitor's question names this known place, whose record has just "
-    "been retrieved. Answer the question from this record now, in the "
-    "visitor's language — do not promise to search later and do not ask "
-    "the visitor to repeat or choose."
+    "The visitor is asking about this known place (named by them, or "
+    "offered by you and confirmed with a yes), whose record has just been "
+    "retrieved. Answer from this record now, in the visitor's language — "
+    "do not promise to search later and do not ask the visitor to repeat "
+    "or choose."
 )
+
+
+def _current_question_index(messages: list[dict], question: str) -> int:
+    """Index of the current visitor question inside `messages` (or -1)."""
+    for i in range(len(messages) - 1, -1, -1):
+        msg = messages[i]
+        if msg.get("role") == "user" and (msg.get("content") or "") == question:
+            return i
+    return -1
+
+
+def _previous_offer_poi_names(messages: list[dict], question: str,
+                              index: dict, limit: int = 3) -> list[str]:
+    """Known-place names inside the assistant's pre-question offer.
+
+    When the assistant ended its previous turn by offering places
+    (“¿Te gustaría saber más sobre X o Y?”) and the visitor replies with
+    a short confirmation, the reply itself names nothing — the named
+    places live in the assistant's own previous message.  Probe that
+    message against the destination's name_index so the backstop can
+    fetch what was offered.  Language-agnostic by design: no affirmation
+    word list — the gate is a short visitor reply to an assistant
+    message that ends with a question mark.
+    """
+    if len(tokenize(question)) > 5:
+        return []
+    prior_end = _current_question_index(messages, question)
+    prior = messages[:prior_end] if prior_end >= 0 else messages
+    offer = ""
+    for msg in reversed(prior):
+        if msg.get("role") == "assistant" and (msg.get("content") or "").strip():
+            offer = (msg["content"] or "").strip()
+            break
+    if not offer.endswith("?"):
+        return []
+    normalized = normalize_text(offer)
+    matches: list[str] = []
+    for name in (index.get("name_index") or {}):
+        if " " not in name and len(name) < 8:
+            continue  # short single words match too casually
+        if name in normalized and name not in matches:
+            matches.append(name)
+    matches.sort(key=len, reverse=True)
+    return matches[:limit]
+
+
+def backstop_named_pois(question: str, messages: list[dict],
+                        index: dict) -> list[str]:
+    """Known-place names to fetch when the model twice declined retrieval.
+
+    Primary: the visitor's question explicitly names a known place.
+    Secondary: the visitor gave a short confirmation to an assistant offer
+    that named known places (the names live in the assistant's message,
+    not in the visitor's reply).
+    """
+    named = question_names_known_poi(question, index)
+    if named:
+        return [named]
+    return _previous_offer_poi_names(messages, question, index)
+
+
+def is_pure_reask(text: str) -> bool:
+    """True when the model's answer is only another clarifying question.
+
+    A helpful tourism turn must carry content; a bare “¿Qué te gustaría
+    saber ahora?” after the recovery prompt is a brush-off.  Tagged or
+    long answers, and warm greeting-style replies (which use exclamation
+    marks in the app languages), count as real answers, not re-asks.
+    """
+    t = (text or "").strip()
+    if not t or len(t) > 300:
+        return False
+    if "<poi" in t or "<trip" in t:
+        return False
+    if "!" in t or "¡" in t or "！" in t:
+        return False
+    return t.endswith("?") or t.endswith("？")
+
+
+REASK_FALLBACK_INSTRUCTION = (
+    "Answering with another clarifying question is not acceptable — the "
+    "visitor already engaged and expects real content. Below are visitor "
+    "records retrieved now. Present them warmly in the visitor's language, "
+    "tagging each place, and invite the visitor to pick one for more "
+    "detail. If the result says nothing matched, answer from the "
+    "destination overview and the section catalogue instead."
+)
+
+
+def execute_reask_fallback(question: str, index: dict, sections_text: str,
+                           cache: dict,
+                           weather: dict | None = None) -> tuple[str, bool, str, dict]:
+    """Deterministically retrieve content after a repeated re-ask.
+
+    A topical question (any token with 3+ chars) gets a same-record
+    evidence search first; a content-free message ("sí", "ok") or a
+    search miss falls back to the destination's indispensable highlights.
+    Returns (result_text, cache_hit, tool_name, args).
+    """
+    if any(len(tok) >= 3 for tok in tokenize(question)):
+        args = {"query": question, "limit": 5}
+        result, hit = execute_tool(
+            "search_pois", args, index, sections_text, cache, weather=weather,
+        )
+        if not result.startswith(NO_DIRECT_EVIDENCE_PREFIX):
+            return result, hit, "search_pois", args
+    args = {"interest_level": 1, "limit": 10}
+    result, hit = execute_tool(
+        "filter_pois", args, index, sections_text, cache, weather=weather,
+    )
+    return result, hit, "filter_pois", args
+
+
+def reask_fallback_applies(messages: list[dict], question: str) -> bool:
+    """Gate the re-ask fallback to ongoing conversations only.
+
+    First-turn messages (greetings like “Hola”, or every single-question
+    eval run) keep the trust-the-model path so greeting tone and eval
+    scores are unaffected; from the second visitor message on, a repeated
+    clarifying question is intercepted with deterministic retrieval.
+    """
+    q_idx = _current_question_index(messages, question)
+    prior = messages[:q_idx] if q_idx >= 0 else messages
+    return any(m.get("role") == "user" for m in prior)
 
 
 def history_followup_answer(question: str, messages: list[dict],
@@ -1466,27 +1598,31 @@ def run_agentic_loop(question: str, system_prompt: str,
                     assistant_msg["content"] = answer
                     break
                 # Last-resort backstop for small models: if the question
-                # explicitly names a known place, fetch its record
+                # explicitly names a known place (or confirms an assistant
+                # offer that named places), fetch those records
                 # deterministically instead of accepting a brush-off.
-                named_poi = question_names_known_poi(question, index)
-                if named_poi:
-                    named_id = (index.get("name_index") or {})[named_poi]
+                named_pois = backstop_named_pois(question, messages, index)
+                if named_pois:
+                    name_index = index.get("name_index") or {}
+                    named_ids = ",".join(dict.fromkeys(
+                        name_index[n] for n in named_pois if n in name_index
+                    ))
                     result, hit = execute_tool(
-                        "get_poi", {"poi_id": named_id}, index,
+                        "get_poi", {"poi_id": named_ids}, index,
                         sections_text, cache, weather=weather,
                     )
                     if hit:
                         cache_hits += 1
                     tool_calls_made.append({
                         "tool": "get_poi",
-                        "args": {"poi_id": named_id},
+                        "args": {"poi_id": named_ids},
                         "result_preview": result[:300],
                         "cache_hit": hit,
                         "automatic": True,
                         "source_selection": {
                             "kind": "poi",
-                            "id": named_id,
-                            "label": named_poi,
+                            "id": named_ids,
+                            "label": ", ".join(named_pois),
                         },
                     })
                     grounded = True
@@ -1494,16 +1630,47 @@ def run_agentic_loop(question: str, system_prompt: str,
                         grounding_tools.append("get_poi")
                     automatic_source_calls.append({
                         "tool": "get_poi",
-                        "args": {"poi_id": named_id},
+                        "args": {"poi_id": named_ids},
                         "source_selection": {
                             "kind": "poi",
-                            "id": named_id,
-                            "label": named_poi,
+                            "id": named_ids,
+                            "label": ", ".join(named_pois),
                         },
                     })
                     messages.append({
                         "role": "user",
                         "content": (NAMED_POI_LOOKUP_INSTRUCTION
+                                    + "\n\n" + result),
+                    })
+                    continue
+                # The model answered the recovery prompt with yet another
+                # clarifying question — a brush-off. In an ongoing
+                # conversation, retrieve real content deterministically
+                # and make it answer from that instead of re-asking.
+                if (reask_fallback_applies(messages, question)
+                        and is_pure_reask((message.content or "").strip())):
+                    result, hit, fb_tool, fb_args = execute_reask_fallback(
+                        question, index, sections_text, cache, weather=weather,
+                    )
+                    if hit:
+                        cache_hits += 1
+                    tool_calls_made.append({
+                        "tool": fb_tool,
+                        "args": fb_args,
+                        "result_preview": result[:300],
+                        "cache_hit": hit,
+                        "automatic": True,
+                    })
+                    grounded = True
+                    if fb_tool not in grounding_tools:
+                        grounding_tools.append(fb_tool)
+                    automatic_source_calls.append({
+                        "tool": fb_tool,
+                        "args": fb_args,
+                    })
+                    messages.append({
+                        "role": "user",
+                        "content": (REASK_FALLBACK_INSTRUCTION
                                     + "\n\n" + result),
                     })
                     continue
@@ -1583,7 +1750,7 @@ def run_agentic_loop(question: str, system_prompt: str,
                 break
 
     if not answer and not error:
-        msg = recovery_msg or _RECOVERY_MSGS["en"]
+        msg = recovery_msg or _recovery_msg("en")
         try:
             compact_tool_history(messages)
             recovery = litellm.completion(

@@ -327,9 +327,17 @@ Typical flows handled by the model:
   destination overview and section catalogue preloaded in the system
   prompt — that content is itself index-derived, so no tool call is
   required. When a turn ends without retrieval, the model self-classifies
-  once (generic → answer from the catalogue; specific → call a tool); the
-  localized safe failure remains only for turns that never produce an
-  answer.
+  once (generic → answer from the catalogue; specific → call a tool; a
+  short confirmation like "sí" answering the assistant's own offer → act
+  on that offer, never re-ask). If the model still declines, two
+  deterministic backstops fire: the destination's own `name_index` is
+  probed against the question — and, after a short confirmation, against
+  the assistant's previous offer — to fetch the named records; and when
+  the model answers an ongoing-conversation turn with yet another bare
+  clarifying question, the runtime retrieves content itself
+  (`search_pois` on the question, else `filter_pois` indispensable
+  highlights) and makes the model present it. The localized safe failure
+  remains only for turns that never produce an answer.
 
 Pre-warm: every section's `get_section(id, "interest", 50)` result is
 cached at session start, so subsequent calls are instant.

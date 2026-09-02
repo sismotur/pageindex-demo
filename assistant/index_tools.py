@@ -311,12 +311,32 @@ def _poi_tag_with_text(poi: dict, text: str) -> str:
     return f"<poi id={bare_id} type={type_code}>{text}</poi>"
 
 
+# Small models occasionally emit a synonymous element name
+# (<place id=12 ...>) or leave the tag dangling after a bold label
+# ("**Name** <poi id=12 type=X>:").  Canonicalize both before validation.
+_TAG_ALIAS_OPEN_RE = re.compile(r"<place\b(?=[^>]*\bid\s*=)", re.IGNORECASE)
+_TAG_ALIAS_CLOSE_RE = re.compile(r"</place\s*>", re.IGNORECASE)
+_POI_BOLD_DANGLING_RE = re.compile(
+    r"\*\*(?P<label>[^*\n]+?)\*\*\s*\(?\s*<poi\b[^>]*\bid\s*=\s*\"?"
+    r"(?:poi/)?(?P<id>\d+)\"?[^>]*>\s*\)?",
+    re.IGNORECASE,
+)
+# Any remaining <poi ...> opening/empty fragment (dangling model output).
+_POI_OPEN_FRAGMENT_RE = re.compile(r"<poi\b[^>]*>", re.IGNORECASE)
+
+
 def sanitize_poi_tags(answer: str, index: dict) -> str:
     """Keep only tags whose id exists in the downloaded index.
 
     This validates an ID the model supplied; it never searches names or
     guesses a replacement. Unknown tags become ordinary inner text.
     """
+    def bold_dangling(match: re.Match) -> str:
+        poi = get_poi(index, f"poi/{match.group('id')}")
+        if poi is None:
+            return match.group("label")
+        return _poi_tag_with_text(poi, match.group("label"))
+
     def full_tag(match: re.Match) -> str:
         poi = get_poi(index, f"poi/{match.group(1)}")
         if poi is None:
@@ -327,7 +347,10 @@ def sanitize_poi_tags(answer: str, index: dict) -> str:
         poi = get_poi(index, f"poi/{match.group(1)}")
         return _poi_tag(poi) if poi is not None else ""
 
-    sanitized = POI_TAG_RE.sub(full_tag, answer or "")
+    sanitized = _TAG_ALIAS_OPEN_RE.sub("<poi", answer or "")
+    sanitized = _TAG_ALIAS_CLOSE_RE.sub("</poi>", sanitized)
+    sanitized = _POI_BOLD_DANGLING_RE.sub(bold_dangling, sanitized)
+    sanitized = POI_TAG_RE.sub(full_tag, sanitized)
     return POI_TAG_EMPTY_RE.sub(empty_tag, sanitized)
 
 
@@ -421,8 +444,10 @@ def sanitize_tourist_answer(answer: str, index: dict) -> str:
         return f"__INVENTRIP_POI_TAG_{len(protected_tags) - 1}__"
 
     # Do not apply prose replacements to the literal `poi` tag name or
-    # its machine-readable attributes.
+    # its machine-readable attributes — full tags first, then any
+    # leftover dangling/empty <poi ...> fragment a small model emitted.
     sanitized = POI_TAG_RE.sub(protect_tag, sanitized)
+    sanitized = _POI_OPEN_FRAGMENT_RE.sub(protect_tag, sanitized)
     replacements = (
         (r"\bPOIs\b", "places"),
         (r"\bPOI\b", "place"),

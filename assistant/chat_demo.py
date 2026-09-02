@@ -57,7 +57,11 @@ from run_eval import (   # noqa: E402
     SOURCE_GROUNDING_TOOLS,
     GROUNDING_RECOVERY_INSTRUCTION,
     NAMED_POI_LOOKUP_INSTRUCTION,
-    question_names_known_poi,
+    REASK_FALLBACK_INSTRUCTION,
+    backstop_named_pois,
+    execute_reask_fallback,
+    is_pure_reask,
+    reask_fallback_applies,
     requires_current_turn_grounding,
     grounding_failure_message,
     history_followup_answer,
@@ -501,28 +505,32 @@ def run_turn(question: str, messages: list[dict],
                         assistant_msg["content"] = answer
                         break
                     # Last-resort backstop for small models: if the
-                    # question explicitly names a known place, fetch its
-                    # record deterministically instead of accepting a
+                    # question explicitly names a known place (or confirms
+                    # an assistant offer that named places), fetch those
+                    # records deterministically instead of accepting a
                     # brush-off.
-                    named_poi = question_names_known_poi(question, index)
-                    if named_poi:
-                        named_id = (index.get("name_index") or {})[named_poi]
+                    named_pois = backstop_named_pois(question, messages, index)
+                    if named_pois:
+                        name_index = index.get("name_index") or {}
+                        named_ids = ",".join(dict.fromkeys(
+                            name_index[n] for n in named_pois if n in name_index
+                        ))
                         result, hit = execute_tool(
-                            "get_poi", {"poi_id": named_id}, index,
+                            "get_poi", {"poi_id": named_ids}, index,
                             sections_text, cache, weather=weather,
                         )
                         if hit:
                             cache_hits += 1
                         tool_calls_made.append({
                             "tool": "get_poi",
-                            "args": {"poi_id": named_id},
+                            "args": {"poi_id": named_ids},
                             "result_preview": result[:250],
                             "cache_hit": hit,
                             "automatic": True,
                             "source_selection": {
                                 "kind": "poi",
-                                "id": named_id,
-                                "label": named_poi,
+                                "id": named_ids,
+                                "label": ", ".join(named_pois),
                             },
                         })
                         grounded = True
@@ -530,16 +538,49 @@ def run_turn(question: str, messages: list[dict],
                             grounding_tools.append("get_poi")
                         automatic_source_calls.append({
                             "tool": "get_poi",
-                            "args": {"poi_id": named_id},
+                            "args": {"poi_id": named_ids},
                             "source_selection": {
                                 "kind": "poi",
-                                "id": named_id,
-                                "label": named_poi,
+                                "id": named_ids,
+                                "label": ", ".join(named_pois),
                             },
                         })
                         messages.append({
                             "role": "user",
                             "content": (NAMED_POI_LOOKUP_INSTRUCTION
+                                        + "\n\n" + result),
+                        })
+                        continue
+                    # The model answered the recovery prompt with yet
+                    # another clarifying question — a brush-off. In an
+                    # ongoing conversation, retrieve real content
+                    # deterministically and make it answer from that
+                    # instead of re-asking.
+                    if (reask_fallback_applies(messages, question)
+                            and is_pure_reask(acc_content.strip())):
+                        result, hit, fb_tool, fb_args = execute_reask_fallback(
+                            question, index, sections_text, cache,
+                            weather=weather,
+                        )
+                        if hit:
+                            cache_hits += 1
+                        tool_calls_made.append({
+                            "tool": fb_tool,
+                            "args": fb_args,
+                            "result_preview": result[:250],
+                            "cache_hit": hit,
+                            "automatic": True,
+                        })
+                        grounded = True
+                        if fb_tool not in grounding_tools:
+                            grounding_tools.append(fb_tool)
+                        automatic_source_calls.append({
+                            "tool": fb_tool,
+                            "args": fb_args,
+                        })
+                        messages.append({
+                            "role": "user",
+                            "content": (REASK_FALLBACK_INSTRUCTION
                                         + "\n\n" + result),
                         })
                         continue
@@ -716,28 +757,32 @@ def run_turn(question: str, messages: list[dict],
                         assistant_msg["content"] = answer
                         break
                     # Last-resort backstop for small models: if the
-                    # question explicitly names a known place, fetch its
-                    # record deterministically instead of accepting a
+                    # question explicitly names a known place (or confirms
+                    # an assistant offer that named places), fetch those
+                    # records deterministically instead of accepting a
                     # brush-off.
-                    named_poi = question_names_known_poi(question, index)
-                    if named_poi:
-                        named_id = (index.get("name_index") or {})[named_poi]
+                    named_pois = backstop_named_pois(question, messages, index)
+                    if named_pois:
+                        name_index = index.get("name_index") or {}
+                        named_ids = ",".join(dict.fromkeys(
+                            name_index[n] for n in named_pois if n in name_index
+                        ))
                         result, hit = execute_tool(
-                            "get_poi", {"poi_id": named_id}, index,
+                            "get_poi", {"poi_id": named_ids}, index,
                             sections_text, cache, weather=weather,
                         )
                         if hit:
                             cache_hits += 1
                         tool_calls_made.append({
                             "tool": "get_poi",
-                            "args": {"poi_id": named_id},
+                            "args": {"poi_id": named_ids},
                             "result_preview": result[:250],
                             "cache_hit": hit,
                             "automatic": True,
                             "source_selection": {
                                 "kind": "poi",
-                                "id": named_id,
-                                "label": named_poi,
+                                "id": named_ids,
+                                "label": ", ".join(named_pois),
                             },
                         })
                         grounded = True
@@ -745,16 +790,49 @@ def run_turn(question: str, messages: list[dict],
                             grounding_tools.append("get_poi")
                         automatic_source_calls.append({
                             "tool": "get_poi",
-                            "args": {"poi_id": named_id},
+                            "args": {"poi_id": named_ids},
                             "source_selection": {
                                 "kind": "poi",
-                                "id": named_id,
-                                "label": named_poi,
+                                "id": named_ids,
+                                "label": ", ".join(named_pois),
                             },
                         })
                         messages.append({
                             "role": "user",
                             "content": (NAMED_POI_LOOKUP_INSTRUCTION
+                                        + "\n\n" + result),
+                        })
+                        continue
+                    # The model answered the recovery prompt with yet
+                    # another clarifying question — a brush-off. In an
+                    # ongoing conversation, retrieve real content
+                    # deterministically and make it answer from that
+                    # instead of re-asking.
+                    if (reask_fallback_applies(messages, question)
+                            and is_pure_reask((message.content or "").strip())):
+                        result, hit, fb_tool, fb_args = execute_reask_fallback(
+                            question, index, sections_text, cache,
+                            weather=weather,
+                        )
+                        if hit:
+                            cache_hits += 1
+                        tool_calls_made.append({
+                            "tool": fb_tool,
+                            "args": fb_args,
+                            "result_preview": result[:250],
+                            "cache_hit": hit,
+                            "automatic": True,
+                        })
+                        grounded = True
+                        if fb_tool not in grounding_tools:
+                            grounding_tools.append(fb_tool)
+                        automatic_source_calls.append({
+                            "tool": fb_tool,
+                            "args": fb_args,
+                        })
+                        messages.append({
+                            "role": "user",
+                            "content": (REASK_FALLBACK_INSTRUCTION
                                         + "\n\n" + result),
                         })
                         continue

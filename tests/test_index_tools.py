@@ -57,12 +57,16 @@ from run_eval import (
     GROUNDING_RECOVERY_INSTRUCTION,
     MAX_TOOL_HISTORY_CHARS,
     MAX_TOOL_RESULT_CHARS,
+    backstop_named_pois,
     bound_tool_result,
     compact_tool_history,
+    execute_reask_fallback,
     execute_tool,
     grounding_failure_message,
     is_physical_route_request,
+    is_pure_reask,
     question_names_known_poi,
+    reask_fallback_applies,
     requires_current_turn_grounding,
     requires_trip_detail,
 )
@@ -163,6 +167,9 @@ class TestStrictGrounding:
         assert "find_poi_by_name" in text
         # Small talk is handled by the model, not a translated list.
         assert "small talk" in text
+        # A short confirmation answering the assistant's own offer must
+        # trigger retrieval of the offered places, not another question.
+        assert "confirmation" in text and "not small talk" in text
 
     def test_named_poi_probe_detects_named_place(self, spanish_index):
         # The language-agnostic backstop: a question explicitly naming a
@@ -177,6 +184,113 @@ class TestStrictGrounding:
     def test_named_poi_probe_ignores_generic_questions(self, spanish_index):
         assert question_names_known_poi("¿Qué puedo ver?", spanish_index) is None
         assert question_names_known_poi("What is there to do?", spanish_index) is None
+
+    def test_backstop_probes_previous_offer_after_confirmation(
+            self, spanish_index):
+        # "sí" names nothing itself, but it confirms the assistant's
+        # previous offer, which named known places — the backstop must
+        # resolve those names so their records are fetched.
+        name_index = spanish_index.get("name_index") or {}
+        multi = next(n for n in name_index if " " in n and len(n) >= 8)
+        offer = f"¿Te gustaría saber más sobre {multi}?"
+        messages = [
+            {"role": "system", "content": "..."},
+            {"role": "user", "content": "historia"},
+            {"role": "assistant", "content": offer},
+            {"role": "user", "content": "sí"},
+        ]
+        assert backstop_named_pois("sí", messages, spanish_index) == [multi]
+
+    def test_backstop_ignores_long_replies_and_non_offers(self, spanish_index):
+        name_index = spanish_index.get("name_index") or {}
+        multi = next(n for n in name_index if " " in n and len(n) >= 8)
+        # Previous assistant turn was not a question → no offer to confirm.
+        messages = [
+            {"role": "user", "content": "historia"},
+            {"role": "assistant", "content": f"Te recomiendo {multi}."},
+            {"role": "user", "content": "sí"},
+        ]
+        assert backstop_named_pois("sí", messages, spanish_index) == []
+        # A long visitor message is a new question, not a confirmation —
+        # it must stand on its own words.
+        messages[-1] = {
+            "role": "user",
+            "content": "sí pero también quiero ver museos y iglesias",
+        }
+        assert backstop_named_pois(
+            "sí pero también quiero ver museos y iglesias",
+            messages, spanish_index,
+        ) == []
+
+    def test_place_alias_and_bold_dangling_tags_repaired(self, index):
+        # Small models sometimes write <place id=…> or leave the tag
+        # dangling after a bold label; both must become canonical poi tags.
+        poi = next(iter((index.get("pois") or {}).values()))
+        bare = str(poi["poi_id"]).split("/", 1)[-1]
+        out = sanitize_tourist_answer(
+            f"**{poi['name']}** <place id={bare} type=Museum>:", index,
+        )
+        assert "<place" not in out and "**" not in out
+        assert f"<poi id={bare}" in out and poi["name"] in out
+        out = sanitize_tourist_answer(
+            f"<place id={bare}>Text</place>", index,
+        )
+        assert out == f"<poi id={bare} type={poi['display_type']}>Text</poi>" \
+            or (f"<poi id={bare}" in out and "Text</poi>" in out
+                and "place" not in out)
+
+    @pytest.mark.parametrize("text", [
+        "¿Qué te gustaría saber ahora?",
+        "¿Te interesa la historia o la gastronomía?",
+        "What would you like to know?",
+    ])
+    def test_pure_reask_detected(self, text):
+        assert is_pure_reask(text)
+
+    @pytest.mark.parametrize("text", [
+        "",   # empty
+        "¡Hola! ¿En qué puedo ayudarte?",          # greeting warmth
+        "¡Dime qué necesitas!",                     # exclamation only
+        "El castillo data del siglo XIII. <poi id=1>X</poi>",  # tagged
+        "x" * 301 + "?",                            # long, has content
+    ])
+    def test_pure_reask_rejects_real_answers(self, text):
+        assert not is_pure_reask(text)
+
+    def test_reask_fallback_never_fires_on_first_turn(self):
+        # Single-question eval runs and opening greetings keep the
+        # trust-the-model path; the fallback needs a prior visitor turn.
+        messages = [
+            {"role": "system", "content": "..."},
+            {"role": "user", "content": "Hola"},
+            {"role": "assistant", "content": "¿Qué deseas?"},
+        ]
+        assert not reask_fallback_applies(messages, "Hola")
+        messages += [{"role": "user", "content": "sí"}]
+        assert reask_fallback_applies(messages, "sí")
+
+    def test_reask_fallback_retrieves_content(self, spanish_index):
+        from index_tools import format_sections_overview
+        sections_text = format_sections_overview(spanish_index)
+        # A content-free confirmation falls back to indispensable highlights.
+        result, _, tool, args = execute_reask_fallback(
+            "sí", spanish_index, sections_text, {},
+        )
+        assert tool == "filter_pois"
+        assert args["interest_level"] == 1
+        assert "<poi" in result
+        # A topical question gets an evidence search first.
+        result, _, tool, _ = execute_reask_fallback(
+            "historia", spanish_index, sections_text, {},
+        )
+        assert tool in {"search_pois", "filter_pois"}
+        assert result
+        # A query with no evidence at all still lands on highlights.
+        result, _, tool, _ = execute_reask_fallback(
+            "zzzzzz", spanish_index, sections_text, {},
+        )
+        assert tool == "filter_pois"
+        assert "<poi" in result
 
     def test_resolves_unique_trip_selection_from_history(self, spanish_index):
         from index_tools import resolve_history_selection
