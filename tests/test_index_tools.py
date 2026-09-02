@@ -63,6 +63,7 @@ from run_eval import (
     MAX_ANSWER_TOKENS,
     MAX_TOOL_HISTORY_CHARS,
     MAX_TOOL_RESULT_CHARS,
+    backstop_named_poi_ids,
     backstop_named_pois,
     bound_tool_result,
     chant_repeat_prefix,
@@ -70,8 +71,10 @@ from run_eval import (
     execute_reask_fallback,
     execute_tool,
     grounding_failure_message,
+    is_brush_off_answer,
     is_designation_question,
     is_physical_route_request,
+    is_promise_to_search_later,
     is_pure_reask,
     is_repeat_of_previous_answer,
     is_repeat_tool_call,
@@ -81,6 +84,7 @@ from run_eval import (
     requires_trip_detail,
     run_agentic_loop,
     tool_call_key,
+    tool_result_is_usable,
     validate_tool_call,
 )
 
@@ -234,6 +238,134 @@ class TestStrictGrounding:
             "sí pero también quiero ver museos y iglesias",
             messages, spanish_index,
         ) == []
+
+    def test_failed_get_poi_result_is_not_usable(self):
+        assert not tool_result_is_usable(
+            "[ERROR] POI 'poi/1' not found. Use find_poi_by_name()."
+        )
+        assert not tool_result_is_usable(
+            "[ERROR] POI 'poi/1' not found.\n\n---\n\n"
+            "[ERROR] POI 'poi/19' not found."
+        )
+        assert tool_result_is_usable(
+            "<poi id=5148>Sacra Capilla del Salvador</poi>\n- **Address**: x"
+        )
+        assert tool_result_is_usable(
+            "[ERROR] POI 'poi/1' not found.\n\n---\n\n"
+            "Sacra Capilla del Salvador\n- **Address**: x"
+        )
+
+    def test_c01_english_chapel_backstop_resolves_salvador(self, index):
+        # C01 turn 2: English visitor phrasing of a Spanish catalogue name
+        # must still resolve via the focus-phrase + fuzzy path.
+        q = (
+            "You mentioned the Plaza Vázquez de Molina — what specific "
+            "monuments surround it? Tell me about the Sacred Chapel of "
+            "El Salvador."
+        )
+        names = backstop_named_pois(q, [], index)
+        ids = backstop_named_poi_ids(q, [], index)
+        assert "sacra capilla del salvador" in names
+        assert "poi/5148" in ids
+
+    def test_promise_to_search_later_is_brush_off(self):
+        decline = (
+            "I do not have the full description for the Sacra Capilla del "
+            "Salvador at this moment. Would you like me to try searching "
+            "for more information on it?"
+        )
+        assert is_promise_to_search_later(decline)
+        assert is_brush_off_answer(decline)
+        assert is_pure_reask(decline)
+        assert not is_brush_off_answer(
+            "The <poi id=5148>Sacra Capilla del Salvador</poi> is a "
+            "Renaissance chapel on Plaza Vázquez de Molina."
+        )
+
+    def test_hallucinated_poi_ids_trigger_named_backstop(
+            self, index, monkeypatch):
+        """C01 reproduction: model invents poi/1 + poi/19, then declines.
+
+        Failed get_poi must not mark the turn grounded; the named-POI
+        backstop must inject the real chapel record and the next model
+        answer is what the visitor sees.
+        """
+        from types import SimpleNamespace
+
+        q = (
+            "You mentioned the Plaza Vázquez de Molina — what specific "
+            "monuments surround it? Tell me about the Sacred Chapel of "
+            "El Salvador."
+        )
+        decline = (
+            "I do not have the full description for the Sacra Capilla del "
+            "Salvador at this moment. Would you like me to try searching "
+            "for more information on it?"
+        )
+        final = (
+            "The <poi id=5148 type=PlaceOfWorship>Sacra Capilla del "
+            "Salvador</poi> is a 16th-century Renaissance chapel."
+        )
+        captured: list = []
+
+        def fake(*args, **kwargs):
+            captured.append(kwargs)
+            n = len(captured)
+            if n == 1:
+                # Hallucinated ids — the C01 failure mode.
+                tcs = [
+                    SimpleNamespace(
+                        id="c1",
+                        function=SimpleNamespace(
+                            name="get_poi",
+                            arguments='{"poi_id": "poi/1"}',
+                        ),
+                    ),
+                    SimpleNamespace(
+                        id="c2",
+                        function=SimpleNamespace(
+                            name="get_poi",
+                            arguments='{"poi_id": "poi/19"}',
+                        ),
+                    ),
+                ]
+                return SimpleNamespace(
+                    choices=[SimpleNamespace(message=SimpleNamespace(
+                        content="", tool_calls=tcs))],
+                    usage=None,
+                )
+            if n == 2:
+                # Decline after the failed lookups.
+                return SimpleNamespace(
+                    choices=[SimpleNamespace(message=SimpleNamespace(
+                        content=decline, tool_calls=None))],
+                    usage=None,
+                )
+            # Answer from the injected backstop records.
+            return SimpleNamespace(
+                choices=[SimpleNamespace(message=SimpleNamespace(
+                    content=final, tool_calls=None))],
+                usage=None,
+            )
+
+        monkeypatch.setattr(litellm, "completion", fake)
+        result = run_agentic_loop(
+            q, "You are a tourism assistant.", index, "", "fake-model", {},
+        )
+        assert "5148" in result["answer"] or "Salvador" in result["answer"]
+        assert result["answer"] == final or "Salvador" in result["answer"]
+        assert any(
+            c.get("automatic") and c.get("tool") == "get_poi"
+            for c in result["tool_calls"]
+        )
+        # The hallucinated calls ran but must not leave grounded stuck on
+        # errors alone — automatic backstop proves recovery fired.
+        auto_ids = [
+            (c.get("args") or {}).get("poi_id", "")
+            for c in result["tool_calls"]
+            if c.get("automatic") and c.get("tool") == "get_poi"
+        ]
+        assert any("5148" in (pid or "") for pid in auto_ids)
 
     def test_place_alias_and_bold_dangling_tags_repaired(self, index):
         # Small models sometimes write <place id=…> or leave the tag

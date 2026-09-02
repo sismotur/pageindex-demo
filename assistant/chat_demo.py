@@ -62,9 +62,10 @@ from run_eval import (   # noqa: E402
     LOOP_REPEAT_CACHE_STUB,
     LOOP_REPEAT_INSTRUCTION,
     LOOP_REPEAT_STUB,
-    backstop_named_pois,
     chant_repeat_prefix,
     execute_reask_fallback,
+    inject_named_poi_backstop,
+    is_brush_off_answer,
     is_pure_reask,
     is_repeat_tool_call,
     reask_fallback_applies,
@@ -75,6 +76,7 @@ from run_eval import (   # noqa: E402
     selected_source_context,
     requires_trip_detail,
     tool_call_key,
+    tool_result_is_usable,
     validate_tool_call,
     MAX_ANSWER_TOKENS,
     TRIP_DETAIL_REQUIRED_INSTRUCTION,
@@ -217,6 +219,7 @@ def run_turn(question: str, messages: list[dict],
     grounding_required = requires_current_turn_grounding(question)
     grounded = False
     grounding_retry_enforced = False
+    brushoff_recovery_enforced = False
     grounding_tools: list[str] = []
     automatic_source_calls: list[dict] = []
     trip_detail_required = requires_trip_detail(question)
@@ -582,6 +585,18 @@ def run_turn(question: str, messages: list[dict],
                             "content": GROUNDING_RECOVERY_INSTRUCTION,
                         })
                         continue
+                    # Named-place backstop before history-followup (see
+                    # run_eval.py): visitor-named places beat re-filtering
+                    # previously shown POIs.
+                    injected, hit_delta = inject_named_poi_backstop(
+                        question, messages, index, sections_text, cache,
+                        weather, tool_calls_made, grounding_tools,
+                        automatic_source_calls, preview_chars=250,
+                    )
+                    cache_hits += hit_delta
+                    if injected:
+                        grounded = True
+                        continue
                     fallback = history_followup_answer(
                         question, messages, index
                     )
@@ -600,53 +615,6 @@ def run_turn(question: str, messages: list[dict],
                         answer = sanitize_tourist_answer(fallback, index)
                         assistant_msg["content"] = answer
                         break
-                    # Last-resort backstop for small models: if the
-                    # question explicitly names a known place (or confirms
-                    # an assistant offer that named places), fetch those
-                    # records deterministically instead of accepting a
-                    # brush-off.
-                    named_pois = backstop_named_pois(question, messages, index)
-                    if named_pois:
-                        name_index = index.get("name_index") or {}
-                        named_ids = ",".join(dict.fromkeys(
-                            name_index[n] for n in named_pois if n in name_index
-                        ))
-                        result, hit = execute_tool(
-                            "get_poi", {"poi_id": named_ids}, index,
-                            sections_text, cache, weather=weather,
-                        )
-                        if hit:
-                            cache_hits += 1
-                        tool_calls_made.append({
-                            "tool": "get_poi",
-                            "args": {"poi_id": named_ids},
-                            "result_preview": result[:250],
-                            "cache_hit": hit,
-                            "automatic": True,
-                            "source_selection": {
-                                "kind": "poi",
-                                "id": named_ids,
-                                "label": ", ".join(named_pois),
-                            },
-                        })
-                        grounded = True
-                        if "get_poi" not in grounding_tools:
-                            grounding_tools.append("get_poi")
-                        automatic_source_calls.append({
-                            "tool": "get_poi",
-                            "args": {"poi_id": named_ids},
-                            "source_selection": {
-                                "kind": "poi",
-                                "id": named_ids,
-                                "label": ", ".join(named_pois),
-                            },
-                        })
-                        messages.append({
-                            "role": "user",
-                            "content": (NAMED_POI_LOOKUP_INSTRUCTION
-                                        + "\n\n" + result),
-                        })
-                        continue
                     # The model answered the recovery prompt with yet
                     # another clarifying question — a brush-off. In an
                     # ongoing conversation, retrieve real content
@@ -659,11 +627,11 @@ def run_turn(question: str, messages: list[dict],
                     # is intercepted on ANY turn (greetings survive via
                     # their "!" warmth markers); a repeat can only exist
                     # in an ongoing conversation, hence the gate there.
-                    if (is_pure_reask(acc_content.strip())
+                    draft = acc_content.strip()
+                    if (is_brush_off_answer(draft)
                             or (reask_fallback_applies(messages, question)
                                 and is_repeat_of_previous_answer(
-                                    acc_content.strip(), messages,
-                                    question))):
+                                    draft, messages, question))):
                         result, hit, fb_tool, fb_args = execute_reask_fallback(
                             question, index, sections_text, cache,
                             weather=weather,
@@ -695,10 +663,51 @@ def run_turn(question: str, messages: list[dict],
                     # generic-question classification and deliver the
                     # answer it composed from the preloaded
                     # overview/catalogue.
-                    answer = sanitize_tourist_answer(acc_content.strip(), index)
+                    answer = sanitize_tourist_answer(draft, index)
                     assistant_msg["content"] = answer
                     break
-                answer = sanitize_tourist_answer(acc_content.strip(), index)
+                # Even after usable tool results, a pure reask /
+                # promise-to-search-later answer is a brush-off.
+                draft = acc_content.strip()
+                if (not brushoff_recovery_enforced
+                        and is_brush_off_answer(draft)):
+                    brushoff_recovery_enforced = True
+                    injected, hit_delta = inject_named_poi_backstop(
+                        question, messages, index, sections_text, cache,
+                        weather, tool_calls_made, grounding_tools,
+                        automatic_source_calls, preview_chars=250,
+                    )
+                    cache_hits += hit_delta
+                    if injected:
+                        grounded = True
+                        continue
+                    result, hit, fb_tool, fb_args = execute_reask_fallback(
+                        question, index, sections_text, cache,
+                        weather=weather,
+                    )
+                    if hit:
+                        cache_hits += 1
+                    tool_calls_made.append({
+                        "tool": fb_tool,
+                        "args": fb_args,
+                        "result_preview": result[:250],
+                        "cache_hit": hit,
+                        "automatic": True,
+                    })
+                    grounded = True
+                    if fb_tool not in grounding_tools:
+                        grounding_tools.append(fb_tool)
+                    automatic_source_calls.append({
+                        "tool": fb_tool,
+                        "args": fb_args,
+                    })
+                    messages.append({
+                        "role": "user",
+                        "content": (REASK_FALLBACK_INSTRUCTION
+                                    + "\n\n" + result),
+                    })
+                    continue
+                answer = sanitize_tourist_answer(draft, index)
                 assistant_msg["content"] = answer
                 break
 
@@ -880,6 +889,17 @@ def run_turn(question: str, messages: list[dict],
                             "content": GROUNDING_RECOVERY_INSTRUCTION,
                         })
                         continue
+                    # Named-place backstop before history-followup (see
+                    # run_eval.py).
+                    injected, hit_delta = inject_named_poi_backstop(
+                        question, messages, index, sections_text, cache,
+                        weather, tool_calls_made, grounding_tools,
+                        automatic_source_calls, preview_chars=250,
+                    )
+                    cache_hits += hit_delta
+                    if injected:
+                        grounded = True
+                        continue
                     fallback = history_followup_answer(
                         question, messages, index
                     )
@@ -898,64 +918,17 @@ def run_turn(question: str, messages: list[dict],
                         answer = sanitize_tourist_answer(fallback, index)
                         assistant_msg["content"] = answer
                         break
-                    # Last-resort backstop for small models: if the
-                    # question explicitly names a known place (or confirms
-                    # an assistant offer that named places), fetch those
-                    # records deterministically instead of accepting a
-                    # brush-off.
-                    named_pois = backstop_named_pois(question, messages, index)
-                    if named_pois:
-                        name_index = index.get("name_index") or {}
-                        named_ids = ",".join(dict.fromkeys(
-                            name_index[n] for n in named_pois if n in name_index
-                        ))
-                        result, hit = execute_tool(
-                            "get_poi", {"poi_id": named_ids}, index,
-                            sections_text, cache, weather=weather,
-                        )
-                        if hit:
-                            cache_hits += 1
-                        tool_calls_made.append({
-                            "tool": "get_poi",
-                            "args": {"poi_id": named_ids},
-                            "result_preview": result[:250],
-                            "cache_hit": hit,
-                            "automatic": True,
-                            "source_selection": {
-                                "kind": "poi",
-                                "id": named_ids,
-                                "label": ", ".join(named_pois),
-                            },
-                        })
-                        grounded = True
-                        if "get_poi" not in grounding_tools:
-                            grounding_tools.append("get_poi")
-                        automatic_source_calls.append({
-                            "tool": "get_poi",
-                            "args": {"poi_id": named_ids},
-                            "source_selection": {
-                                "kind": "poi",
-                                "id": named_ids,
-                                "label": ", ".join(named_pois),
-                            },
-                        })
-                        messages.append({
-                            "role": "user",
-                            "content": (NAMED_POI_LOOKUP_INSTRUCTION
-                                        + "\n\n" + result),
-                        })
-                        continue
                     # The model answered the recovery prompt with yet
                     # another clarifying question — a brush-off. In an
                     # ongoing conversation, retrieve real content
                     # deterministically and make it answer from that
                     # instead of re-asking.
                     # Same brush-off interception as the streaming path.
-                    if (is_pure_reask((message.content or "").strip())
+                    draft = (message.content or "").strip()
+                    if (is_brush_off_answer(draft)
                             or (reask_fallback_applies(messages, question)
                                 and is_repeat_of_previous_answer(
-                                    (message.content or "").strip(),
-                                    messages, question))):
+                                    draft, messages, question))):
                         result, hit, fb_tool, fb_args = execute_reask_fallback(
                             question, index, sections_text, cache,
                             weather=weather,
@@ -987,12 +960,51 @@ def run_turn(question: str, messages: list[dict],
                     # generic-question classification and deliver the
                     # answer it composed from the preloaded
                     # overview/catalogue.
-                    answer = sanitize_tourist_answer(
-                        (message.content or "").strip(), index
-                    )
+                    answer = sanitize_tourist_answer(draft, index)
                     assistant_msg["content"] = answer
                     break
-                answer = sanitize_tourist_answer((message.content or "").strip(), index)
+                # Even after usable tool results, a pure reask /
+                # promise-to-search-later answer is a brush-off.
+                draft = (message.content or "").strip()
+                if (not brushoff_recovery_enforced
+                        and is_brush_off_answer(draft)):
+                    brushoff_recovery_enforced = True
+                    injected, hit_delta = inject_named_poi_backstop(
+                        question, messages, index, sections_text, cache,
+                        weather, tool_calls_made, grounding_tools,
+                        automatic_source_calls, preview_chars=250,
+                    )
+                    cache_hits += hit_delta
+                    if injected:
+                        grounded = True
+                        continue
+                    result, hit, fb_tool, fb_args = execute_reask_fallback(
+                        question, index, sections_text, cache,
+                        weather=weather,
+                    )
+                    if hit:
+                        cache_hits += 1
+                    tool_calls_made.append({
+                        "tool": fb_tool,
+                        "args": fb_args,
+                        "result_preview": result[:250],
+                        "cache_hit": hit,
+                        "automatic": True,
+                    })
+                    grounded = True
+                    if fb_tool not in grounding_tools:
+                        grounding_tools.append(fb_tool)
+                    automatic_source_calls.append({
+                        "tool": fb_tool,
+                        "args": fb_args,
+                    })
+                    messages.append({
+                        "role": "user",
+                        "content": (REASK_FALLBACK_INSTRUCTION
+                                    + "\n\n" + result),
+                    })
+                    continue
+                answer = sanitize_tourist_answer(draft, index)
                 assistant_msg["content"] = answer
                 break
 
@@ -1088,7 +1100,8 @@ def run_turn(question: str, messages: list[dict],
                 fn_name, fn_args, index, sections_text, cache, weather=weather,
             )
             results_by_key[call_keys[-1]] = result
-            if fn_name in SOURCE_GROUNDING_TOOLS:
+            if (fn_name in SOURCE_GROUNDING_TOOLS
+                    and tool_result_is_usable(result)):
                 grounded = True
                 if fn_name not in grounding_tools:
                     grounding_tools.append(fn_name)

@@ -617,8 +617,26 @@ def grounding_failure_message(index: dict) -> str:
     return GROUNDING_FAILURE_MESSAGES.get(lang, GROUNDING_FAILURE_MESSAGES["en"])
 
 
-def question_names_known_poi(question: str, index: dict) -> str | None:
-    """Return the `name_index` entry the question explicitly names, if any.
+def tool_result_is_usable(result: str) -> bool:
+    """True when a tool result carries real source content.
+
+    Failed lookups (single or multi-id batches of only `[ERROR] …` blocks)
+    must not flip the turn's `grounded` bit — otherwise a small model that
+    invents `poi/1` skips the named-POI / reask recovery stack and serves
+    a "shall I search later?" brush-off.
+    """
+    body = (result or "").strip()
+    if not body:
+        return False
+    parts = [p.strip() for p in body.split("\n\n---\n\n") if p.strip()]
+    if not parts:
+        return False
+    return any(not p.startswith("[ERROR]") for p in parts)
+
+
+def question_names_known_pois(question: str, index: dict,
+                              limit: int = 5) -> list[str]:
+    """`name_index` entries the question explicitly embeds, longest first.
 
     Language-agnostic 'specific question' probe: no keyword lists to
     translate — the destination's own POI names are the lexicon.  Used as
@@ -628,14 +646,21 @@ def question_names_known_poi(question: str, index: dict) -> str | None:
     """
     normalized = normalize_text(question)
     if not normalized:
-        return None
-    best = None
+        return []
+    matches: list[str] = []
     for name in (index.get("name_index") or {}):
         if " " not in name and len(name) < 8:
             continue  # short single words match too casually
-        if name in normalized and (best is None or len(name) > len(best)):
-            best = name
-    return best
+        if name in normalized and name not in matches:
+            matches.append(name)
+    matches.sort(key=len, reverse=True)
+    return matches[:limit]
+
+
+def question_names_known_poi(question: str, index: dict) -> str | None:
+    """Longest `name_index` entry the question explicitly names, if any."""
+    names = question_names_known_pois(question, index, limit=1)
+    return names[0] if names else None
 
 
 NAMED_POI_LOOKUP_INSTRUCTION = (
@@ -645,6 +670,81 @@ NAMED_POI_LOOKUP_INSTRUCTION = (
     "do not promise to search later and do not ask the visitor to repeat "
     "or choose."
 )
+
+
+# Lead-ins that mark the place the visitor wants details on. Longest
+# first so "tell me about" wins over bare "about". Plain substrings (not
+# a full i18n table) so EN/ES/IT visitor phrasing all extract spans like
+# "Sacred Chapel of El Salvador" without per-language grammar.
+_FOCUS_PHRASE_LEADS = tuple(sorted((
+    "tell me more about",
+    "tell me about",
+    "what about",
+    "more about",
+    "cuentame mas sobre",
+    "cuentame sobre",
+    "cuentame de",
+    "dime mas sobre",
+    "dime sobre",
+    "dime de",
+    "hablame de",
+    "hablame sobre",
+    "mas sobre",
+    "parlami di",
+    "parlami del",
+    "parlami della",
+    "dimmi di",
+    "dimmi del",
+    "dimmi della",
+), key=len, reverse=True))
+
+
+def _focus_phrases(question: str) -> list[str]:
+    """Extract place-name spans the visitor is asking about.
+
+    Prefers the clause after a "tell me about / cuéntame sobre / …" lead-in
+    so English translations of Spanish catalogue names still reach
+    `find_poi_by_name` (exact `name_index` substring match cannot see
+    "Sacred Chapel" ↔ "Sacra Capilla").
+    """
+    normalized = normalize_text(question)
+    if not normalized:
+        return []
+    padded = f" {normalized} "
+    phrases: list[str] = []
+    occupied: list[tuple[int, int]] = []
+    for lead in _FOCUS_PHRASE_LEADS:
+        token = f" {lead} "
+        start = 0
+        while True:
+            idx = padded.find(token, start)
+            if idx < 0:
+                break
+            lead_end = idx + len(token)
+            # Skip if a longer lead already claimed this region.
+            if any(a <= idx < b or a < lead_end <= b for a, b in occupied):
+                start = idx + 1
+                continue
+            rest = padded[lead_end:].strip()
+            for sep in ("?", "!", ".", ";"):
+                cut = rest.find(sep)
+                if cut >= 0:
+                    rest = rest[:cut]
+            rest = rest.strip(" ,;:-")
+            # Drop leading articles so "the sacred chapel…" ranks like
+            # "sacred chapel…" (find_poi_by_name token overlap is hurt by
+            # a bare "the" that matches almost every English POI name).
+            for article in ("the ", "a ", "an ", "el ", "la ", "los ",
+                            "las ", "un ", "una ", "lo ", "le ", "les ",
+                            "il ", "lo ", "gli ", "i "):
+                if rest.startswith(article):
+                    rest = rest[len(article):]
+                    break
+            if rest and rest not in phrases:
+                phrases.append(rest)
+                occupied.append((idx, lead_end + len(rest)))
+            start = idx + 1
+    return phrases
 
 
 def _current_question_index(messages: list[dict], question: str) -> int:
@@ -691,19 +791,155 @@ def _previous_offer_poi_names(messages: list[dict], question: str,
     return matches[:limit]
 
 
-def backstop_named_pois(question: str, messages: list[dict],
-                        index: dict) -> list[str]:
-    """Known-place names to fetch when the model twice declined retrieval.
+def _fuzzy_poi_name_hits(index: dict, phrase: str,
+                         limit: int = 3) -> list[dict]:
+    """Fuzzy name hits that share a content token with the phrase.
 
-    Primary: the visitor's question explicitly names a known place.
-    Secondary: the visitor gave a short confirmation to an assistant offer
-    that named known places (the names live in the assistant's message,
-    not in the visitor's reply).
+    `find_poi_by_name` tier-3 (any-token) is too loose for recovery —
+    "What can I see?" can land on an unrelated POI via a short particle.
+    Require at least one phrase token of length ≥ 4 to appear in the POI
+    name so "Sacred Chapel of El Salvador" still reaches `salvador` while
+    generic overview questions return nothing.
     """
-    named = question_names_known_poi(question, index)
-    if named:
-        return [named]
-    return _previous_offer_poi_names(messages, question, index)
+    content_tokens = {t for t in tokenize(phrase) if len(t) >= 4}
+    if not content_tokens:
+        return []
+    hits: list[dict] = []
+    for poi in ix_find_poi_by_name(index, phrase, limit=max(limit * 3, 9)):
+        name = (poi.get("normalized_name")
+                or normalize_text(poi.get("name") or ""))
+        if content_tokens & set(name.split()):
+            hits.append(poi)
+        if len(hits) >= limit:
+            break
+    return hits
+
+
+def backstop_named_pois(question: str, messages: list[dict],
+                        index: dict, limit: int = 5) -> list[str]:
+    """Known-place names to fetch when the model declined retrieval.
+
+    Order of preference:
+      1. Short confirmation of an assistant offer that named places
+         (names live in the assistant message, not the visitor reply).
+      2. Focus phrases ("tell me about X") resolved via fuzzy name search
+         — covers English visitor phrasing of Spanish catalogue names.
+      3. Exact `name_index` substrings embedded in the question.
+      4. Fuzzy name search on the full question only when nothing else hit.
+    """
+    names: list[str] = []
+
+    def add(name: str) -> None:
+        n = (name or "").strip()
+        if n and n not in names:
+            names.append(n)
+
+    # Short yes-to-offer: keep the existing confirmation path exclusive so
+    # a bare "sí" does not also fuzzy-match random POIs.
+    offer_names = _previous_offer_poi_names(messages, question, index)
+    if offer_names and not question_names_known_pois(question, index, limit=1):
+        if len(tokenize(question)) <= 5 and not _focus_phrases(question):
+            return offer_names[:limit]
+
+    for phrase in _focus_phrases(question):
+        for poi in _fuzzy_poi_name_hits(index, phrase, limit=3):
+            add(poi.get("normalized_name")
+                or normalize_text(poi.get("name") or ""))
+            if len(names) >= limit:
+                return names[:limit]
+
+    for name in question_names_known_pois(question, index, limit=limit):
+        add(name)
+        if len(names) >= limit:
+            return names[:limit]
+
+    # Short place-name questions with no lead-in ("Sacred Chapel of El
+    # Salvador?") — fuzzy the whole question.  Longer multi-intent turns
+    # stay on exact name_index / focus-phrase hits only so a reply like
+    # "sí pero también quiero ver museos" is not treated as a confirmation
+    # backstop.
+    if not names and 2 <= len(tokenize(question)) <= 6:
+        for poi in _fuzzy_poi_name_hits(index, question, limit=limit):
+            add(poi.get("normalized_name")
+                or normalize_text(poi.get("name") or ""))
+
+    if not names:
+        for name in offer_names:
+            add(name)
+
+    return names[:limit]
+
+
+def backstop_named_poi_ids(question: str, messages: list[dict],
+                           index: dict, limit: int = 5) -> list[str]:
+    """POI ids for the named-place backstop (`get_poi` multi-id batch)."""
+    name_index = index.get("name_index") or {}
+    ids: list[str] = []
+    for name in backstop_named_pois(question, messages, index, limit=limit):
+        pid = name_index.get(name)
+        if pid and pid not in ids:
+            ids.append(pid)
+        if len(ids) >= limit:
+            break
+    return ids
+
+
+def inject_named_poi_backstop(
+    question: str,
+    messages: list[dict],
+    index: dict,
+    sections_text: str,
+    cache: dict,
+    weather: dict | None,
+    tool_calls_made: list,
+    grounding_tools: list[str],
+    automatic_source_calls: list,
+    preview_chars: int = 300,
+) -> tuple[bool, int]:
+    """Fetch known-place records and append NAMED_POI instruction.
+
+    Returns (injected, cache_hit_count_delta).
+    """
+    named = backstop_named_pois(question, messages, index)
+    named_ids = backstop_named_poi_ids(question, messages, index)
+    if not named_ids:
+        return False, 0
+    id_arg = ",".join(named_ids)
+    result, hit = execute_tool(
+        "get_poi", {"poi_id": id_arg}, index,
+        sections_text, cache, weather=weather,
+    )
+    if not tool_result_is_usable(result):
+        return False, (1 if hit else 0)
+    label = ", ".join(named)
+    tool_calls_made.append({
+        "tool": "get_poi",
+        "args": {"poi_id": id_arg},
+        "result_preview": result[:preview_chars],
+        "cache_hit": hit,
+        "automatic": True,
+        "source_selection": {
+            "kind": "poi",
+            "id": id_arg,
+            "label": label,
+        },
+    })
+    if "get_poi" not in grounding_tools:
+        grounding_tools.append("get_poi")
+    automatic_source_calls.append({
+        "tool": "get_poi",
+        "args": {"poi_id": id_arg},
+        "source_selection": {
+            "kind": "poi",
+            "id": id_arg,
+            "label": label,
+        },
+    })
+    messages.append({
+        "role": "user",
+        "content": NAMED_POI_LOOKUP_INSTRUCTION + "\n\n" + result,
+    })
+    return True, (1 if hit else 0)
 
 
 def is_pure_reask(text: str) -> bool:
@@ -722,6 +958,39 @@ def is_pure_reask(text: str) -> bool:
     if "!" in t or "¡" in t or "！" in t:
         return False
     return t.endswith("?") or t.endswith("？")
+
+
+# Multi-language stems for the "I don't have it — shall I search later?"
+# anti-pattern.  Matched on normalize_text output (no diacritics).
+_PROMISE_SEARCH_MARKERS = (
+    "would you like me to try",
+    "would you like me to search",
+    "do you want me to search",
+    "i do not have the full description",
+    "i dont have the full description",
+    "try searching for more",
+    "search for more information",
+    "no tengo la descripcion",
+    "no tengo la informacion",
+    "quieres que busque",
+    "te gustaria que busque",
+    "deseas que busque",
+    "vuoi che cerchi",
+    "non ho la descrizione",
+)
+
+
+def is_promise_to_search_later(text: str) -> bool:
+    """True when the model declines content and offers to search later."""
+    t = normalize_text(text or "")
+    if not t or "<poi" in (text or "") or "<trip" in (text or ""):
+        return False
+    return any(marker in t for marker in _PROMISE_SEARCH_MARKERS)
+
+
+def is_brush_off_answer(text: str) -> bool:
+    """True for bare re-asks or promise-to-search-later declines."""
+    return is_pure_reask(text) or is_promise_to_search_later(text)
 
 
 def is_repeat_of_previous_answer(answer: str, messages: list[dict],
@@ -1662,6 +1931,7 @@ def run_agentic_loop(question: str, system_prompt: str,
     grounding_required = requires_current_turn_grounding(question)
     grounded = False
     grounding_retry_enforced = False
+    brushoff_recovery_enforced = False
     grounding_tools: list[str] = []
     automatic_source_calls: list[dict] = []
     trip_detail_required = requires_trip_detail(question)
@@ -1947,6 +2217,20 @@ def run_agentic_loop(question: str, system_prompt: str,
                         "content": GROUNDING_RECOVERY_INSTRUCTION,
                     })
                     continue
+                # Named-place backstop before history-followup: a visitor
+                # who named a place (or confirmed an offer) must get that
+                # record, not a re-filter of previously shown POIs.  C01
+                # "tell me about the Sacred Chapel…" after failed get_poi
+                # hits this path.
+                injected, hit_delta = inject_named_poi_backstop(
+                    question, messages, index, sections_text, cache,
+                    weather, tool_calls_made, grounding_tools,
+                    automatic_source_calls,
+                )
+                cache_hits += hit_delta
+                if injected:
+                    grounded = True
+                    continue
                 fallback = history_followup_answer(question, messages, index)
                 if fallback:
                     tool_calls_made.append({
@@ -1963,59 +2247,14 @@ def run_agentic_loop(question: str, system_prompt: str,
                     answer = sanitize_tourist_answer(fallback, index)
                     assistant_msg["content"] = answer
                     break
-                # Last-resort backstop for small models: if the question
-                # explicitly names a known place (or confirms an assistant
-                # offer that named places), fetch those records
-                # deterministically instead of accepting a brush-off.
-                named_pois = backstop_named_pois(question, messages, index)
-                if named_pois:
-                    name_index = index.get("name_index") or {}
-                    named_ids = ",".join(dict.fromkeys(
-                        name_index[n] for n in named_pois if n in name_index
-                    ))
-                    result, hit = execute_tool(
-                        "get_poi", {"poi_id": named_ids}, index,
-                        sections_text, cache, weather=weather,
-                    )
-                    if hit:
-                        cache_hits += 1
-                    tool_calls_made.append({
-                        "tool": "get_poi",
-                        "args": {"poi_id": named_ids},
-                        "result_preview": result[:300],
-                        "cache_hit": hit,
-                        "automatic": True,
-                        "source_selection": {
-                            "kind": "poi",
-                            "id": named_ids,
-                            "label": ", ".join(named_pois),
-                        },
-                    })
-                    grounded = True
-                    if "get_poi" not in grounding_tools:
-                        grounding_tools.append("get_poi")
-                    automatic_source_calls.append({
-                        "tool": "get_poi",
-                        "args": {"poi_id": named_ids},
-                        "source_selection": {
-                            "kind": "poi",
-                            "id": named_ids,
-                            "label": ", ".join(named_pois),
-                        },
-                    })
-                    messages.append({
-                        "role": "user",
-                        "content": (NAMED_POI_LOOKUP_INSTRUCTION
-                                    + "\n\n" + result),
-                    })
-                    continue
                 # The model answered the recovery prompt with yet
                 # another clarifying question — a brush-off.  A bare
                 # re-ask is never an acceptable final answer, on ANY turn
                 # (greetings survive: warm greeting replies carry "!"
                 # markers, which is_pure_reask rejects).  Retrieve real
                 # content deterministically and make the model present it.
-                if is_pure_reask((message.content or "").strip()):
+                draft = (message.content or "").strip()
+                if is_brush_off_answer(draft):
                     result, hit, fb_tool, fb_args = execute_reask_fallback(
                         question, index, sections_text, cache, weather=weather,
                     )
@@ -2045,11 +2284,49 @@ def run_agentic_loop(question: str, system_prompt: str,
                 # no known place is named: trust its generic-question
                 # classification and deliver the answer it composed from
                 # the preloaded overview/catalogue.
-                answer = sanitize_tourist_answer(
-                    (message.content or "").strip(), index
-                )
+                answer = sanitize_tourist_answer(draft, index)
                 break
-            answer = sanitize_tourist_answer((message.content or "").strip(), index)
+            # Even after usable tool results, a pure reask / promise-to-
+            # search-later answer is a brush-off — recover once.
+            draft = (message.content or "").strip()
+            if (not brushoff_recovery_enforced
+                    and is_brush_off_answer(draft)):
+                brushoff_recovery_enforced = True
+                injected, hit_delta = inject_named_poi_backstop(
+                    question, messages, index, sections_text, cache,
+                    weather, tool_calls_made, grounding_tools,
+                    automatic_source_calls,
+                )
+                cache_hits += hit_delta
+                if injected:
+                    grounded = True
+                    continue
+                result, hit, fb_tool, fb_args = execute_reask_fallback(
+                    question, index, sections_text, cache, weather=weather,
+                )
+                if hit:
+                    cache_hits += 1
+                tool_calls_made.append({
+                    "tool": fb_tool,
+                    "args": fb_args,
+                    "result_preview": result[:300],
+                    "cache_hit": hit,
+                    "automatic": True,
+                })
+                grounded = True
+                if fb_tool not in grounding_tools:
+                    grounding_tools.append(fb_tool)
+                automatic_source_calls.append({
+                    "tool": fb_tool,
+                    "args": fb_args,
+                })
+                messages.append({
+                    "role": "user",
+                    "content": (REASK_FALLBACK_INSTRUCTION
+                                + "\n\n" + result),
+                })
+                continue
+            answer = sanitize_tourist_answer(draft, index)
             break
 
         for tc in message.tool_calls:
@@ -2138,7 +2415,8 @@ def run_agentic_loop(question: str, system_prompt: str,
                 fn_name, fn_args, index, sections_text, cache, weather=weather,
             )
             results_by_key[call_keys[-1]] = result
-            if fn_name in SOURCE_GROUNDING_TOOLS:
+            if (fn_name in SOURCE_GROUNDING_TOOLS
+                    and tool_result_is_usable(result)):
                 grounded = True
                 if fn_name not in grounding_tools:
                     grounding_tools.append(fn_name)
