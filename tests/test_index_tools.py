@@ -60,6 +60,7 @@ from run_eval import (
     LOOP_REPEAT_CACHE_STUB,
     LOOP_REPEAT_INSTRUCTION,
     LOOP_REPEAT_STUB,
+    MAX_ANSWER_TOKENS,
     MAX_TOOL_HISTORY_CHARS,
     MAX_TOOL_RESULT_CHARS,
     backstop_named_pois,
@@ -71,6 +72,7 @@ from run_eval import (
     grounding_failure_message,
     is_physical_route_request,
     is_pure_reask,
+    is_repeat_of_previous_answer,
     is_repeat_tool_call,
     question_names_known_poi,
     reask_fallback_applies,
@@ -1535,3 +1537,87 @@ class TestChantGuard:
                           "fake-model", {}, stream=True)
         assert result["answer"] == grounding_failure_message(index)
         assert len(captured) == 1
+
+
+# ── Repeat-answer guard ───────────────────────────────────────────────────
+
+class TestRepeatAnswerGuard:
+    """A small model at temperature=0 can re-emit its previous reply
+    instead of answering the new visitor message.  The duplicate is a
+    brush-off: intercept it with the same deterministic retrieval as a
+    repeated clarifying question instead of serving it."""
+
+    PREV = "Hello! How can I help you today?"
+
+    def _history(self) -> list[dict]:
+        return [
+            {"role": "system", "content": "You are a tourism assistant."},
+            {"role": "user", "content": "Hello"},
+            {"role": "assistant", "content": self.PREV},
+        ]
+
+    def test_exact_repeat_detected(self):
+        assert is_repeat_of_previous_answer(self.PREV, self._history())
+
+    def test_repeat_detected_despite_case_and_punctuation(self):
+        assert is_repeat_of_previous_answer(
+            "hello, how can I help you today", self._history())
+
+    def test_different_text_is_not_a_repeat(self):
+        assert not is_repeat_of_previous_answer(
+            "The castle dates from the 13th century.", self._history())
+
+    def test_empty_answer_is_not_a_repeat(self):
+        assert not is_repeat_of_previous_answer("", self._history())
+
+    def test_first_turn_is_never_a_repeat(self):
+        messages = [{"role": "system", "content": "sys"}]
+        assert not is_repeat_of_previous_answer(self.PREV, messages)
+
+    def test_referent_is_the_previous_turn_not_the_current_draft(self):
+        # The current turn's own earlier-round draft sits between the
+        # question and the new answer; the repeat referent must remain
+        # the answer to the PREVIOUS visitor message.
+        messages = self._history() + [
+            {"role": "user", "content": "What can I see?"},
+            {"role": "assistant", "content": "A genuine first attempt."},
+            {"role": "user", "content": "(recovery instruction)"},
+        ]
+        assert is_repeat_of_previous_answer(
+            self.PREV, messages, "What can I see?")
+        assert not is_repeat_of_previous_answer(
+            "A genuine first attempt.", messages, "What can I see?")
+
+    def test_repeated_answer_triggers_deterministic_retrieval(
+            self, index, monkeypatch):
+        """Turn 2 parrots the greeting verbatim after a genuine first
+        attempt: the runtime must not serve the duplicate; it retrieves
+        content (reask fallback) and the model's next answer is served
+        instead.  The middle reply being different from the parroted
+        greeting reproduces the observed E2B dynamics exactly."""
+        from chat_demo import run_turn
+        captured: list = []
+        replies = ["A genuine first attempt.", self.PREV,
+                   "Real overview answer."]
+
+        def fake(*args, **kwargs):
+            captured.append(kwargs)
+            content = replies[min(len(captured), len(replies)) - 1]
+            return SimpleNamespace(
+                choices=[SimpleNamespace(message=SimpleNamespace(
+                    content=content, tool_calls=None))],
+                usage=None,
+            )
+
+        monkeypatch.setattr(litellm, "completion", fake)
+        result = run_turn("What can I see?", self._history(), index, "",
+                          "fake-model", {})
+        assert result["answer"] == "Real overview answer."
+        # Two brush-off replies, then the answer composed from the
+        # deterministically retrieved records.
+        assert len(captured) == 3
+        assert any(c.get("automatic") and c["tool"] in (
+            "search_pois", "filter_pois") for c in result["tool_calls"])
+        # Every generation call carries the answer-length cap.
+        assert all(c.get("max_tokens") == MAX_ANSWER_TOKENS
+                   for c in captured)

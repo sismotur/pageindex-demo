@@ -350,7 +350,10 @@ Typical flows handled by the model:
   probed against the question — and, after a short confirmation, against
   the assistant's previous offer — to fetch the named records; and when
   the model answers an ongoing-conversation turn with yet another bare
-  clarifying question, the runtime retrieves content itself
+  clarifying question — or repeats its previous answer verbatim
+  (`is_repeat_of_previous_answer` compares against the last assistant
+  message before the current question, so current-turn drafts do not
+  count) — the runtime retrieves content itself
   (`search_pois` on the question, else `filter_pois` indispensable
   highlights) and makes the model present it. A per-turn loop detector
   blocks the third identical `(tool, args)` call (every tool is a
@@ -372,7 +375,9 @@ Typical flows handled by the model:
   guard (`chant_repeat_prefix`: the trailing 50-char chunk repeated
   six or more times in the last 2 000 characters) stops a degenerating
   stream and serves the non-repetitive prefix as the answer — at
-  temperature=0 re-asking would chant again deterministically. The
+  temperature=0 re-asking would chant again deterministically. All
+  generation calls carry a 1 024-token answer cap (`MAX_ANSWER_TOKENS`),
+  so a degenerating non-streaming response stays bounded as well. The
   localized safe failure remains only for turns that never produce an
   answer.
 

@@ -70,10 +70,12 @@ from run_eval import (   # noqa: E402
     requires_current_turn_grounding,
     grounding_failure_message,
     history_followup_answer,
+    is_repeat_of_previous_answer,
     selected_source_context,
     requires_trip_detail,
     tool_call_key,
     validate_tool_call,
+    MAX_ANSWER_TOKENS,
     TRIP_DETAIL_REQUIRED_INSTRUCTION,
     WEATHER_LOOKUP_ENFORCED_INSTRUCTION,
 )
@@ -360,6 +362,7 @@ def run_turn(question: str, messages: list[dict],
                     tools=TOOL_DEFS,
                     tool_choice="auto",
                     temperature=0,
+                    max_tokens=MAX_ANSWER_TOKENS,
                     stream=True,
                 )
             except Exception as exc:
@@ -598,8 +601,15 @@ def run_turn(question: str, messages: list[dict],
                     # ongoing conversation, retrieve real content
                     # deterministically and make it answer from that
                     # instead of re-asking.
+                    # A repeated previous answer is a brush-off just like
+                    # a bare re-ask (temp=0 models can re-emit their last
+                    # reply); intercept it with the same deterministic
+                    # retrieval instead of serving the duplicate.
                     if (reask_fallback_applies(messages, question)
-                            and is_pure_reask(acc_content.strip())):
+                            and (is_pure_reask(acc_content.strip())
+                                 or is_repeat_of_previous_answer(
+                                     acc_content.strip(), messages,
+                                     question))):
                         result, hit, fb_tool, fb_args = execute_reask_fallback(
                             question, index, sections_text, cache,
                             weather=weather,
@@ -657,6 +667,7 @@ def run_turn(question: str, messages: list[dict],
                     tools=TOOL_DEFS,
                     tool_choice="auto",
                     temperature=0,
+                    max_tokens=MAX_ANSWER_TOKENS,
                 )
             except Exception as exc:
                 error = str(exc)
@@ -850,8 +861,12 @@ def run_turn(question: str, messages: list[dict],
                     # ongoing conversation, retrieve real content
                     # deterministically and make it answer from that
                     # instead of re-asking.
+                    # Same repeat-answer interception as the streaming path.
                     if (reask_fallback_applies(messages, question)
-                            and is_pure_reask((message.content or "").strip())):
+                            and (is_pure_reask((message.content or "").strip())
+                                 or is_repeat_of_previous_answer(
+                                     (message.content or "").strip(),
+                                     messages, question))):
                         result, hit, fb_tool, fb_args = execute_reask_fallback(
                             question, index, sections_text, cache,
                             weather=weather,
@@ -1057,6 +1072,7 @@ def run_turn(question: str, messages: list[dict],
                 model=model,
                 messages=messages + [{"role": "user", "content": msg}],
                 temperature=0,
+                max_tokens=MAX_ANSWER_TOKENS,
             )
             answer = sanitize_tourist_answer(
                 (recovery.choices[0].message.content or "").strip(), index

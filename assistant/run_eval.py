@@ -104,6 +104,10 @@ DEFAULT_INDEX   = PROJECT_ROOT / "indexes" / "ubeda" / "en.json"
 RESULTS_DIR     = PROJECT_ROOT / "results"
 DEFAULT_MODEL   = DEFAULT_EVAL_MODEL   # oMLX E2B; the mobile deployment target
 MAX_TOOL_ROUNDS = 14
+# Answers run a few hundred tokens; the cap bounds worst-case latency and
+# stops a degenerating non-streaming response from burning the
+# server-side default budget (the streaming path has the chant guard).
+MAX_ANSWER_TOKENS = 1_024
 MAX_TOOL_RESULT_CHARS = 24_000
 MAX_TOOL_HISTORY_CHARS = 120_000
 COMPACTED_TOOL_RESULT = (
@@ -575,6 +579,34 @@ def is_pure_reask(text: str) -> bool:
     if "!" in t or "¡" in t or "！" in t:
         return False
     return t.endswith("?") or t.endswith("？")
+
+
+def is_repeat_of_previous_answer(answer: str, messages: list[dict],
+                                 question: str = "") -> bool:
+    """True when `answer` duplicates the assistant's previous VISITOR turn.
+
+    A small model at temperature=0 can re-emit the reply the visitor last
+    saw instead of answering the new message (observed: "Hola" followed
+    by a broad question returns the greeting verbatim); serving it is a
+    brush-off, exactly like a repeated clarifying question.  Exact match
+    after normalisation — near-misses stay the model's answer.
+
+    The referent is the last assistant message BEFORE the current
+    `question` (current-turn drafts from earlier rounds of this same
+    turn must not count).  When `question` is not found in `messages`,
+    falls back to the last assistant message overall.
+    """
+    candidate = normalize_text(answer or "")
+    if not candidate:
+        return False
+    if question:
+        q_idx = _current_question_index(messages, question)
+        if q_idx >= 0:
+            messages = messages[:q_idx]
+    for msg in reversed(messages):
+        if msg.get("role") == "assistant" and (msg.get("content") or "").strip():
+            return normalize_text(msg["content"]) == candidate
+    return False
 
 
 REASK_FALLBACK_INSTRUCTION = (
@@ -1551,6 +1583,7 @@ def run_agentic_loop(question: str, system_prompt: str,
                 tools=TOOL_DEFS,
                 tool_choice="auto",
                 temperature=0,
+                max_tokens=MAX_ANSWER_TOKENS,
             )
         except Exception as exc:
             error = str(exc)
@@ -1985,6 +2018,7 @@ def run_agentic_loop(question: str, system_prompt: str,
                 model=model,
                 messages=messages + [{"role": "user", "content": msg}],
                 temperature=0,
+                max_tokens=MAX_ANSWER_TOKENS,
             )
             usage = getattr(recovery, "usage", None)
             if usage:
