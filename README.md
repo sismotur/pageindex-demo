@@ -221,7 +221,6 @@ pageindex-demo/
 │   ├── ubeda/
 │   │   ├── questions.json             ← 20 curated visitor questions (English)
 │   │   ├── questions_es.json          ← Spanish translations
-│   │   ├── questions_it.json          ← Italian translations
 │   │   └── conversations.json         ← multi-turn conversation threads
 │   └── montancheztamuja/
 │       └── conversations.json         ← multi-turn conversation threads

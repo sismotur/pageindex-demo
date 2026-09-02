@@ -444,7 +444,6 @@ pageindex-demo/
 │   ├── ubeda/
 │   │   ├── questions.json             ← 20 visitor questions (English)
 │   │   ├── questions_es.json          ← Spanish translations
-│   │   ├── questions_it.json          ← Italian translations
 │   │   └── conversations.json         ← multi-turn threads (Úbeda)
 │   └── montancheztamuja/
 │       └── conversations.json         ← multi-turn threads (Montánchez)

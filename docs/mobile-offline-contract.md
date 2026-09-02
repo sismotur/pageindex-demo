@@ -860,9 +860,9 @@ iOS **MLX Swift**; oMLX is the reference server only):
    `results/eval_*.json`-shaped file).
 5. Pass bar: grounding ≥ 70% and content-fetch ≥ 70% — the same gates
    the Python reference meets (E2B: 72.5% / 95%).
-6. Repeat with `eval/ubeda/questions_es.json` + `indexes/ubeda/es.json` and
-   `eval/ubeda/questions_it.json` + `indexes/ubeda/it.json` for multilingual
-   coverage (E2B reference: ES 0.830, IT 0.760 composite).
+6. Repeat with `eval/ubeda/questions_es.json` + `indexes/ubeda/es.json`
+   for multilingual coverage (E2B reference: ES 0.830 composite).
+   Other languages follow once EN/ES are stable.
 
 Multi-turn behaviour is exercised by `eval/ubeda/conversations.json`
 (4 threads × 3 turns, shared history) — used for manual QA, not scored.
