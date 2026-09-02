@@ -81,8 +81,6 @@ PageIndex pipeline scores 85.0% / 77.5% / 72.5% on EN/ES/IT with the
 new POI-aware index — above the 70% rubric threshold on every measured
 language. Architecture matters more than model size for this task.
 
-Full cross-model report: `results/comparison_table.md`.
-
 The "Sections accessed" rubric input is now derived from the actual
 tools called (`get_section`, `get_poi`, `find_poi_by_name`,
 `filter_pois`) instead of mapping line ranges to section titles.

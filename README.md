@@ -33,7 +33,7 @@ subfolder per destination (`indexes/{dest}/{lang}.json`,
 ## Quick summary
 
 Four models were evaluated end-to-end on 20 visitor questions per
-language. The full report lives in `results/comparison_table.md`.
+language.
 
 ### Server-side (recommended: gemma4:26b)
 
@@ -64,9 +64,7 @@ thresholds at ~4× lower latency than the Ollama baseline.
 The POI-aware index lifts retrieval accuracy from 80% to 95% on the
 server model and — critically — also unlocks the smallest Gemma 4
 variant for **fully-offline mobile use**. The same E2B that scored 54%
-grounding on the old PageIndex pipeline scores 85% on this one. See
-`results/comparison_table.md` for the full cross-model report and the
-offline-mobile integration guidance.
+grounding on the old PageIndex pipeline scores 85% on this one.
 
 **Why an index instead of PageIndex?**
 PageIndex builds a tree from Markdown headings. That works for arbitrary
