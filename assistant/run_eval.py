@@ -598,16 +598,27 @@ def requires_current_turn_grounding(question: str) -> bool:
     return bool(normalize_text(question))
 
 
+def _token_matches_intent(term: str, intents: frozenset,
+                          min_prefix_stem: int = 5) -> bool:
+    """Exact lexicon hit, or prefix only for longer stems.
+
+    Short stems like "plan" must match as whole tokens — otherwise
+    "planetarium".startswith("plan") false-triggers trip-detail mode.
+    Longer deliberate stems ("itiner") still cover "itinerary"/"itinerario".
+    """
+    if term in intents:
+        return True
+    return any(
+        len(intent) >= min_prefix_stem and term.startswith(intent)
+        for intent in intents
+    )
+
+
 def requires_trip_detail(question: str) -> bool:
     """True when a visitor requests a concrete curated plan/detail."""
-    terms = tokenize(question)
     return any(
-        term in TRIP_PLAN_INTENT_TERMS_ALL
-        or any(
-            len(term) >= 4 and term.startswith(intent)
-            for intent in TRIP_PLAN_INTENT_TERMS_ALL if len(intent) >= 4
-        )
-        for term in terms
+        _token_matches_intent(term, TRIP_PLAN_INTENT_TERMS_ALL)
+        for term in tokenize(question)
     )
 
 

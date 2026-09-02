@@ -167,6 +167,15 @@ class TestStrictGrounding:
     def test_plan_detail_intent(self, question):
         assert requires_trip_detail(question)
 
+    @pytest.mark.parametrize("question", [
+        "Is there a planetarium?",
+        "planetary museum nearby",
+        "What is the plant museum?",
+    ])
+    def test_plan_prefix_does_not_false_trigger_trip_detail(self, question):
+        # "planetarium".startswith("plan") used to force curated-trip mode.
+        assert not requires_trip_detail(question)
+
     def test_failure_message_follows_index_language(self, index):
         spanish = dict(index)
         spanish["meta"] = dict(index["meta"], lang="es")
