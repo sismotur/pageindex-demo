@@ -78,5 +78,27 @@
         "question": "¿Dónde puedo conseguir información turística o mapas de la zona?"
       }
     ]
+  },
+  {
+    "id": "MT06",
+    "title": "Saludo, Confirmación y Continuidad",
+    "description": "Regression coverage for the repeat-answer/confirmation-follow-through guard (2026-09 fix): a greeting, a topical follow-up, then a short confirmation that answers the assistant's own offer. The confirmation turn must not repeat turn 1's greeting verbatim and must not be a bare re-ask — it should continue grounded on the castle raised in turn 2.",
+    "turns": [
+      {
+        "question": "Hola"
+      },
+      {
+        "question": "¿Qué puedo ver relacionado con la historia de Montánchez?",
+        "must_mention": ["castillo"],
+        "expected_section": "UNESCO World Heritage and City Overview, Civil and Historical Monuments"
+      },
+      {
+        "question": "Sí, cuéntame más.",
+        "must_mention": ["castillo"]
+      }
+    ],
+    "outcome": {
+      "must_mention": ["castillo"]
+    }
   }
 ]

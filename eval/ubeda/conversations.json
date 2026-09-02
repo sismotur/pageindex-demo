@@ -5,15 +5,24 @@
     "description": "Visitor discovers Úbeda's UNESCO status, then drills into a specific monument on the main square, then asks about dining nearby.",
     "turns": [
       {
-        "question": "Why is Úbeda a UNESCO World Heritage City and what is the most famous square?"
+        "question": "Why is Úbeda a UNESCO World Heritage City and what is the most famous square?",
+        "must_mention": ["vázquez de molina"],
+        "expected_section": "UNESCO World Heritage and City Overview"
       },
       {
-        "question": "You mentioned the Plaza Vázquez de Molina — what specific monuments surround it? Tell me about the Sacred Chapel of El Salvador."
+        "question": "You mentioned the Plaza Vázquez de Molina — what specific monuments surround it? Tell me about the Sacred Chapel of El Salvador.",
+        "must_mention": ["salvador"],
+        "expected_section": "UNESCO World Heritage and City Overview, Civil and Historical Monuments, Religious Heritage"
       },
       {
-        "question": "After visiting the chapel, I'd like to eat nearby. Are there any restaurants or cafes close to that square?"
+        "question": "After visiting the chapel, I'd like to eat nearby. Are there any restaurants or cafes close to that square?",
+        "must_mention": ["restaurant"],
+        "expected_section": "Gastronomy"
       }
-    ]
+    ],
+    "outcome": {
+      "must_mention": ["restaurant"]
+    }
   },
   {
     "id": "C02",
@@ -21,15 +30,24 @@
     "description": "Visitor interested in olive oil explores local production, gets details on a specific mill, then asks about accommodation.",
     "turns": [
       {
-        "question": "Is Úbeda known for olive oil? What can I visit related to local olive oil production?"
+        "question": "Is Úbeda known for olive oil? What can I visit related to local olive oil production?",
+        "must_mention": ["oil", "olive"],
+        "expected_section": "Gastronomy"
       },
       {
-        "question": "You mentioned Almazara Baltasar Lara — where exactly is it located and what does it offer to visitors?"
+        "question": "You mentioned Almazara Baltasar Lara — where exactly is it located and what does it offer to visitors?",
+        "must_mention": ["almazara"],
+        "expected_section": "Gastronomy"
       },
       {
-        "question": "After visiting the oil mill, I need somewhere to stay overnight. What accommodation is available near the old town?"
+        "question": "After visiting the oil mill, I need somewhere to stay overnight. What accommodation is available near the old town?",
+        "must_mention": ["parador", "hotel"],
+        "expected_section": "Accommodation"
       }
-    ]
+    ],
+    "outcome": {
+      "must_mention": ["parador"]
+    }
   },
   {
     "id": "C03",
@@ -37,13 +55,19 @@
     "description": "Visitor plans logistics: parking, then health services if needed, then picks up a tourist information guide.",
     "turns": [
       {
-        "question": "I'm driving to Úbeda. Where can I park my car near the historic centre?"
+        "question": "I'm driving to Úbeda. Where can I park my car near the historic centre?",
+        "must_mention": ["parking"],
+        "expected_section": "Practical Information"
       },
       {
-        "question": "Good. And just in case — if I need a pharmacy while I'm there, where can I find one close by?"
+        "question": "Good. And just in case — if I need a pharmacy while I'm there, where can I find one close by?",
+        "must_mention": ["pharmacy"],
+        "expected_section": "Health and Beauty"
       },
       {
-        "question": "Is there a tourist information office in Úbeda where I can get maps and book guided tours?"
+        "question": "Is there a tourist information office in Úbeda where I can get maps and book guided tours?",
+        "must_mention": ["tourist information"],
+        "expected_section": "Tourist Information and Services"
       }
     ]
   },
@@ -53,13 +77,18 @@
     "description": "Visitor plans a full day: morning culture route, deep-dive on one monument mentioned in the answer, afternoon events.",
     "turns": [
       {
-        "question": "I have one full day in Úbeda. Suggest a morning cultural route covering the most important heritage sites."
+        "question": "I have one full day in Úbeda. Suggest a morning cultural route covering the most important heritage sites.",
+        "expected_section": "UNESCO World Heritage and City Overview, Civil and Historical Monuments, Religious Heritage"
       },
       {
-        "question": "You mentioned the Hospital de Santiago in your route — can you tell me more about it specifically? What is its history and what can I see inside?"
+        "question": "You mentioned the Hospital de Santiago in your route — can you tell me more about it specifically? What is its history and what can I see inside?",
+        "must_mention": ["hospital de santiago"],
+        "expected_section": "Museums and Culture"
       },
       {
-        "question": "What traditional festivals or cultural events take place in Úbeda that I might catch during my visit?"
+        "question": "What traditional festivals or cultural events take place in Úbeda that I might catch during my visit?",
+        "must_mention": ["holy week"],
+        "expected_section": "Events and Festivals"
       }
     ]
   }

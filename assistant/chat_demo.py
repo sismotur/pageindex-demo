@@ -102,6 +102,7 @@ from common.lang_support import (   # noqa: E402
     recovery_msg as _recovery_msg,
 )
 from common.models import DEFAULT_CHAT_MODEL   # noqa: E402
+import run_store
 
 # ── Constants ──────────────────────────────────────────────────────────────────
 CONVERSATIONS_FILE = PROJECT_ROOT / "eval" / "ubeda" / "conversations.json"
@@ -1403,7 +1404,9 @@ def main() -> None:
                               "Use this to point scripted mode at a "
                               "destination-specific thread file."))
     parser.add_argument("--output",       default=None,
-                        help="Output path (default: results/conversations_<model>.json)")
+                        help=("Explicit output path. Bypasses the historized "
+                              "results/{dest}/{lang}/runs/ layout — use only "
+                              "for ad-hoc one-off files."))
     args = parser.parse_args()
 
     if not is_supported(args.lang):
@@ -1464,10 +1467,21 @@ def main() -> None:
                   file=sys.stderr)
             sys.exit(1)
 
-    model_tag = args.model.split("/")[-1].replace(":", "-")
-    output_file = Path(args.output) if args.output \
-                  else RESULTS_DIR / f"conversations_{model_tag}.json"
-    RESULTS_DIR.mkdir(exist_ok=True)
+    run_dir = None
+    if args.output:
+        # Ad-hoc mode: explicit path, no run dir, no manifest, no history.
+        output_file = Path(args.output)
+        if not output_file.is_absolute():
+            output_file = PROJECT_ROOT / output_file
+        output_file.parent.mkdir(parents=True, exist_ok=True)
+    else:
+        run_dir = run_store.new_run_dir(dest_slug or "unknown", args.lang, args.model)
+        run_store.build_manifest(
+            run_dir, kind="conversations", model=args.model, lang=args.lang,
+            destination=dest_slug or "unknown", index_path=index_path,
+            index=index, conversations_file=conversations_path,
+        )
+        output_file = run_dir / "conversations.json"
 
     print(f"[INFO] Model:         {args.model}")
     print(f"[INFO] Index:         {index_path.name}")
@@ -1487,6 +1501,10 @@ def main() -> None:
     with open(output_file, "w", encoding="utf-8") as f:
         json.dump(results, f, indent=2, ensure_ascii=False)
     print(f"[INFO] Saved → {output_file}")
+
+    if run_dir is not None:
+        run_store.update_latest(run_dir)
+        print(f"[INFO] Run dir:       {run_dir}")
 
 
 if __name__ == "__main__":

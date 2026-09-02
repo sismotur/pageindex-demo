@@ -856,16 +856,21 @@ iOS **MLX Swift**; oMLX is the reference server only):
 3. Run the 20 questions of `eval/ubeda/questions.json` single-turn,
    temperature 0, recording per question: answer, tool calls, sections
    accessed, latency.
-4. Score with `assistant/score_results.py` (it accepts any
-   `results/eval_*.json`-shaped file).
+4. Score with `assistant/score_results.py --file <path>/eval.json` (it
+   accepts any eval.json-shaped file, in or out of the historized
+   `results/{destination}/{lang}/runs/` layout the Python reference uses).
 5. Pass bar: grounding ≥ 70% and content-fetch ≥ 70% — the same gates
    the Python reference meets (E2B: 72.5% / 95%).
 6. Repeat with `eval/ubeda/questions_es.json` + `indexes/ubeda/es.json`
-   for multilingual coverage (E2B reference: ES 0.830 composite).
+   for multilingual coverage (E2B reference: ES 0.835 composite).
    Other languages follow once EN/ES are stable.
 
 Multi-turn behaviour is exercised by `eval/ubeda/conversations.json`
-(4 threads × 3 turns, shared history) — used for manual QA, not scored.
+(4 threads × 3 turns, shared history) via `assistant/chat_demo.py`
+(scripted mode) + `assistant/score_conversations.py`. Only turns/threads
+with authored `must_mention`/`expected_section`/`outcome` count toward a
+composite; unannotated threads stay manual QA. Not part of this port
+verification's pass bar — useful as a secondary regression signal.
 
 ---
 

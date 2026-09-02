@@ -197,7 +197,10 @@ pageindex-demo/
 │   ├── index_tools.py                 ← eleven tools, evidence + trip/path retrieval
 │   ├── run_eval.py                    ← agentic Q&A evaluation
 │   ├── chat_demo.py                   ← interactive / scripted chat demo
-│   └── score_results.py               ← score grounding + retrieval
+│   ├── run_store.py                   ← historized run storage (manifest, latest, baseline, history)
+│   ├── score_results.py               ← score grounding + retrieval
+│   ├── score_conversations.py         ← score scripted multi-turn conversations
+│   └── compare_runs.py                ← regression gate + destination×language matrix
 │
 ├── indexes/                           ← committed fixture copies, refreshed from
 │   │                                     inventrip-rag-data's build output;
@@ -225,7 +228,12 @@ pageindex-demo/
 │   └── montancheztamuja/
 │       └── conversations.json         ← multi-turn conversation threads
 │
-└── results/                           ← gitignored; eval/conversation outputs
+└── results/                           ← gitignored; historized eval/conversation runs
+    └── {destination}/{lang}/
+        ├── runs/{timestamp}_{model}/  ← immutable per-run manifest + output
+        ├── latest -> runs/{...}       ← newest run
+        ├── baseline.json              ← pinned regression reference
+        └── history.jsonl              ← one aggregate row per scored run
 ```
 
 ### Naming convention
@@ -235,7 +243,8 @@ indexes/{destination}/{lang}.json
 weather/{destination}/{lang}.json
 eval/{destination}/questions_{lang}.json    (English: questions.json, no suffix)
 eval/{destination}/conversations.json
-results/eval_{model}_{lang}.json            (results/ is gitignored)
+results/{destination}/{lang}/runs/{timestamp}_{model}/   (results/ is gitignored)
+results/{destination}/{lang}/{latest, baseline.json, history.jsonl}
 ```
 
 ---
@@ -300,12 +309,21 @@ that only happens in the sibling `inventrip-rag-data` repo now.
 
 ```bash
 # Run the Q&A evaluation (defaults to the E2B mobile model, ~75 s on oMLX;
-# the 26B server ceiling is opt-in via --model openai/gemma-4-26B-A4B-it-MLX-4bit)
+# the 26B server ceiling is opt-in via --model openai/gemma-4-26B-A4B-it-MLX-4bit).
+# Writes into a fresh results/ubeda/en/runs/{run_id}/ and updates `latest`.
 .venv/bin/python assistant/run_eval.py --index indexes/ubeda/en.json
 
-# Score and summarise
-.venv/bin/python assistant/score_results.py \
-  --file results/eval_gemma-4-E2B-it-MLX-8bit.json
+# Score the latest run for every destination/language, write scored.json,
+# and append a row to that pair's history.jsonl (pass --file for one run)
+.venv/bin/python assistant/score_results.py
+
+# Compare the latest run against the pinned baseline; exits non-zero on
+# a real regression. Pin a new baseline after an intentional improvement.
+.venv/bin/python assistant/compare_runs.py --dest ubeda --lang en
+.venv/bin/python assistant/compare_runs.py --dest ubeda --lang en --set-baseline
+
+# Destination × language composite matrix across every historized run
+.venv/bin/python assistant/compare_runs.py --matrix
 
 # Optional: interactive chat
 .venv/bin/python assistant/chat_demo.py --interactive
@@ -372,6 +390,33 @@ Pass thresholds (from the original plan): `grounding ≥ 70%` AND
 
 This replaces the previous heuristic that mapped line ranges to section
 titles.
+
+### Historized runs & regression detection
+
+Every `run_eval.py`/`chat_demo.py` run lands in its own
+`results/{destination}/{lang}/runs/{run_id}/`, never overwritten, with a
+`manifest.json` recording the git commit, index fingerprint, model, and
+source questions/conversations file — so a score change can be
+attributed to code, data, or model. `assistant/compare_runs.py` compares
+the latest run against a pinned `baseline.json`, reporting per-question
+deltas and failing on an aggregate composite/grounding drop, any single
+question dropping ≥ 0.25, or a new error; `--matrix` reports the latest
+composite for every destination/language pair. See AGENTS.md's
+"Regression workflow" for the full command sequence.
+
+### Conversation scoring
+
+`eval/{destination}/conversations.json` threads may optionally annotate
+turns with `must_mention`/`forbidden`/`expected_section`, and a thread
+with `outcome.must_mention` checked against the final answer — the
+same τ-bench-style "grade the goal state" idea applied to a scripted,
+reproducible multi-turn dialogue instead of an LLM-simulated user.
+Every turn also gets two always-on structural checks regardless of
+authoring: a bare re-ask, or a verbatim repeat of the previous turn's
+answer (the greeting/confirmation "double-parrot" failure mode) hard-
+floors that thread's composite to 0.0. Threads with no authored checks
+stay manual QA — `assistant/score_conversations.py` still reports their
+structural signals but excludes them from the composite average.
 
 ---
 

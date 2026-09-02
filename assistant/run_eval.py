@@ -97,6 +97,7 @@ from common.lang_support import (
 )
 from common.models import DEFAULT_EVAL_MODEL
 from common.textnorm import normalize_text, tokenize
+import run_store
 
 # ── Constants ───────────────────────────────────────────────────────────────────────
 QUESTIONS_FILE  = PROJECT_ROOT / "eval" / "ubeda" / "questions.json"
@@ -2298,6 +2299,10 @@ def main() -> None:
     parser.add_argument("--lang", default="en",
                         help=("Response language code (default: en). "
                               "One of: " + ", ".join(SUPPORTED_LANGS)))
+    parser.add_argument("--output", default=None,
+                        help=("Explicit output path. Bypasses the historized "
+                              "results/{dest}/{lang}/runs/ layout — use only "
+                              "for ad-hoc one-off files."))
     args = parser.parse_args()
 
     if not is_supported(args.lang):
@@ -2340,10 +2345,21 @@ def main() -> None:
 
     recovery = recovery_msg(args.lang)
 
-    model_tag   = args.model.split("/")[-1].replace(":", "-")
-    lang_suffix = f"_{args.lang}" if args.lang != "en" else ""
-    output_file = RESULTS_DIR / f"eval_{model_tag}{lang_suffix}.json"
-    RESULTS_DIR.mkdir(exist_ok=True)
+    run_dir = None
+    if args.output:
+        # Ad-hoc mode: explicit path, no run dir, no manifest, no history.
+        output_file = Path(args.output)
+        if not output_file.is_absolute():
+            output_file = PROJECT_ROOT / output_file
+        output_file.parent.mkdir(parents=True, exist_ok=True)
+    else:
+        run_dir = run_store.new_run_dir(dest_slug or "unknown", args.lang, args.model)
+        run_store.build_manifest(
+            run_dir, kind="eval", model=args.model, lang=args.lang,
+            destination=dest_slug or "unknown", index_path=index_path,
+            index=index, questions_file=questions_file,
+        )
+        output_file = run_dir / "eval.json"
 
     print(f"[INFO] Model:          {args.model}")
     print(f"[INFO] Language:       {args.lang}")
@@ -2411,6 +2427,10 @@ def main() -> None:
     with open(output_file, "w", encoding="utf-8") as f:
         json.dump(results, f, indent=2, ensure_ascii=False)
     print(f"[INFO] Saved → {output_file}")
+
+    if run_dir is not None:
+        run_store.update_latest(run_dir)
+        print(f"[INFO] Run dir:        {run_dir}")
 
 
 if __name__ == "__main__":

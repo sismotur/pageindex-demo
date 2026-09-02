@@ -1,39 +1,68 @@
 #!/usr/bin/env python3
 """
-score_results.py — Score PageIndex Q&A evaluation results.
+score_results.py — Score POI-index Q&A evaluation results.
 
-Loads results/eval_*.json and applies a rubric:
+Discovers the latest run per results/{destination}/{lang}/ (or scores an
+explicit --file) and applies a rubric:
   1. Retrieval accuracy  — did the model access an expected section?
-  2. Content fetched     — did it call get_page_content at all?
+  2. Content fetched     — did it call a content-retrieving tool at all?
   3. Factual grounding   — does the answer contain verifiable key facts?
-  4. Language correct    — is the answer in English (for EN questions)?
+  4. Language correct    — is the answer in the requested language?
   5. Latency             — wall-clock seconds per question.
+
+Scoring a run-dir file (one with a sibling manifest.json) writes scored.json
+into the run dir and appends one aggregate row to that (destination, lang)'s
+history.jsonl. Legacy flat eval_*.json files (no manifest) still score,
+writing a scored_ sibling as before.
 
 Usage:
     .venv/bin/python assistant/score_results.py
-    .venv/bin/python assistant/score_results.py --file results/eval_gemma4-e4b.json
+    .venv/bin/python assistant/score_results.py --file results/ubeda/en/runs/<run_id>/eval.json
 """
 
 import argparse
 import json
 import re
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).parent.parent
 RESULTS_DIR  = PROJECT_ROOT / "results"
 
-# Load current expected sections from the Úbeda questions file as the
-# authoritative source.  These override whatever expected_section is stored
-# inside a result file, so rubric corrections to the questions file take
-# effect without re-running the eval.
-_QUESTIONS_FILE = PROJECT_ROOT / "eval" / "ubeda" / "questions.json"
-EXPECTED_SECTIONS: dict[str, str] = {}
-if _QUESTIONS_FILE.exists():
-    with open(_QUESTIONS_FILE, encoding="utf-8") as _qf:
-        for _q in json.load(_qf):
-            if _q.get("expected_section"):
-                EXPECTED_SECTIONS[_q["id"]] = _q["expected_section"]
+sys.path.insert(0, str(Path(__file__).parent))
+import run_store
+
+# Fallback expected-sections source when a result file has no manifest (or
+# its questions_file is missing) — the original Úbeda English question set.
+_DEFAULT_QUESTIONS_FILE = PROJECT_ROOT / "eval" / "ubeda" / "questions.json"
+
+
+def load_expected_sections(questions_file: Path) -> dict[str, str]:
+    """Map question id -> expected_section from a questions JSON file."""
+    sections: dict[str, str] = {}
+    if questions_file.exists():
+        with open(questions_file, encoding="utf-8") as f:
+            for q in json.load(f):
+                if q.get("expected_section"):
+                    sections[q["id"]] = q["expected_section"]
+    return sections
+
+
+# Kept for backward compatibility with direct imports/tests that reference
+# the module-level mapping; run-dir files resolve their own questions_file
+# via the manifest instead (see _expected_sections_for_manifest below).
+EXPECTED_SECTIONS: dict[str, str] = load_expected_sections(_DEFAULT_QUESTIONS_FILE)
+
+
+def _expected_sections_for_manifest(manifest: dict) -> dict[str, str]:
+    """Resolve the authoritative expected-sections map for one run."""
+    qfile = manifest.get("questions_file")
+    if qfile:
+        path = PROJECT_ROOT / qfile
+        if path.exists():
+            return load_expected_sections(path)
+    return EXPECTED_SECTIONS
 
 # ── Factual grounding checks ──────────────────────────────────────────────────
 # Each entry: (question_id, list_of_required_substrings_or_patterns).
@@ -169,14 +198,17 @@ def score_factual_grounding(qid: str, answer: str,
     return round(score, 2), missing
 
 
-def score_retrieval(result: dict) -> float:
+def score_retrieval(result: dict, expected_sections: dict | None = None) -> float:
     """1.0 if the model accessed an expected section, else 0.0.
 
-    Uses EXPECTED_SECTIONS (from questions.json) as the authoritative source,
-    falling back to the value stored in the result file.
+    Uses `expected_sections` (resolved from the run's manifest questions_file
+    when available) as the authoritative source, falling back to the
+    module-level EXPECTED_SECTIONS and then to the value stored in the
+    result file.
     """
     qid      = result.get("id", "")
-    expected = EXPECTED_SECTIONS.get(qid) or result.get("expected_section", "")
+    sections = EXPECTED_SECTIONS if expected_sections is None else expected_sections
+    expected = sections.get(qid) or result.get("expected_section", "")
     accessed = result.get("sections_accessed", [])
     if not expected or not accessed:
         return 0.0
@@ -284,11 +316,11 @@ def guard_tallies(result: dict) -> dict:
     return tally
 
 
-def score_result(result: dict) -> dict:
+def score_result(result: dict, expected_sections: dict | None = None) -> dict:
     """Return a dict of all dimension scores for one result."""
     lang = result.get("lang", "en")
     grounding, missing = score_factual_grounding(result["id"], result.get("answer", ""), lang=lang)
-    retrieval  = score_retrieval(result)
+    retrieval  = score_retrieval(result, expected_sections)
     fetched    = score_content_fetched(result, grounding)  # pass grounding for listing exemption
     language   = score_language(result)
     has_error  = bool(result.get("error"))
@@ -411,7 +443,53 @@ def save_scored(scores: list[dict], output_path: Path) -> None:
     print(f"\n[INFO] Scored results saved → {output_path}")
 
 
-# ── Main ───────────────────────────────────────────────────────────────────────
+# ── Run-dir discovery & history ──────────────────────────────────────
+
+def _discover_result_files() -> list[Path]:
+    """Default no-arg discovery: latest eval run per (dest, lang), plus any
+    legacy flat eval_*.json files not yet migrated into the run-dir layout.
+    """
+    files: list[Path] = []
+    for dest, lang, _lang_dir in run_store.iter_lang_dirs():
+        run_dir = run_store.find_latest_run(dest, lang, require="eval.json")
+        if run_dir:
+            files.append(run_dir / "eval.json")
+    files.extend(sorted(RESULTS_DIR.glob("eval_*.json")))
+    return files
+
+
+def _aggregate_row(manifest: dict, scores: list[dict]) -> dict:
+    """One history.jsonl line summarising a scored run."""
+    n = len(scores)
+    avg = (lambda key: round(sum(s[key] for s in scores) / n, 3)) if n \
+        else (lambda key: 0.0)
+
+    guard_totals: dict[str, int] = {}
+    for s in scores:
+        for key, count in (s.get("guard_events") or {}).items():
+            guard_totals[key] = guard_totals.get(key, 0) + count
+
+    return {
+        "run_id":          manifest.get("run_id"),
+        "kind":            "eval",
+        "scored_at":       datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "model":           manifest.get("model"),
+        "model_tag":       manifest.get("model_tag"),
+        "lang":            manifest.get("lang"),
+        "destination":     manifest.get("destination"),
+        "git_commit":      (manifest.get("git") or {}).get("commit"),
+        "index_sha256_12": (manifest.get("index") or {}).get("sha256_12"),
+        "n_questions":     n,
+        "grounding":       avg("grounding"),
+        "retrieval":       avg("retrieval"),
+        "content_fetched": avg("content_fetched"),
+        "composite":       avg("composite"),
+        "latency_avg":     avg("latency"),
+        "guard_events":    guard_totals,
+    }
+
+
+# ── Main ──────────────────────────────────────────────────────────────────────────────────────────
 
 def main() -> None:
     """Load eval results, score, print, save."""
@@ -419,17 +497,17 @@ def main() -> None:
     parser.add_argument(
         "--file", type=Path,
         default=None,
-        help="Path to eval_*.json (default: most recent in results/)",
+        help="Path to an eval.json/eval_*.json file (default: latest run per destination/lang)",
     )
     args = parser.parse_args()
 
     if args.file:
         result_files = [args.file]
     else:
-        result_files = sorted(RESULTS_DIR.glob("eval_*.json"))
+        result_files = _discover_result_files()
 
     if not result_files:
-        print("[ERROR] No eval_*.json files found in results/", file=sys.stderr)
+        print("[ERROR] No eval result files found in results/", file=sys.stderr)
         sys.exit(1)
 
     for result_file in result_files:
@@ -441,13 +519,30 @@ def main() -> None:
             results = json.load(f)
 
         model = results[0].get("model", "unknown") if results else "unknown"
-        scores = [score_result(r) for r in results]
+
+        run_dir  = result_file.parent
+        manifest = run_store.read_manifest(run_dir)
+        expected_sections = _expected_sections_for_manifest(manifest) if manifest \
+            else EXPECTED_SECTIONS
+
+        scores = [score_result(r, expected_sections) for r in results]
 
         print_table(scores, model)
         print_summary(scores, model)
 
-        scored_path = result_file.parent / result_file.name.replace("eval_", "scored_")
+        if manifest:
+            scored_path = run_dir / "scored.json"
+        else:
+            scored_path = result_file.parent / result_file.name.replace("eval_", "scored_")
         save_scored(scores, scored_path)
+
+        if manifest and manifest.get("destination") and manifest.get("lang"):
+            row = _aggregate_row(manifest, scores)
+            appended = run_store.append_history(
+                manifest["destination"], manifest["lang"], row)
+            if appended:
+                hpath = run_store.history_path(manifest["destination"], manifest["lang"])
+                print(f"[INFO] History appended → {hpath}")
 
 
 if __name__ == "__main__":

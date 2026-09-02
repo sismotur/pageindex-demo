@@ -301,8 +301,16 @@ given an old `results/{name}_structure.json` path, it remaps to
 ### Score and report
 
 ```bash
-.venv/bin/python assistant/score_results.py --file results/eval_gemma4-26b.json
-.venv/bin/python assistant/score_results.py --file results/eval_gemma4-26b_es.json
+# No args: scores every destination/language's latest run, writes
+# scored.json into that run dir, and appends a row to history.jsonl
+.venv/bin/python assistant/score_results.py
+
+# Regression check: latest vs the pinned baseline (exits non-zero on a
+# real regression); --set-baseline pins latest as the new baseline
+.venv/bin/python assistant/compare_runs.py --dest ubeda --lang en
+
+# Destination × language composite matrix across every historized run
+.venv/bin/python assistant/compare_runs.py --matrix
 ```
 
 Rubric details in `assistant/score_results.py`. The `_CONTENT_FETCH_TOOLS`
@@ -310,7 +318,8 @@ set lists every tool that counts as "the model retrieved real content"
 (`get_poi`, `get_section`, `find_poi_by_name`, `filter_pois`,
 `search_pois`, `search_trips`, `get_trip`, `search_paths`, `get_path`); legacy
 tool names from older result files are also accepted so historical
-files still score.
+files still score. See "Regression workflow" below for the full run →
+score → compare → (re-)pin sequence, including scored conversations.
 
 ---
 
@@ -420,7 +429,10 @@ pageindex-demo/
 │   ├── index_tools.py                 ← read-side helpers (eleven tools + itineraries)
 │   ├── run_eval.py                    ← agentic eval
 │   ├── chat_demo.py                   ← interactive / scripted chat demo
-│   └── score_results.py               ← score grounding + retrieval
+│   ├── run_store.py                   ← historized run storage (manifest, latest, baseline, history)
+│   ├── score_results.py               ← score grounding + retrieval
+│   ├── score_conversations.py         ← score scripted multi-turn conversations
+│   └── compare_runs.py                ← regression gate + destination×language matrix
 │
 ├── indexes/                           ← committed fixture copies, refreshed from
 │   │                                     inventrip-rag-data's build output;
@@ -452,9 +464,18 @@ pageindex-demo/
 │   ├── test_index_tools.py            ← index schema + tool-layer regression tests
 │   ├── test_weather.py                ← weather tool + intent detection tests
 │   ├── test_multi_destination.py      ← cross-destination isolation tests
-│   └── test_rubric.py                 ← rubric + index regression tests
+│   ├── test_rubric.py                 ← rubric + index regression tests (pinned baseline)
+│   ├── test_run_store.py              ← run-dir/manifest/baseline/history tests
+│   ├── test_compare_runs.py           ← regression-gate threshold tests
+│   └── test_score_conversations.py    ← scored-conversation rubric tests
 │
-└── results/                           ← gitignored
+└── results/                           ← gitignored; historized eval/conversation runs
+    └── {destination}/{lang}/
+        ├── runs/{timestamp}_{model}/  ← immutable: manifest.json, eval.json,
+        │                                scored.json, conversations.json, ...
+        ├── latest -> runs/{...}       ← newest run (symlink)
+        ├── baseline.json              ← pinned regression reference
+        └── history.jsonl              ← one aggregate row per scored run
 ```
 
 ### Naming convention
@@ -464,8 +485,32 @@ indexes/{destination}/{lang}.json
 weather/{destination}/{lang}.json
 eval/{destination}/questions_{lang}.json    (English: questions.json, no suffix)
 eval/{destination}/conversations.json
-results/eval_{model}_{lang}.json            (results/ is gitignored)
+results/{destination}/{lang}/runs/{timestamp}_{model}/   (results/ is gitignored)
+results/{destination}/{lang}/{latest, baseline.json, history.jsonl}
 ```
+
+### Regression workflow
+
+1. `run_eval.py` (or `chat_demo.py` scripted mode) writes into a fresh
+   `results/{dest}/{lang}/runs/{run_id}/` — never overwritten — and
+   updates that pair's `latest` pointer.
+2. `score_results.py` / `score_conversations.py` with no arguments score
+   every destination/language's `latest` run, write `scored.json` /
+   `conversations_scored.json` into the run dir, and append one row to
+   `history.jsonl`. Only turns/threads with authored
+   `must_mention`/`forbidden`/`expected_section`/`outcome` in the source
+   `conversations.json` count toward a conversation's composite —
+   everything else stays manual QA.
+3. `compare_runs.py` (no args → `ubeda`/`en`; `--dest`/`--lang` for
+   others) compares `latest` against the pinned `baseline.json` and
+   exits non-zero on a real regression: aggregate composite drop > 0.02,
+   aggregate grounding drop > 2.5pp, any single question's composite
+   dropping ≥ 0.25, or a new error.
+4. When a change is an intentional improvement, re-pin with
+   `compare_runs.py --set-baseline`.
+5. `compare_runs.py --matrix` prints the destination × language
+   composite table from every `history.jsonl`, to compare how well the
+   system performs across destinations/languages.
 
 ---
 

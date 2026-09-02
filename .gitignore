@@ -9,7 +9,7 @@ __pycache__/
 
 # Logs and run outputs
 logs/
-results/*.json
+results/
 
 # Generated Markdown (optional human-readable export from json_to_markdown.py)
 data/*_guide_*.md

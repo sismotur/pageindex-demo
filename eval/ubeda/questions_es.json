@@ -4,7 +4,7 @@
     "category": "overview",
     "difficulty": "easy",
     "question": "¿Por qué Úbeda es Ciudad Patrimonio de la Humanidad por la UNESCO?",
-    "expected_section": "Destination Overview",
+    "expected_section": "UNESCO World Heritage and City Overview",
     "grounding_check": "La respuesta debe mencionar la arquitectura renacentista, la designación UNESCO de 2003 y/o la Plaza Vázquez de Molina"
   },
   {
@@ -156,7 +156,7 @@
     "category": "synthesis",
     "difficulty": "hard",
     "question": "¿Qué hace a Úbeda diferente de otras ciudades españolas como destino turístico? ¿Cuál es su atractivo único?",
-    "expected_section": "Destination Overview",
+    "expected_section": "UNESCO World Heritage and City Overview",
     "grounding_check": "La respuesta debe mencionar: estado de Patrimonio de la Humanidad de la UNESCO (2003), arquitectura renacentista. Debe estar fundamentada en el documento, no en conocimiento general."
   }
 ]
