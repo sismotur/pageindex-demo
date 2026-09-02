@@ -1747,3 +1747,101 @@ class TestDesignationGuard:
         )
         assert result["answer"] == "¡Hola! ¿En qué puedo ayudarte hoy?"
         assert result["tool_calls"] == []   # no retrieval for a greeting
+
+
+# ── Decode-time tool forcing (tool_choice) ──────────────────────────────────
+
+class TestForcedToolChoice:
+    """The two instruction turns that DEMAND a tool call carry tool_choice
+    for runtimes that honor it (LiteRT ToolChoice; oMLX ignores it).
+    Every other turn stays 'auto' — most instructions have legitimate
+    no-tool outcomes (small talk, overview answers, \"answer from these
+    results\" follow-ups)."""
+
+    def test_complementary_instruction_forces_required(self, index,
+                                                       monkeypatch):
+        captured: list = []
+
+        def fake(*args, **kwargs):
+            captured.append(kwargs)
+            n = len(captured)
+            tc = None
+            if n == 1:
+                tc = SimpleNamespace(id="c1", function=SimpleNamespace(
+                    name="search_pois",      # misses → direct_evidence_missing
+                    arguments=json.dumps({"query": "zzz qqq"})))
+            elif n == 3:
+                tc = SimpleNamespace(id="c3", function=SimpleNamespace(
+                    name="filter_pois",
+                    arguments=json.dumps({"interest_level": 1})))
+            return SimpleNamespace(
+                choices=[SimpleNamespace(message=SimpleNamespace(
+                    content=None if tc else "Answer text.",
+                    tool_calls=[tc] if tc else None))],
+                usage=None,
+            )
+
+        monkeypatch.setattr(litellm, "completion", fake)
+        # Compound question with no trip-plan intent ("planetarium" would
+        # false-positive: it prefix-matches the plan term "plan").
+        run_agentic_loop("olive oil restaurant zzzqqq",
+                         "You are a tourism assistant.", index, "",
+                         "fake-model", {})
+        assert len(captured) == 4
+        assert captured[0]["tool_choice"] == "auto"
+        assert captured[1]["tool_choice"] == "auto"
+        # The call right after COMPLEMENTARY_SEARCH_INSTRUCTION is forced.
+        assert captured[2]["tool_choice"] == "required"
+        assert captured[3]["tool_choice"] == "auto"   # cleared after use
+
+    def test_trip_detail_instruction_forces_get_trip(self, index,
+                                                     monkeypatch):
+        captured: list = []
+        trip_id = (index.get("trips") or [{}])[0].get("itinerary_id", "")
+
+        def fake(*args, **kwargs):
+            captured.append(kwargs)
+            n = len(captured)
+            tc = None
+            if n == 1:
+                tc = SimpleNamespace(id="c1", function=SimpleNamespace(
+                    name="search_trips",       # real matches → has_results
+                    arguments=json.dumps({"query": "Úbeda"})))
+            elif n == 3:
+                tc = SimpleNamespace(id="c3", function=SimpleNamespace(
+                    name="get_trip",
+                    arguments=json.dumps({"trip_id": trip_id})))
+            return SimpleNamespace(
+                choices=[SimpleNamespace(message=SimpleNamespace(
+                    content=None if tc else "Hold on a moment.",
+                    tool_calls=[tc] if tc else None))],
+                usage=None,
+            )
+
+        monkeypatch.setattr(litellm, "completion", fake)
+        # Plan intent via "detalles" with zero trip-text token matches,
+        # so the deterministic trip-offer shortcut stays out of the way.
+        run_agentic_loop("detalles zzzqqq",
+                         "You are a tourism assistant.", index, "",
+                         "fake-model", {})
+        assert len(captured) == 3
+        assert captured[0]["tool_choice"] == "auto"
+        assert captured[1]["tool_choice"] == "auto"
+        # The call right after TRIP_DETAIL_REQUIRED_INSTRUCTION names the tool.
+        assert captured[2]["tool_choice"] == {
+            "type": "function", "function": {"name": "get_trip"}}
+
+    def test_grounding_recovery_stays_auto(self, index, monkeypatch):
+        """The recovery instruction has legitimate no-tool outcomes
+        (small talk, generic overview), so it must never force a call."""
+        captured: list = []
+        monkeypatch.setattr(
+            litellm, "completion",
+            _text_only_completion(captured, ["Some catalogue answer."]),
+        )
+        result = run_agentic_loop("What is there to do?",
+                                  "You are a tourism assistant.", index, "",
+                                  "fake-model", {})
+        assert result["answer"] == "Some catalogue answer."
+        assert len(captured) == 2   # initial answer + one grounding retry
+        assert all(c["tool_choice"] == "auto" for c in captured)

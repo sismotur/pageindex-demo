@@ -245,10 +245,12 @@ Ollama (`http://localhost:11434/v1`, model strings like
 
 oMLX accepts but **ignores `tool_choice`** (`"required"` and named
 function choice were probed 2026-09-02: no error, plain-text answers
-on a greeting where a call was forced). Tool-call enforcement on this
-stack therefore stays instruction-based; the on-device LiteRT port
-(Google AI Edge) does expose `ToolChoice.REQUIRED` if a future mobile
-stack needs decode-time forcing.
+on a greeting where a call was forced). The reference loop still passes
+it on the two instruction turns that demand a tool call (trip detail →
+named `get_trip`; complementary retrieval → `"required"`) as porting
+intent — a no-op on oMLX, effective on LiteRT (`ToolChoice`). Every
+other turn stays `"auto"` because those instructions have legitimate
+no-tool outcomes; see `docs/mobile-offline-contract.md` §6.
 
 oMLX 0.6.4 does **prefix-cache** shared prompt prefixes server-side
 (`cache.enabled`, on by default): a repeated 13K-char system prefix

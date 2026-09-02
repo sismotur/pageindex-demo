@@ -716,6 +716,19 @@ if no answer after the loop:
   function-calling channel, use the standard Gemma tool-call prompt
   format and parse the model's `<tool_call>` / JSON output app-side.
   The loop semantics above do not change.
+- **Decode-time tool forcing (optional, runtime-dependent):** exactly
+  two instruction turns demand a tool call and carry `tool_choice` in
+  the reference loop: the trip-detail demand (named `get_trip`) and the
+  complementary-retrieval demand after a failed compound search
+  (`required`).  oMLX ignores the parameter (probed 2026-09-02), so it
+  is a no-op in the reference implementation; on LiteRT
+  (`ToolChoice.REQUIRED` / named function) it removes one wasted retry
+  round when the model ignores the instruction.  Never set it on turns
+  whose instruction allows a no-tool outcome — the grounding recovery
+  (small-talk / generic-overview branches) and the weather, route, and
+  designation follow-ups (which ask for an answer, not a call).  The
+  deterministic runtime guards remain the primary mechanism either way;
+  decode-time forcing only tightens latency.
 
 ---
 

@@ -1532,6 +1532,16 @@ def run_agentic_loop(question: str, system_prompt: str,
     weather_intent = bool(weather) and is_weather_request(question)
     designation_intent = is_designation_question(question)
     designation_lookup_enforced = False
+    # Decode-time tool forcing, consumed (and cleared) by the next
+    # completion call.  Set only on instruction turns that DEMAND a tool
+    # call — the trip-detail demand (named get_trip) and the
+    # complementary-retrieval demand (required).  Never set it where the
+    # instruction allows a no-tool outcome (grounding recovery's
+    # small-talk/overview branches; weather/route/designation follow-ups
+    # that ask for an answer).  oMLX ignores tool_choice (probed
+    # 2026-09-02), so this is a no-op here; it documents porting intent
+    # for runtimes that honor it (LiteRT ToolChoice).
+    forced_tool_choice = None
     tool_calls_made = []
     answer = ""
     error  = None
@@ -1622,13 +1632,14 @@ def run_agentic_loop(question: str, system_prompt: str,
                 model=model,
                 messages=messages,
                 tools=TOOL_DEFS,
-                tool_choice="auto",
+                tool_choice=forced_tool_choice or "auto",
                 temperature=0,
                 max_tokens=MAX_ANSWER_TOKENS,
             )
         except Exception as exc:
             error = str(exc)
             break
+        forced_tool_choice = None
 
         # Token accounting (feeds the on-device budgets in
         # docs/mobile-offline-contract.md)
@@ -1772,6 +1783,9 @@ def run_agentic_loop(question: str, system_prompt: str,
                     "role": "user",
                     "content": COMPLEMENTARY_SEARCH_INSTRUCTION,
                 })
+                # The instruction demands retrieval — enforce it at decode
+                # time on runtimes that honor tool_choice.
+                forced_tool_choice = "required"
                 continue
             if (trip_detail_required and trip_search_started
                     and trip_search_has_results and not trip_detail_started):
@@ -1781,6 +1795,9 @@ def run_agentic_loop(question: str, system_prompt: str,
                         "role": "user",
                         "content": TRIP_DETAIL_REQUIRED_INSTRUCTION,
                     })
+                    # The instruction demands get_trip specifically.
+                    forced_tool_choice = {"type": "function",
+                                          "function": {"name": "get_trip"}}
                     continue
                 if trip_search_default:
                     selected_id = trip_search_default["itinerary_id"]

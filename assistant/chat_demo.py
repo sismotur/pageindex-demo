@@ -197,6 +197,9 @@ def run_turn(question: str, messages: list[dict],
     weather_intent = bool(weather) and is_weather_request(question)
     designation_intent = is_designation_question(question)
     designation_lookup_enforced = False
+    # Decode-time tool forcing — see run_eval.py's note; a no-op on oMLX,
+    # effective on runtimes honoring tool_choice (LiteRT ToolChoice).
+    forced_tool_choice = None
 
     tool_calls_made = []
     answer     = ""
@@ -365,7 +368,7 @@ def run_turn(question: str, messages: list[dict],
                     model=model,
                     messages=messages,
                     tools=TOOL_DEFS,
-                    tool_choice="auto",
+                    tool_choice=forced_tool_choice or "auto",
                     temperature=0,
                     max_tokens=MAX_ANSWER_TOKENS,
                     stream=True,
@@ -373,6 +376,7 @@ def run_turn(question: str, messages: list[dict],
             except Exception as exc:
                 error = str(exc)
                 break
+            forced_tool_choice = None
 
             for chunk in response_stream:
                 delta = chunk.choices[0].delta
@@ -547,6 +551,9 @@ def run_turn(question: str, messages: list[dict],
                         "role": "user",
                         "content": COMPLEMENTARY_SEARCH_INSTRUCTION,
                     })
+                    # The instruction demands retrieval — enforce it at
+                    # decode time on runtimes that honor tool_choice.
+                    forced_tool_choice = "required"
                     continue
                 if (trip_detail_required and trip_search_started
                         and trip_search_has_results and not trip_detail_started):
@@ -556,6 +563,10 @@ def run_turn(question: str, messages: list[dict],
                             "role": "user",
                             "content": TRIP_DETAIL_REQUIRED_INSTRUCTION,
                         })
+                        # The instruction demands get_trip specifically.
+                        forced_tool_choice = {
+                            "type": "function",
+                            "function": {"name": "get_trip"}}
                         continue
                     if use_default_trip_detail():
                         continue
@@ -707,13 +718,14 @@ def run_turn(question: str, messages: list[dict],
                     model=model,
                     messages=messages,
                     tools=TOOL_DEFS,
-                    tool_choice="auto",
+                    tool_choice=forced_tool_choice or "auto",
                     temperature=0,
                     max_tokens=MAX_ANSWER_TOKENS,
                 )
             except Exception as exc:
                 error = str(exc)
                 break
+            forced_tool_choice = None
 
             choice  = response.choices[0]
             message = choice.message
@@ -840,6 +852,8 @@ def run_turn(question: str, messages: list[dict],
                         "role": "user",
                         "content": COMPLEMENTARY_SEARCH_INSTRUCTION,
                     })
+                    # Same decode-time enforcement as the streaming path.
+                    forced_tool_choice = "required"
                     continue
                 if (trip_detail_required and trip_search_started
                         and trip_search_has_results and not trip_detail_started):
@@ -849,6 +863,9 @@ def run_turn(question: str, messages: list[dict],
                             "role": "user",
                             "content": TRIP_DETAIL_REQUIRED_INSTRUCTION,
                         })
+                        forced_tool_choice = {
+                            "type": "function",
+                            "function": {"name": "get_trip"}}
                         continue
                     if use_default_trip_detail():
                         continue
