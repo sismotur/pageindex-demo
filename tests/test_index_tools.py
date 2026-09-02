@@ -14,7 +14,9 @@ Run with:
 import json
 import sys
 from pathlib import Path
+from types import SimpleNamespace
 
+import litellm
 import pytest
 
 PROJECT_ROOT = Path(__file__).parent.parent
@@ -55,6 +57,8 @@ from common.textnorm import normalize_text, tokenize
 from run_eval import (
     COMPACTED_TOOL_RESULT,
     GROUNDING_RECOVERY_INSTRUCTION,
+    LOOP_REPEAT_INSTRUCTION,
+    LOOP_REPEAT_STUB,
     MAX_TOOL_HISTORY_CHARS,
     MAX_TOOL_RESULT_CHARS,
     backstop_named_pois,
@@ -65,10 +69,13 @@ from run_eval import (
     grounding_failure_message,
     is_physical_route_request,
     is_pure_reask,
+    is_repeat_tool_call,
     question_names_known_poi,
     reask_fallback_applies,
     requires_current_turn_grounding,
     requires_trip_detail,
+    run_agentic_loop,
+    tool_call_key,
 )
 
 INDEX_FILE = PROJECT_ROOT / "indexes" / "ubeda" / "en.json"
@@ -1194,3 +1201,111 @@ class TestPoiTags:
         refs = extract_poi_tags(ans, index)
         assert refs[0]["text"] == "**Úbeda** – *Heritage* City"
         assert strip_poi_tags(ans) == "**Úbeda** – *Heritage* City!"
+
+
+# ── Tool-call loop detection ──────────────────────────────────────────────
+
+class TestToolCallLoopBreak:
+    """The repeat detector blocks the 3rd identical (tool, args) call in a
+    turn, corrects the model once, and aborts on any further repeat so the
+    tail recovery forces a final answer instead of burning all rounds."""
+
+    def test_key_ignores_argument_order(self):
+        k1 = tool_call_key("filter_pois", {"limit": 5, "type": "Museum"})
+        k2 = tool_call_key("filter_pois", {"type": "Museum", "limit": 5})
+        assert k1 == k2
+
+    def test_third_identical_call_is_a_repeat(self):
+        keys = []
+        key = tool_call_key("get_poi", {"poi_id": "poi/5155"})
+        for _ in range(2):
+            keys.append(key)
+            assert not is_repeat_tool_call(keys)
+        keys.append(key)
+        assert is_repeat_tool_call(keys)
+
+    def test_alternating_repeat_detected(self):
+        a = tool_call_key("find_poi_by_name", {"query": "castillo"})
+        b = tool_call_key("get_section", {"section_id": "museums"})
+        keys = [a, b, a, b]
+        assert not is_repeat_tool_call(keys)
+        keys.append(a)   # A B A B A — the third A trips the counter
+        assert is_repeat_tool_call(keys)
+
+    def test_different_arguments_are_not_a_repeat(self):
+        keys = [
+            tool_call_key("get_poi", {"poi_id": "poi/1"}),
+            tool_call_key("get_poi", {"poi_id": "poi/2"}),
+            tool_call_key("get_poi", {"poi_id": "poi/1"}),
+        ]
+        assert not is_repeat_tool_call(keys)
+
+    def test_correction_instruction_names_the_tool(self):
+        text = LOOP_REPEAT_INSTRUCTION.format(tool="get_poi")
+        assert "get_poi" in text
+        assert "Do not repeat" in text
+
+    @staticmethod
+    def _looping_completion(captured: list, answer_text: str):
+        """Fake litellm.completion: re-issues the same find_poi_by_name
+        call on every loop round, then answers on the tail recovery call
+        (5th call overall: 4 loop rounds + recovery)."""
+        def fake(*args, **kwargs):
+            captured.append(list(kwargs.get("messages") or []))
+            if len(captured) <= 4:
+                tc = SimpleNamespace(
+                    id=f"call_{len(captured)}",
+                    function=SimpleNamespace(
+                        name="find_poi_by_name",
+                        arguments=json.dumps({"query": "castillo"}),
+                    ),
+                )
+                return SimpleNamespace(
+                    choices=[SimpleNamespace(message=SimpleNamespace(
+                        content=None, tool_calls=[tc]))],
+                    usage=None,
+                )
+            return SimpleNamespace(
+                choices=[SimpleNamespace(message=SimpleNamespace(
+                    content=answer_text, tool_calls=None))],
+                usage=None,
+            )
+        return fake
+
+    def test_two_strike_break_forces_answer(self, index, monkeypatch):
+        captured: list = []
+        monkeypatch.setattr(
+            litellm, "completion",
+            self._looping_completion(captured, "Recovered answer text."),
+        )
+        result = run_agentic_loop(
+            "Tell me about the castle", "You are a tourism assistant.",
+            index, "", "fake-model", {},
+        )
+        assert result["answer"] == "Recovered answer text."
+        assert result["rounds"] == 4
+        blocked = [c for c in result["tool_calls"] if c.get("loop_blocked")]
+        real    = [c for c in result["tool_calls"] if not c.get("loop_blocked")]
+        assert len(blocked) == 2   # strike 1 + strike 2
+        assert len(real) == 2      # only the first two calls really ran
+        assert all(c["result_preview"] == LOOP_REPEAT_STUB for c in blocked)
+        # The one-shot correction was injected after the first blocked call.
+        assert any(
+            "Do not repeat it" in (m.get("content") or "")
+            for messages in captured for m in messages
+            if m.get("role") == "user"
+        )
+
+    def test_run_turn_blocks_and_recovers(self, index, monkeypatch):
+        from chat_demo import run_turn
+        captured: list = []
+        monkeypatch.setattr(
+            litellm, "completion",
+            self._looping_completion(captured, "Recovered chat answer."),
+        )
+        messages = [{"role": "system", "content": "You are a tourism assistant."}]
+        result = run_turn("Tell me about the castle", messages, index, "",
+                          "fake-model", {})
+        assert result["answer"] == "Recovered chat answer."
+        blocked = [c for c in result["tool_calls"] if c.get("loop_blocked")]
+        assert len(blocked) == 2

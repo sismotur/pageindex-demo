@@ -58,15 +58,19 @@ from run_eval import (   # noqa: E402
     GROUNDING_RECOVERY_INSTRUCTION,
     NAMED_POI_LOOKUP_INSTRUCTION,
     REASK_FALLBACK_INSTRUCTION,
+    LOOP_REPEAT_INSTRUCTION,
+    LOOP_REPEAT_STUB,
     backstop_named_pois,
     execute_reask_fallback,
     is_pure_reask,
+    is_repeat_tool_call,
     reask_fallback_applies,
     requires_current_turn_grounding,
     grounding_failure_message,
     history_followup_answer,
     selected_source_context,
     requires_trip_detail,
+    tool_call_key,
     TRIP_DETAIL_REQUIRED_INSTRUCTION,
     WEATHER_LOOKUP_ENFORCED_INSTRUCTION,
 )
@@ -209,6 +213,12 @@ def run_turn(question: str, messages: list[dict],
     trip_detail_started = False
     trip_detail_enforced = False
     source_detail_answer = ""
+    # Loop-detector state is local to run_turn, so each new visitor
+    # message resets it (a cross-turn re-lookup is legitimate).
+    call_keys: list[str] = []
+    loop_correction_given = False
+    loop_correction_pending: str | None = None
+    loop_abort = False
 
     # Resolve concise selections against validated tags from earlier
     # assistant turns before asking the model to answer. This prevents
@@ -861,6 +871,30 @@ def run_turn(question: str, messages: list[dict],
             except json.JSONDecodeError:
                 pass
 
+            call_keys.append(tool_call_key(fn_name, fn_args))
+            if is_repeat_tool_call(call_keys):
+                # Third identical call this turn: block the execution and
+                # answer with a stub.  Correct the model once; on any
+                # further repeat, abort the tool loop — the tail recovery
+                # then forces a final answer from what it already has.
+                if loop_correction_given:
+                    loop_abort = True
+                else:
+                    loop_correction_pending = fn_name
+                tool_calls_made.append({
+                    "tool":           fn_name,
+                    "args":           fn_args,
+                    "result_preview": LOOP_REPEAT_STUB,
+                    "cache_hit":      False,
+                    "loop_blocked":   True,
+                })
+                messages.append({
+                    "role":         "tool",
+                    "tool_call_id": tc.id,
+                    "content":      LOOP_REPEAT_STUB,
+                })
+                continue
+
             if on_status:
                 on_status(_status_for_call(fn_name, fn_args))
 
@@ -911,6 +945,18 @@ def run_turn(question: str, messages: list[dict],
                 "tool_call_id": tc.id,
                 "content":      result,
             })
+
+        if loop_abort:
+            break
+        if loop_correction_pending:
+            blocked_tool = loop_correction_pending
+            loop_correction_pending = None
+            loop_correction_given = True
+            messages.append({
+                "role":    "user",
+                "content": LOOP_REPEAT_INSTRUCTION.format(tool=blocked_tool),
+            })
+            continue
 
     # Fallback: never recover a model-only tourism answer after the round cap.
     if not answer and grounding_required and not grounded:

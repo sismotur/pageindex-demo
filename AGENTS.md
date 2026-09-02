@@ -345,8 +345,14 @@ Typical flows handled by the model:
   the model answers an ongoing-conversation turn with yet another bare
   clarifying question, the runtime retrieves content itself
   (`search_pois` on the question, else `filter_pois` indispensable
-  highlights) and makes the model present it. The localized safe failure
-  remains only for turns that never produce an answer.
+  highlights) and makes the model present it. A per-turn loop detector
+  blocks the third identical `(tool, args)` call (every tool is a
+  deterministic read-only lookup, so a repeat can return nothing new),
+  corrects the model once with the offending call named, and on any
+  further repeat aborts the tool loop so the tail recovery forces a
+  final answer — worst-case latency stays bounded instead of burning
+  all 14 rounds. The localized safe failure remains only for turns that
+  never produce an answer.
 
 Pre-warm: every section's `get_section(id, "interest", 50)` result is
 cached at session start, so subsequent calls are instant.

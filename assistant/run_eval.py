@@ -166,6 +166,43 @@ def no_path_answer_instruction(weather_grounded: bool) -> str:
             else NO_PATH_ANSWER_INSTRUCTION)
 
 
+# ── Tool-call loop detection ─────────────────────────────────────────────
+# Small models sometimes re-issue the identical tool call over and over
+# (the 26B Spanish eval showed single questions looping until the round
+# cap, e.g. 1000 s outliers vs a ~20 s median).  Every tool here is a
+# deterministic read-only lookup, so an identical (tool, args) call can
+# never return new information — repeat detection has no false-positive
+# window beyond legitimate cross-turn re-asks, which is why the state
+# resets per question/turn.
+LOOP_CALL_LIMIT = 3
+LOOP_REPEAT_STUB = (
+    "[Repeated call blocked: you already received this exact result "
+    "earlier in this turn.]"
+)
+LOOP_REPEAT_INSTRUCTION = (
+    "You already called {tool} with the exact same arguments earlier in "
+    "this turn and received that result. Repeating the call returns "
+    "nothing new. Do not repeat it. Answer the visitor's question now "
+    "from the information you already have, or use a different tool."
+)
+
+
+def tool_call_key(name: str, args: dict) -> str:
+    """Canonical identity of one tool call (argument order irrelevant)."""
+    return name + "|" + json.dumps(args or {}, sort_keys=True, default=str)
+
+
+def is_repeat_tool_call(call_keys: list[str],
+                        limit: int = LOOP_CALL_LIMIT) -> bool:
+    """True when the latest key in `call_keys` has appeared `limit` times.
+
+    Count-based, so consecutive, alternating (A-B-A-B-A) and scattered
+    repeats of the same (tool, args) all trip it.  Only model-emitted
+    calls are tracked; deterministic runtime lookups are excluded.
+    """
+    return bool(call_keys) and call_keys.count(call_keys[-1]) >= limit
+
+
 SOURCE_GROUNDING_TOOLS = frozenset({
     "get_poi", "get_section", "find_poi_by_name", "filter_pois",
     "search_pois", "search_trips", "get_trip", "search_paths", "get_path",
@@ -1350,6 +1387,10 @@ def run_agentic_loop(question: str, system_prompt: str,
     trip_detail_started = False
     trip_detail_enforced = False
     source_detail_answer = ""
+    call_keys: list[str] = []
+    loop_correction_given = False
+    loop_correction_pending: str | None = None
+    loop_abort = False
     direct_trip_selection = resolve_trip_query(question, index)
     if direct_trip_selection:
         result, hit = execute_tool(
@@ -1694,6 +1735,30 @@ def run_agentic_loop(question: str, system_prompt: str,
             except json.JSONDecodeError:
                 pass
 
+            call_keys.append(tool_call_key(fn_name, fn_args))
+            if is_repeat_tool_call(call_keys):
+                # Third identical call this turn: block the execution and
+                # answer with a stub.  Correct the model once; on any
+                # further repeat, abort the tool loop — the tail recovery
+                # then forces a final answer from what it already has.
+                if loop_correction_given:
+                    loop_abort = True
+                else:
+                    loop_correction_pending = fn_name
+                tool_calls_made.append({
+                    "tool":           fn_name,
+                    "args":           fn_args,
+                    "result_preview": LOOP_REPEAT_STUB,
+                    "cache_hit":      False,
+                    "loop_blocked":   True,
+                })
+                messages.append({
+                    "role":         "tool",
+                    "tool_call_id": tc.id,
+                    "content":      LOOP_REPEAT_STUB,
+                })
+                continue
+
             result, hit = execute_tool(
                 fn_name, fn_args, index, sections_text, cache, weather=weather,
             )
@@ -1741,6 +1806,18 @@ def run_agentic_loop(question: str, system_prompt: str,
                 "tool_call_id": tc.id,
                 "content":      result,
             })
+
+        if loop_abort:
+            break
+        if loop_correction_pending:
+            blocked_tool = loop_correction_pending
+            loop_correction_pending = None
+            loop_correction_given = True
+            messages.append({
+                "role":    "user",
+                "content": LOOP_REPEAT_INSTRUCTION.format(tool=blocked_tool),
+            })
+            continue
 
     if not answer and grounding_required and not grounded:
         answer = grounding_failure_message(index)
