@@ -185,6 +185,13 @@ LOOP_REPEAT_INSTRUCTION = (
     "nothing new. Do not repeat it. Answer the visitor's question now "
     "from the information you already have, or use a different tool."
 )
+# Served for the SECOND occurrence of an identical call (before the
+# blocking stub above applies to the third): the tools are deterministic
+# lookups, so the result already in context is the whole answer.
+LOOP_REPEAT_CACHE_STUB = (
+    "[Already retrieved this turn: the identical result is in this "
+    "conversation above. Use it; repeating the call returns nothing new.]"
+)
 
 
 def tool_call_key(name: str, args: dict) -> str:
@@ -201,6 +208,43 @@ def is_repeat_tool_call(call_keys: list[str],
     calls are tracked; deterministic runtime lookups are excluded.
     """
     return bool(call_keys) and call_keys.count(call_keys[-1]) >= limit
+
+
+# ── Streaming content-chant detection ─────────────────────────────────────
+# Text-level counterpart of the tool-call loop detector: a small model can
+# degenerate into repeating one phrase until the server-side token cap
+# (gemini-cli calls this "content chanting").  Streaming only — the eval
+# path is non-streaming and bounded by the server.
+CHANT_CHUNK_SIZE = 50        # tail chunk compared for repetition
+CHANT_WINDOW_CHARS = 2_000   # only the recent window is inspected
+CHANT_MAX_REPEATS = 6        # chunk occurrences in the window that trip it
+
+
+def chant_repeat_prefix(text: str,
+                        chunk_size: int = CHANT_CHUNK_SIZE,
+                        window_chars: int = CHANT_WINDOW_CHARS,
+                        max_repeats: int = CHANT_MAX_REPEATS) -> int:
+    """Offset where a repetitive chant run begins, or len(text) if none.
+
+    Detection (gemini-cli style, tightened for short chat answers): the
+    last `chunk_size` characters occurring at least `max_repeats` times in
+    the trailing `window_chars` window means the stream is chanting.  On
+    detection the offset walks back over every earlier occurrence of the
+    tail chunk, so text[:offset] is the keepable non-repetitive prefix
+    (it may retain up to one partial chant unit — the run start is not
+    chunk-aligned in general).
+    """
+    if len(text) < chunk_size * max_repeats:
+        return len(text)
+    chunk = text[-chunk_size:]
+    if text[-window_chars:].count(chunk) < max_repeats:
+        return len(text)
+    start = text.find(chunk, max(0, len(text) - window_chars))
+    while True:
+        prev = text.rfind(chunk, 0, start)
+        if prev == -1:
+            return start
+        start = prev
 
 
 SOURCE_GROUNDING_TOOLS = frozenset({
@@ -1445,6 +1489,7 @@ def run_agentic_loop(question: str, system_prompt: str,
     loop_correction_given = False
     loop_correction_pending: str | None = None
     loop_abort = False
+    results_by_key: dict[str, str] = {}
     direct_trip_selection = resolve_trip_query(question, index)
     if direct_trip_selection:
         result, hit = execute_tool(
@@ -1817,6 +1862,35 @@ def run_agentic_loop(question: str, system_prompt: str,
                 })
                 continue
 
+            cached_result = results_by_key.get(call_keys[-1])
+            if cached_result is not None:
+                # Second occurrence of an identical call this turn.  The
+                # tools are deterministic lookups, so re-execution can
+                # return nothing new: serve a short stub while the
+                # original result is still in context, or re-serve the
+                # cached result itself when compact_tool_history has
+                # since replaced it (its own text tells the model to
+                # retrieve the source again when needed).
+                still_visible = any(
+                    m.get("role") == "tool" and m.get("content") == cached_result
+                    for m in messages
+                )
+                repeat_content = (LOOP_REPEAT_CACHE_STUB if still_visible
+                                  else cached_result)
+                tool_calls_made.append({
+                    "tool":           fn_name,
+                    "args":           fn_args or {},
+                    "result_preview": repeat_content[:300],
+                    "cache_hit":      False,
+                    "repeat_cached":  True,
+                })
+                messages.append({
+                    "role":         "tool",
+                    "tool_call_id": tc.id,
+                    "content":      repeat_content,
+                })
+                continue
+
             invalid = validate_tool_call(fn_name, fn_args,
                                          tc.function.arguments or "")
             if invalid:
@@ -1837,6 +1911,7 @@ def run_agentic_loop(question: str, system_prompt: str,
             result, hit = execute_tool(
                 fn_name, fn_args, index, sections_text, cache, weather=weather,
             )
+            results_by_key[call_keys[-1]] = result
             if fn_name in SOURCE_GROUNDING_TOOLS:
                 grounded = True
                 if fn_name not in grounding_tools:

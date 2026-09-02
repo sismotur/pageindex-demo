@@ -58,9 +58,11 @@ from run_eval import (   # noqa: E402
     GROUNDING_RECOVERY_INSTRUCTION,
     NAMED_POI_LOOKUP_INSTRUCTION,
     REASK_FALLBACK_INSTRUCTION,
+    LOOP_REPEAT_CACHE_STUB,
     LOOP_REPEAT_INSTRUCTION,
     LOOP_REPEAT_STUB,
     backstop_named_pois,
+    chant_repeat_prefix,
     execute_reask_fallback,
     is_pure_reask,
     is_repeat_tool_call,
@@ -220,6 +222,7 @@ def run_turn(question: str, messages: list[dict],
     loop_correction_given = False
     loop_correction_pending: str | None = None
     loop_abort = False
+    results_by_key: dict[str, str] = {}
 
     # Resolve concise selections against validated tags from earlier
     # assistant turns before asking the model to answer. This prevents
@@ -345,6 +348,7 @@ def run_turn(question: str, messages: list[dict],
             acc_content    = ""
             acc_tool_calls: list[dict] = []
             streaming_live = False
+            chant_detected = False
             # Raw model deltas may contain malformed <poi>/<trip>/<path>
             # tags. Buffer until sanitization has validated the full answer.
             hold_stream_content = True
@@ -367,6 +371,13 @@ def run_turn(question: str, messages: list[dict],
 
                 if delta.content:
                     acc_content += delta.content
+                    keep = chant_repeat_prefix(acc_content)
+                    if keep < len(acc_content):
+                        # Text-level loop (content chanting): stop the
+                        # stream and keep only the non-repetitive prefix.
+                        acc_content = acc_content[:keep]
+                        chant_detected = True
+                        break
 
                 if delta.tool_calls:
                     for tc_delta in delta.tool_calls:
@@ -380,6 +391,15 @@ def run_turn(question: str, messages: list[dict],
                                 acc_tool_calls[idx]["name"] = tc_delta.function.name
                             if tc_delta.function.arguments:
                                 acc_tool_calls[idx]["arguments"] += tc_delta.function.arguments
+
+            if chant_detected:
+                # Best effort: release the abandoned HTTP stream.
+                close_stream = getattr(response_stream, "close", None)
+                if callable(close_stream):
+                    try:
+                        close_stream()
+                    except Exception:
+                        pass
 
             if streaming_live:
                 print()
@@ -398,6 +418,17 @@ def run_turn(question: str, messages: list[dict],
             messages.append(assistant_msg)
 
             if not acc_tool_calls:
+                if chant_detected:
+                    # At temperature=0 re-asking would chant again
+                    # deterministically, so serve the trimmed prefix as
+                    # the answer.  An empty prefix (the chant started on
+                    # the first token) falls through to the tail
+                    # recovery below.
+                    answer = sanitize_tourist_answer(
+                        acc_content.strip(), index
+                    )
+                    assistant_msg["content"] = answer
+                    break
                 if weather_intent and "get_weather" not in grounding_tools:
                     if not weather_lookup_enforced:
                         weather_lookup_enforced = True
@@ -900,6 +931,35 @@ def run_turn(question: str, messages: list[dict],
                 })
                 continue
 
+            cached_result = results_by_key.get(call_keys[-1])
+            if cached_result is not None:
+                # Second occurrence of an identical call this turn.  The
+                # tools are deterministic lookups, so re-execution can
+                # return nothing new: serve a short stub while the
+                # original result is still in context, or re-serve the
+                # cached result itself when compact_tool_history has
+                # since replaced it (its own text tells the model to
+                # retrieve the source again when needed).
+                still_visible = any(
+                    m.get("role") == "tool" and m.get("content") == cached_result
+                    for m in messages
+                )
+                repeat_content = (LOOP_REPEAT_CACHE_STUB if still_visible
+                                  else cached_result)
+                tool_calls_made.append({
+                    "tool":           fn_name,
+                    "args":           fn_args or {},
+                    "result_preview": repeat_content[:250],
+                    "cache_hit":      False,
+                    "repeat_cached":  True,
+                })
+                messages.append({
+                    "role":         "tool",
+                    "tool_call_id": tc.id,
+                    "content":      repeat_content,
+                })
+                continue
+
             invalid = validate_tool_call(fn_name, fn_args,
                                          tc.function.arguments or "")
             if invalid:
@@ -923,6 +983,7 @@ def run_turn(question: str, messages: list[dict],
             result, hit = execute_tool(
                 fn_name, fn_args, index, sections_text, cache, weather=weather,
             )
+            results_by_key[call_keys[-1]] = result
             if fn_name in SOURCE_GROUNDING_TOOLS:
                 grounded = True
                 if fn_name not in grounding_tools:

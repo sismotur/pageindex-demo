@@ -243,6 +243,13 @@ Ollama (`http://localhost:11434/v1`, model strings like
 | Gemma 4 E4B     | `gemma-4-E4B-it-MLX-4bit`      | 9.6 GB | 128K    |
 | Gemma 4 26B MoE | `gemma-4-26B-A4B-it-MLX-4bit`  | 18 GB  | 256K    |
 
+oMLX accepts but **ignores `tool_choice`** (`"required"` and named
+function choice were probed 2026-09-02: no error, plain-text answers
+on a greeting where a call was forced). Tool-call enforcement on this
+stack therefore stays instruction-based; the on-device LiteRT port
+(Google AI Edge) does expose `ToolChoice.REQUIRED` if a future mobile
+stack needs decode-time forcing.
+
 ---
 
 ## Data preparation (sibling repo)
@@ -351,13 +358,23 @@ Typical flows handled by the model:
   corrects the model once with the offending call named, and on any
   further repeat aborts the tool loop so the tail recovery forces a
   final answer — worst-case latency stays bounded instead of burning
-  all 14 rounds. Every tool call is validated against its schema before
+  all 14 rounds. The second occurrence of an identical call is not
+  blocked but answered from a per-turn result cache: a short stub
+  while the original result is still in context, or the cached result
+  itself when history compaction has since replaced it — a repeated
+  full result no longer doubles the context cost. Every tool call is
+  validated against its schema before
   execution: malformed JSON, unknown tools, missing required arguments,
   wrong-typed values, and out-of-enum values return an `[ERROR] …`
   tool result naming the problem (never executing), so the model
   re-issues a corrected call instead of running on silently defaulted
-  arguments. The localized safe failure remains only for turns that
-  never produce an answer.
+  arguments. On the streaming path (interactive chat), a content-chant
+  guard (`chant_repeat_prefix`: the trailing 50-char chunk repeated
+  six or more times in the last 2 000 characters) stops a degenerating
+  stream and serves the non-repetitive prefix as the answer — at
+  temperature=0 re-asking would chant again deterministically. The
+  localized safe failure remains only for turns that never produce an
+  answer.
 
 Pre-warm: every section's `get_section(id, "interest", 50)` result is
 cached at session start, so subsequent calls are instant.

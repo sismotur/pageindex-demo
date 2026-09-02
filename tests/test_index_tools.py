@@ -57,12 +57,14 @@ from common.textnorm import normalize_text, tokenize
 from run_eval import (
     COMPACTED_TOOL_RESULT,
     GROUNDING_RECOVERY_INSTRUCTION,
+    LOOP_REPEAT_CACHE_STUB,
     LOOP_REPEAT_INSTRUCTION,
     LOOP_REPEAT_STUB,
     MAX_TOOL_HISTORY_CHARS,
     MAX_TOOL_RESULT_CHARS,
     backstop_named_pois,
     bound_tool_result,
+    chant_repeat_prefix,
     compact_tool_history,
     execute_reask_fallback,
     execute_tool,
@@ -1288,7 +1290,14 @@ class TestToolCallLoopBreak:
         blocked = [c for c in result["tool_calls"] if c.get("loop_blocked")]
         real    = [c for c in result["tool_calls"] if not c.get("loop_blocked")]
         assert len(blocked) == 2   # strike 1 + strike 2
-        assert len(real) == 2      # only the first two calls really ran
+        assert len(real) == 2      # call 1 ran; call 2 got the cache stub
+        # Only the first occurrence actually executed: the second was
+        # served the repeat cache stub without re-running the lookup.
+        executed = [c for c in result["tool_calls"]
+                    if not c.get("loop_blocked") and not c.get("repeat_cached")]
+        assert len(executed) == 1
+        assert real[1]["repeat_cached"]
+        assert real[1]["result_preview"] == LOOP_REPEAT_CACHE_STUB
         assert all(c["result_preview"] == LOOP_REPEAT_STUB for c in blocked)
         # The one-shot correction was injected after the first blocked call.
         assert any(
@@ -1398,3 +1407,131 @@ class TestValidateToolCall:
         assert not entries[1].get("invalid_args")
         # The malformed call never executed: exactly one real lookup ran.
         assert sum(1 for c in entries if not c.get("invalid_args")) == 1
+
+    def test_second_identical_call_served_from_cache_stub(
+            self, index, monkeypatch):
+        """The 2nd occurrence of an identical (tool, args) call does not
+        re-execute: while the original result is still in context it gets
+        a short cache stub; only the 3rd is blocked outright."""
+        calls: list = []
+
+        def fake(*args, **kwargs):
+            calls.append(list(kwargs.get("messages") or []))
+            if len(calls) <= 2:
+                tc = SimpleNamespace(
+                    id=f"call_{len(calls)}",
+                    function=SimpleNamespace(
+                        name="find_poi_by_name",
+                        arguments=json.dumps({"query": "castillo"}),
+                    ),
+                )
+                return SimpleNamespace(
+                    choices=[SimpleNamespace(message=SimpleNamespace(
+                        content=None, tool_calls=[tc]))],
+                    usage=None,
+                )
+            return SimpleNamespace(
+                choices=[SimpleNamespace(message=SimpleNamespace(
+                    content="Done.", tool_calls=None))],
+                usage=None,
+            )
+
+        monkeypatch.setattr(litellm, "completion", fake)
+        result = run_agentic_loop(
+            "Tell me about the castle", "You are a tourism assistant.",
+            index, "", "fake-model", {},
+        )
+        assert result["answer"] == "Done."
+        entries = result["tool_calls"]
+        assert len(entries) == 2
+        assert not entries[0].get("repeat_cached")
+        assert entries[1].get("repeat_cached")
+        assert entries[1]["result_preview"] == LOOP_REPEAT_CACHE_STUB
+
+
+# ── Streaming content-chant guard ─────────────────────────────────────────
+
+# 50 chars exactly: with the chant unit aligned to CHANT_CHUNK_SIZE, the
+# first exact occurrence of the tail chunk sits at the run start, so the
+# trim offset is exact in these tests.
+CHANT_UNIT = "the old walls the old walls the old walls the old "
+assert len(CHANT_UNIT) == 50
+
+
+class TestChantGuard:
+    """chant_repeat_prefix detects a degenerating stream (the tail chunk
+    repeated >= CHANT_MAX_REPEATS times in the recent window) and returns
+    the offset where the chant run began; ordinary text is untouched."""
+
+    def test_short_text_untouched(self):
+        text = "Short answer."
+        assert chant_repeat_prefix(text) == len(text)
+
+    def test_normal_long_answer_untouched(self):
+        text = " ".join(f"word{i}" for i in range(600))
+        assert chant_repeat_prefix(text) == len(text)
+
+    def test_below_threshold_repetition_untouched(self):
+        text = "Intro. " + CHANT_UNIT * 4   # 4 < CHANT_MAX_REPEATS
+        assert chant_repeat_prefix(text) == len(text)
+
+    def test_chant_after_intro_trims_to_intro(self):
+        intro = "Here is a real answer about the castle. "
+        text = intro + CHANT_UNIT * 12
+        assert chant_repeat_prefix(text) == len(intro)
+
+    def test_chant_from_first_token_trims_to_zero(self):
+        text = CHANT_UNIT * 12
+        assert chant_repeat_prefix(text) == 0
+
+    def test_chant_at_exact_threshold_detected(self):
+        text = CHANT_UNIT * 6   # 300 chars, exactly chunk_size * repeats
+        assert chant_repeat_prefix(text) == 0
+
+    @staticmethod
+    def _chanting_stream(captured: list, pieces: list[str]):
+        """Fake litellm.completion: stream= True yields the content pieces
+        as chunks; a non-streaming call answers plainly (unused here)."""
+        def fake(*args, **kwargs):
+            captured.append(kwargs)
+            if kwargs.get("stream"):
+                def gen():
+                    for piece in pieces:
+                        yield SimpleNamespace(choices=[SimpleNamespace(
+                            delta=SimpleNamespace(content=piece,
+                                                  tool_calls=None))])
+                return gen()
+            return SimpleNamespace(
+                choices=[SimpleNamespace(message=SimpleNamespace(
+                    content="Recovered.", tool_calls=None))],
+                usage=None,
+            )
+        return fake
+
+    def test_stream_chant_serves_trimmed_prefix(self, index, monkeypatch):
+        from chat_demo import run_turn
+        intro = "Here is a real answer about the castle. "
+        captured: list = []
+        monkeypatch.setattr(
+            litellm, "completion",
+            self._chanting_stream(captured, [intro] + [CHANT_UNIT] * 12),
+        )
+        messages = [{"role": "system", "content": "You are a tourism assistant."}]
+        result = run_turn("What can I see?", messages, index, "",
+                          "fake-model", {}, stream=True)
+        assert result["answer"] == intro.strip()
+        assert result["rounds"] == 1
+        assert len(captured) == 1   # no re-generation after the chant
+
+    def test_stream_chant_without_prefix_fails_safe(self, index, monkeypatch):
+        from chat_demo import run_turn
+        captured: list = []
+        monkeypatch.setattr(
+            litellm, "completion",
+            self._chanting_stream(captured, [CHANT_UNIT] * 12),
+        )
+        messages = [{"role": "system", "content": "You are a tourism assistant."}]
+        result = run_turn("Tell me about the castle", messages, index, "",
+                          "fake-model", {}, stream=True)
+        assert result["answer"] == grounding_failure_message(index)
+        assert len(captured) == 1
