@@ -336,6 +336,12 @@ Typical flows handled by the model:
 - **Physical route intent** is guarded deterministically: one
   `search_paths` lookup is forced, then the assistant answers once. This
   prevents repeated clarification/instruction loops on small models.
+- **Designation/status questions** ("Why is X a UNESCO World Heritage
+  City?") name no POI, so small models misclassify them as generic
+  overviews and miss the factual anchors (dates, reasons). Guarded like
+  route intent: one forced `search_pois` lookup querying the proper noun
+  `unesco` (designation records carry it in every language), then the
+  model answers from the results.
 - **Strict grounding**: specific questions (named places, facts,
   listings) need a current-turn source-bearing retrieval; prior `<poi>`,
   `<trip>`, and `<path>` tag selections resolve directly to `get_*`.
@@ -349,9 +355,10 @@ Typical flows handled by the model:
   deterministic backstops fire: the destination's own `name_index` is
   probed against the question — and, after a short confirmation, against
   the assistant's previous offer — to fetch the named records; and when
-  the model answers an ongoing-conversation turn with yet another bare
-  clarifying question — or repeats its previous answer verbatim
-  (`is_repeat_of_previous_answer` compares against the last assistant
+  the model answers with yet another bare clarifying question (on ANY
+  turn — warm greeting replies carry "!" markers and are unaffected) or
+  repeats its previous answer verbatim (ongoing conversations only;
+  `is_repeat_of_previous_answer` compares against the last assistant
   message before the current question, so current-turn drafts do not
   count) — the runtime retrieves content itself
   (`search_pois` on the question, else `filter_pois` indispensable

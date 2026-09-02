@@ -407,6 +407,46 @@ WEATHER_LOOKUP_ENFORCED_INSTRUCTION = (
     "answer the visitor; do not add outside knowledge about the weather."
 )
 
+# Designation/status questions ("Why is Úbeda a UNESCO World Heritage
+# City?") name no POI, so small models misclassify them as generic
+# overview questions and answer from the catalogue without the specific
+# facts (dates, reasons) that only POI records carry.  Same failure
+# shape as physical-route requests — same remedy: one forced evidence
+# lookup.  Phrase match on the normalized question; "unesco" alone
+# covers the languages whose designation phrasing is not listed —
+# unmatched languages degrade to the generic path, never to a new
+# failure.  All listed phrases are UNESCO designations, and designation
+# records carry the proper noun "UNESCO" in every language — so the
+# forced lookup queries "unesco" directly (the full visitor question
+# would miss: evidence search requires all tokens in one record).
+DESIGNATION_INTENT_PHRASES = (
+    "unesco",
+    "world heritage",
+    "patrimonio de la humanidad",    # es / gl
+    "patrimonio de la humanitat",    # ca
+    "patrimonio da humanidade",      # pt
+    "patrimonio dell umanita",       # it (normalized)
+    "patrimonio mundial",            # gl / pt variant
+    "patrimoine mondial",            # fr
+    "weltkulturerbe",                # de
+    "werelderfgoed",                 # nl
+    "svjetska bastina",              # hr (normalized)
+)
+DESIGNATION_LOOKUP_INSTRUCTION = (
+    "The visitor asks about an official designation or status (e.g. "
+    "UNESCO World Heritage). An evidence search has already run. Answer "
+    "from these results now, in the visitor's language, including the "
+    "specific facts they carry (dates, reasons, official names). If "
+    "nothing matched, answer from the destination overview and the "
+    "section catalogue instead. Do not ask a follow-up question."
+)
+
+
+def is_designation_question(question: str) -> bool:
+    """True for official designation/status questions (UNESCO, …)."""
+    normalized = normalize_text(question)
+    return any(p in normalized for p in DESIGNATION_INTENT_PHRASES)
+
 # English-only, model-facing note appended to a get_weather(day=...) tool
 # result when that specific day exceeds the outdoor-plan heat threshold.
 # Deliberately not localized: it is read by the model (which already
@@ -610,8 +650,8 @@ def is_repeat_of_previous_answer(answer: str, messages: list[dict],
 
 
 REASK_FALLBACK_INSTRUCTION = (
-    "Answering with another clarifying question is not acceptable — the "
-    "visitor already engaged and expects real content. Below are visitor "
+    "Answering with a clarifying question is not acceptable here — the "
+    "visitor expects real content. Below are visitor "
     "records retrieved now. Present them warmly in the visitor's language, "
     "tagging each place, and invite the visitor to pick one for more "
     "detail. If the result says nothing matched, answer from the "
@@ -644,12 +684,11 @@ def execute_reask_fallback(question: str, index: dict, sections_text: str,
 
 
 def reask_fallback_applies(messages: list[dict], question: str) -> bool:
-    """Gate the re-ask fallback to ongoing conversations only.
+    """True when the current question follows an earlier visitor turn.
 
-    First-turn messages (greetings like “Hola”, or every single-question
-    eval run) keep the trust-the-model path so greeting tone and eval
-    scores are unaffected; from the second visitor message on, a repeated
-    clarifying question is intercepted with deterministic retrieval.
+    Gates the repeat-answer interception (a repeated previous answer can
+    only exist in an ongoing conversation).  Bare clarifying questions
+    are intercepted on ANY turn, without this gate.
     """
     q_idx = _current_question_index(messages, question)
     prior = messages[:q_idx] if q_idx >= 0 else messages
@@ -1491,6 +1530,8 @@ def run_agentic_loop(question: str, system_prompt: str,
     ]
     weather_lookup_enforced = False
     weather_intent = bool(weather) and is_weather_request(question)
+    designation_intent = is_designation_question(question)
+    designation_lookup_enforced = False
     tool_calls_made = []
     answer = ""
     error  = None
@@ -1613,6 +1654,37 @@ def run_agentic_loop(question: str, system_prompt: str,
         messages.append(assistant_msg)
 
         if not message.tool_calls:
+            if designation_intent and not designation_lookup_enforced:
+                # Like the route guard: force exactly one evidence lookup
+                # for designation/status questions ("why is X a UNESCO
+                # site?"); small models otherwise answer from the generic
+                # overview and miss the factual anchors (dates, reasons).
+                designation_lookup_enforced = True
+                des_result, des_hit = execute_tool(
+                    "search_pois", {"query": "unesco", "limit": 5}, index,
+                    sections_text, cache, weather=weather,
+                )
+                if des_hit:
+                    cache_hits += 1
+                tool_calls_made.append({
+                    "tool": "search_pois",
+                    "args": {"query": "unesco", "limit": 5},
+                    "result_preview": des_result[:300],
+                    "cache_hit": des_hit,
+                    "automatic": True,
+                })
+                grounded = True
+                grounding_tools.append("search_pois")
+                automatic_source_calls.append({
+                    "tool": "search_pois",
+                    "args": {"query": "unesco", "limit": 5},
+                })
+                messages.append({
+                    "role": "user",
+                    "content": (DESIGNATION_LOOKUP_INSTRUCTION
+                                + "\n\n" + des_result),
+                })
+                continue
             if weather_intent and "get_weather" not in grounding_tools:
                 if not weather_lookup_enforced:
                     weather_lookup_enforced = True
@@ -1817,12 +1889,13 @@ def run_agentic_loop(question: str, system_prompt: str,
                                     + "\n\n" + result),
                     })
                     continue
-                # The model answered the recovery prompt with yet another
-                # clarifying question — a brush-off. In an ongoing
-                # conversation, retrieve real content deterministically
-                # and make it answer from that instead of re-asking.
-                if (reask_fallback_applies(messages, question)
-                        and is_pure_reask((message.content or "").strip())):
+                # The model answered the recovery prompt with yet
+                # another clarifying question — a brush-off.  A bare
+                # re-ask is never an acceptable final answer, on ANY turn
+                # (greetings survive: warm greeting replies carry "!"
+                # markers, which is_pure_reask rejects).  Retrieve real
+                # content deterministically and make the model present it.
+                if is_pure_reask((message.content or "").strip()):
                     result, hit, fb_tool, fb_args = execute_reask_fallback(
                         question, index, sections_text, cache, weather=weather,
                     )

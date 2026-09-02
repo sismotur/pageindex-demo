@@ -50,6 +50,7 @@ from run_eval import (   # noqa: E402
     DEFAULT_INDEX,
     NO_DIRECT_EVIDENCE_PREFIX,
     COMPLEMENTARY_SEARCH_INSTRUCTION,
+    is_designation_question,
     is_physical_route_request,
     is_weather_request,
     no_path_answer_instruction,
@@ -78,6 +79,7 @@ from run_eval import (   # noqa: E402
     MAX_ANSWER_TOKENS,
     TRIP_DETAIL_REQUIRED_INSTRUCTION,
     WEATHER_LOOKUP_ENFORCED_INSTRUCTION,
+    DESIGNATION_LOOKUP_INSTRUCTION,
 )
 from index_tools import (   # noqa: E402
     load_index,
@@ -193,6 +195,8 @@ def run_turn(question: str, messages: list[dict],
     messages.append({"role": "user", "content": question})
     weather_lookup_enforced = False
     weather_intent = bool(weather) and is_weather_request(question)
+    designation_intent = is_designation_question(question)
+    designation_lookup_enforced = False
 
     tool_calls_made = []
     answer     = ""
@@ -432,6 +436,39 @@ def run_turn(question: str, messages: list[dict],
                     )
                     assistant_msg["content"] = answer
                     break
+                if designation_intent and not designation_lookup_enforced:
+                    # Like the route guard: force exactly one evidence
+                    # lookup for designation/status questions ("why is X
+                    # a UNESCO site?"); small models otherwise answer
+                    # from the generic overview and miss the factual
+                    # anchors (dates, reasons).
+                    designation_lookup_enforced = True
+                    des_result, des_hit = execute_tool(
+                        "search_pois", {"query": "unesco", "limit": 5},
+                        index, sections_text, cache, weather=weather,
+                    )
+                    if des_hit:
+                        cache_hits += 1
+                    tool_calls_made.append({
+                        "tool": "search_pois",
+                        "args": {"query": "unesco", "limit": 5},
+                        "result_preview": des_result[:250],
+                        "cache_hit": des_hit,
+                        "automatic": True,
+                    })
+                    grounded = True
+                    if "search_pois" not in grounding_tools:
+                        grounding_tools.append("search_pois")
+                    automatic_source_calls.append({
+                        "tool": "search_pois",
+                        "args": {"query": "unesco", "limit": 5},
+                    })
+                    messages.append({
+                        "role": "user",
+                        "content": (DESIGNATION_LOOKUP_INSTRUCTION
+                                    + "\n\n" + des_result),
+                    })
+                    continue
                 if weather_intent and "get_weather" not in grounding_tools:
                     if not weather_lookup_enforced:
                         weather_lookup_enforced = True
@@ -603,13 +640,16 @@ def run_turn(question: str, messages: list[dict],
                     # instead of re-asking.
                     # A repeated previous answer is a brush-off just like
                     # a bare re-ask (temp=0 models can re-emit their last
-                    # reply); intercept it with the same deterministic
-                    # retrieval instead of serving the duplicate.
-                    if (reask_fallback_applies(messages, question)
-                            and (is_pure_reask(acc_content.strip())
-                                 or is_repeat_of_previous_answer(
-                                     acc_content.strip(), messages,
-                                     question))):
+                    # reply); intercept both with the same deterministic
+                    # retrieval instead of serving them.  A bare re-ask
+                    # is intercepted on ANY turn (greetings survive via
+                    # their "!" warmth markers); a repeat can only exist
+                    # in an ongoing conversation, hence the gate there.
+                    if (is_pure_reask(acc_content.strip())
+                            or (reask_fallback_applies(messages, question)
+                                and is_repeat_of_previous_answer(
+                                    acc_content.strip(), messages,
+                                    question))):
                         result, hit, fb_tool, fb_args = execute_reask_fallback(
                             question, index, sections_text, cache,
                             weather=weather,
@@ -690,6 +730,35 @@ def run_turn(question: str, messages: list[dict],
             messages.append(assistant_msg)
 
             if not message.tool_calls:
+                if designation_intent and not designation_lookup_enforced:
+                    # Same forced evidence lookup as the streaming path.
+                    designation_lookup_enforced = True
+                    des_result, des_hit = execute_tool(
+                        "search_pois", {"query": "unesco", "limit": 5},
+                        index, sections_text, cache, weather=weather,
+                    )
+                    if des_hit:
+                        cache_hits += 1
+                    tool_calls_made.append({
+                        "tool": "search_pois",
+                        "args": {"query": "unesco", "limit": 5},
+                        "result_preview": des_result[:250],
+                        "cache_hit": des_hit,
+                        "automatic": True,
+                    })
+                    grounded = True
+                    if "search_pois" not in grounding_tools:
+                        grounding_tools.append("search_pois")
+                    automatic_source_calls.append({
+                        "tool": "search_pois",
+                        "args": {"query": "unesco", "limit": 5},
+                    })
+                    messages.append({
+                        "role": "user",
+                        "content": (DESIGNATION_LOOKUP_INSTRUCTION
+                                    + "\n\n" + des_result),
+                    })
+                    continue
                 if weather_intent and "get_weather" not in grounding_tools:
                     if not weather_lookup_enforced:
                         weather_lookup_enforced = True
@@ -861,12 +930,12 @@ def run_turn(question: str, messages: list[dict],
                     # ongoing conversation, retrieve real content
                     # deterministically and make it answer from that
                     # instead of re-asking.
-                    # Same repeat-answer interception as the streaming path.
-                    if (reask_fallback_applies(messages, question)
-                            and (is_pure_reask((message.content or "").strip())
-                                 or is_repeat_of_previous_answer(
-                                     (message.content or "").strip(),
-                                     messages, question))):
+                    # Same brush-off interception as the streaming path.
+                    if (is_pure_reask((message.content or "").strip())
+                            or (reask_fallback_applies(messages, question)
+                                and is_repeat_of_previous_answer(
+                                    (message.content or "").strip(),
+                                    messages, question))):
                         result, hit, fb_tool, fb_args = execute_reask_fallback(
                             question, index, sections_text, cache,
                             weather=weather,

@@ -70,6 +70,7 @@ from run_eval import (
     execute_reask_fallback,
     execute_tool,
     grounding_failure_message,
+    is_designation_question,
     is_physical_route_request,
     is_pure_reask,
     is_repeat_of_previous_answer,
@@ -269,9 +270,11 @@ class TestStrictGrounding:
     def test_pure_reask_rejects_real_answers(self, text):
         assert not is_pure_reask(text)
 
-    def test_reask_fallback_never_fires_on_first_turn(self):
-        # Single-question eval runs and opening greetings keep the
-        # trust-the-model path; the fallback needs a prior visitor turn.
+    def test_reask_fallback_applies_requires_prior_turn(self):
+        # The gate now covers only the repeat-answer branch (a repeat can
+        # only exist with a prior turn); bare re-asks are intercepted on
+        # any turn.  The function itself still reports whether an earlier
+        # visitor turn exists.
         messages = [
             {"role": "system", "content": "..."},
             {"role": "user", "content": "Hola"},
@@ -1621,3 +1624,123 @@ class TestRepeatAnswerGuard:
         # Every generation call carries the answer-length cap.
         assert all(c.get("max_tokens") == MAX_ANSWER_TOKENS
                    for c in captured)
+
+
+# ── Designation-question guard ────────────────────────────────────────────
+
+def _text_only_completion(captured: list, replies: list[str]):
+    """Fake litellm.completion answering each call with the next text
+    reply (never a tool call); the last reply repeats if exhausted."""
+    def fake(*args, **kwargs):
+        captured.append(kwargs)
+        content = replies[min(len(captured), len(replies)) - 1]
+        return SimpleNamespace(
+            choices=[SimpleNamespace(message=SimpleNamespace(
+                content=content, tool_calls=None))],
+            usage=None,
+        )
+    return fake
+
+
+class TestDesignationGuard:
+    """Designation/status questions (UNESCO, World Heritage…) name no POI,
+    so small models misclassify them as generic overview questions and
+    answer from the catalogue without the factual anchors.  One forced
+    search_pois evidence lookup fires when the model answers without
+    retrieving — same shape as the physical-route guard."""
+
+    @pytest.mark.parametrize("question", [
+        "Why is Úbeda a UNESCO World Heritage City?",
+        "¿Por qué es Úbeda Patrimonio de la Humanidad?",
+        "Perché Úbeda è patrimonio dell'umanità?",
+        "Pourquoi Úbeda est-elle au patrimoine mondial?",
+        "Warum ist Úbeda Weltkulturerbe?",
+    ])
+    def test_designation_question_detected(self, question):
+        assert is_designation_question(question)
+
+    @pytest.mark.parametrize("question", [
+        "What can I see?",
+        "¿Qué puedo ver?",
+        "Tell me about the castle",
+        "Where can I eat traditional food?",
+    ])
+    def test_generic_questions_not_designation(self, question):
+        assert not is_designation_question(question)
+
+    def test_forced_lookup_supplies_the_facts(self, index, monkeypatch):
+        """Q01 reproduction: the model's first answer is a generic
+        catalogue overview (no tools); the runtime forces one evidence
+        search and the model's next answer carries the facts."""
+        captured: list = []
+        monkeypatch.setattr(
+            litellm, "completion",
+            _text_only_completion(captured, [
+                "Úbeda is an artistic and monumental city with many "
+                "churches and palaces.",
+                "Úbeda was declared a World Heritage City in 2003 for "
+                "its Renaissance architecture.",
+            ]),
+        )
+        result = run_agentic_loop(
+            "Why is Úbeda a UNESCO World Heritage City?",
+            "You are a tourism assistant.", index, "", "fake-model", {},
+        )
+        assert result["answer"] == (
+            "Úbeda was declared a World Heritage City in 2003 for "
+            "its Renaissance architecture.")
+        assert result["grounded"]
+        auto = [c for c in result["tool_calls"] if c.get("automatic")]
+        assert len(auto) == 1 and auto[0]["tool"] == "search_pois"
+        # The forced lookup queries the designation proper noun, never
+        # the full visitor question (all-tokens evidence search would
+        # miss every record).
+        assert auto[0]["args"]["query"] == "unesco"
+        assert result["rounds"] == 2
+
+    def test_first_turn_bare_reask_triggers_fallback(self, index, monkeypatch):
+        """Q20 reproduction: a bare clarifying question is never an
+        acceptable final answer — even on the very first turn, the
+        runtime retrieves content deterministically and the model's
+        next answer is served instead."""
+        captured: list = []
+        monkeypatch.setattr(
+            litellm, "completion",
+            _text_only_completion(captured, [
+                "What would you like to know?",
+                "What would you like to know?",
+                "Úbeda pairs a UNESCO-listed Renaissance core with a "
+                "living pottery tradition.",
+            ]),
+        )
+        result = run_agentic_loop(
+            "What makes Úbeda different from other Spanish cities as a "
+            "tourist destination?",
+            "You are a tourism assistant.", index, "", "fake-model", {},
+        )
+        assert result["answer"] == (
+            "Úbeda pairs a UNESCO-listed Renaissance core with a "
+            "living pottery tradition.")
+        auto = [c for c in result["tool_calls"] if c.get("automatic")]
+        assert len(auto) == 1
+        assert auto[0]["tool"] in {"search_pois", "filter_pois"}
+        assert len(captured) == 3
+
+    def test_warm_greeting_stays_on_the_trust_path(self, index, monkeypatch):
+        """Greetings must NOT trigger retrieval: a warm greeting reply
+        carries \"!\" markers, so is_pure_reask rejects it and the
+        answer is served as before."""
+        captured: list = []
+        monkeypatch.setattr(
+            litellm, "completion",
+            _text_only_completion(captured, [
+                "¡Hola! ¿En qué puedo ayudarte hoy?",
+                "¡Hola! ¿En qué puedo ayudarte hoy?",
+            ]),
+        )
+        result = run_agentic_loop(
+            "Hola", "You are a tourism assistant.", index, "",
+            "fake-model", {},
+        )
+        assert result["answer"] == "¡Hola! ¿En qué puedo ayudarte hoy?"
+        assert result["tool_calls"] == []   # no retrieval for a greeting
