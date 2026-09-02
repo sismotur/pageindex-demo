@@ -123,20 +123,65 @@ COMPLEMENTARY_SEARCH_INSTRUCTION = (
     "options. State that the available visitor information does not confirm "
     "the combination; do not imply that separate places satisfy it."
 )
-ROUTE_INTENT_TERMS = frozenset({
-    # English
-    "route", "walking", "walk", "cycling", "cycle", "bicycle", "bike",
-    "trail", "track", "hiking", "hike", "trek",
-    # Spanish / Catalan / Galician / Basque
-    "ruta", "caminar", "caminata", "sendero", "senderismo", "bicicleta",
-    "ciclismo", "paseo", "camin", "bici", "ibilbide",
-    # Italian / French / Portuguese
-    "percorso", "piedi", "sentiero", "camminata", "bici", "bicicletta",
-    "randonnée", "randonnee", "velo", "ciclovia", "caminho",
-    # German / Dutch / Croatian
-    "wander", "wanderweg", "fahrrad", "radweg", "spaziergang", "route",
-    "wandeling", "fiets", "staza", "pjesa", "setnja",
-})
+def _all_terms(table: dict) -> frozenset:
+    """Union of every language's terms, normalized like visitor input.
+
+    Detection is deliberately language-agnostic: the union keeps e.g. a
+    Spanish term working in a session declared as English (mixed-language
+    visitors are common), while the per-language table keeps coverage
+    auditable — tests/test_i18n.py guards that every supported language
+    code has a non-empty entry in each table.
+    """
+    return frozenset(
+        normalize_text(term)
+        for terms in table.values()
+        for term in terms
+    )
+
+
+# Intent lexicons are i18n tables keyed by language code (like the
+# visitor-facing tables below): every one of the 16 supported languages
+# gets its own entry.  Terms are stored in their natural written form;
+# _all_terms() normalizes them (NFKD, no diacritics, lowercase) the same
+# way tokenize() normalizes the question, so accented forms need no
+# duplicate entries.  CJK terms match only as standalone tokens — the
+# tokenizer does not segment unspaced scripts.
+ROUTE_INTENT_TERMS: dict[str, frozenset] = {
+    "ca": frozenset({"ruta", "caminar", "camin", "caminada", "sender",
+                     "senderisme", "bicicleta", "ciclisme", "passeig",
+                     "bici"}),
+    "de": frozenset({"wander", "wanderweg", "wanderung", "fahrrad",
+                     "radweg", "radtour", "spaziergang", "route"}),
+    "en": frozenset({"route", "walking", "walk", "cycling", "cycle",
+                     "bicycle", "bike", "trail", "track", "hiking",
+                     "hike", "trek"}),
+    "es": frozenset({"ruta", "caminar", "caminata", "sendero",
+                     "senderismo", "bicicleta", "ciclismo", "paseo",
+                     "bici"}),
+    "eu": frozenset({"ibilbide", "ibilaldi", "bizikleta", "oinez"}),
+    "fr": frozenset({"randonnée", "vélo", "itinéraire", "promenade",
+                     "piste", "ciclovia"}),
+    "gl": frozenset({"ruta", "camiño", "sendeiro", "bicicleta",
+                     "ciclismo", "paseo", "bici"}),
+    "hi": frozenset({"पैदल", "साइकिल", "हाइकिंग", "ट्रेल", "रास्ता"}),
+    "hr": frozenset({"staza", "pjesa", "šetnja", "bicikl",
+                     "planinarenje"}),
+    "it": frozenset({"percorso", "piedi", "sentiero", "camminata",
+                     "bici", "bicicletta", "escursione", "passeggiata",
+                     "ciclovia"}),
+    "ja": frozenset({"散歩", "散策", "ハイキング", "サイクリング",
+                     "ルート", "歩道"}),
+    "nl": frozenset({"wandeling", "wandelen", "fiets", "fietsroute",
+                     "wandelroute", "route"}),
+    "pt": frozenset({"percurso", "caminho", "trilha", "bicicleta",
+                     "caminhada", "passeio", "ciclovia"}),
+    "ru": frozenset({"маршрут", "пешком", "велосипед", "тропа",
+                     "прогулка", "поход"}),
+    "uk": frozenset({"маршрут", "стежка", "велосипед", "пішки",
+                     "прогулянка", "похід"}),
+    "zh": frozenset({"路线", "步行", "自行车", "徒步", "步道", "骑行"}),
+}
+ROUTE_INTENT_TERMS_ALL = _all_terms(ROUTE_INTENT_TERMS)
 ROUTE_SEARCH_INSTRUCTION = (
     "This is a physical walking, cycling, trail, track, or route request. "
     "You must call search_paths now. Do not ask the visitor to clarify "
@@ -330,16 +375,25 @@ GROUNDING_FAILURE_MESSAGES = {
     "uk": "Не вдалося отримати перевірену туристичну інформацію із завантажених даних.",
     "zh": "无法从已下载的数据中获取经过验证的旅游信息。",
 }
-RENTAL_INTENT_TERMS = frozenset({
-    # English
-    "rent", "rental", "hire",
-    # Spanish / Catalan / Galician / Basque
-    "alquilar", "alquiler", "lloguer", "alugar",
-    # Italian / French / Portuguese
-    "noleggiare", "noleggio", "louer", "location", "aluguer",
-    # German / Dutch
-    "mieten", "verleih", "huren",
-})
+RENTAL_INTENT_TERMS: dict[str, frozenset] = {
+    "ca": frozenset({"lloguer", "llogar"}),
+    "de": frozenset({"mieten", "verleih", "ausleihen"}),
+    "en": frozenset({"rent", "rental", "hire"}),
+    "es": frozenset({"alquilar", "alquiler"}),
+    "eu": frozenset({"alokatu", "alokairu"}),
+    "fr": frozenset({"louer", "location"}),
+    "gl": frozenset({"alugar", "aluguer"}),
+    "hi": frozenset({"किराया", "किराए"}),
+    "hr": frozenset({"najam", "iznajmiti", "unajmiti"}),
+    "it": frozenset({"noleggiare", "noleggio", "affittare", "affitto"}),
+    "ja": frozenset({"レンタル", "借りる"}),
+    "nl": frozenset({"huren", "huur", "verhuur"}),
+    "pt": frozenset({"alugar", "aluguer", "aluguel"}),
+    "ru": frozenset({"аренда", "арендовать", "прокат"}),
+    "uk": frozenset({"оренда", "орендувати", "прокат"}),
+    "zh": frozenset({"租赁", "租用", "出租", "租车"}),
+}
+RENTAL_INTENT_TERMS_ALL = _all_terms(RENTAL_INTENT_TERMS)
 
 
 def is_physical_route_request(question: str) -> bool:
@@ -353,36 +407,56 @@ def is_physical_route_request(question: str) -> bool:
     """
     terms = tokenize(question)
     term_set = set(terms)
-    if term_set & RENTAL_INTENT_TERMS:
+    if term_set & RENTAL_INTENT_TERMS_ALL:
         return False
     return any(
-        term in ROUTE_INTENT_TERMS
+        term in ROUTE_INTENT_TERMS_ALL
         or any(
             len(term) >= 4 and term.startswith(route)
-            for route in ROUTE_INTENT_TERMS if len(route) >= 4
+            for route in ROUTE_INTENT_TERMS_ALL if len(route) >= 4
         )
         for term in terms
     )
 
 
-WEATHER_INTENT_TERMS = frozenset({
-    # English
-    "weather", "forecast", "temperature", "temp", "rain", "sunny",
-    "cloudy", "windy", "storm", "cold", "hot",
-    # Spanish / Catalan / Galician / Basque
-    "tiempo", "clima", "temperatura", "lluvia", "soleado", "nublado",
-    "tormenta", "calor", "frío", "frio", "eguraldi",
-    # Italian / French / Portuguese
-    "meteo", "tempo", "previsione", "pioggia", "soleggiato", "nuvoloso",
-    "caldo", "freddo", "météo", "meteo", "température", "pluie",
-    "ensoleillé", "nuageux", "chaud", "froid", "tempo", "chuva",
-    "ensolarado", "nublado", "quente", "frio",
-    # German / Dutch / Croatian / Russian / Ukrainian / Japanese / Chinese
-    "wetter", "vorhersage", "temperatur", "regen", "sonnig", "bewölkt",
-    "heiß", "kalt", "weer", "weersvoorspelling", "regen", "zonnig",
-    "vrijeme", "prognoza", "kiša", "sunčano", "vruće", "hladno",
-    "погода", "прогноз", "температура", "天気", "天气", "预报",
-})
+WEATHER_INTENT_TERMS: dict[str, frozenset] = {
+    "ca": frozenset({"temps", "clima", "temperatura", "pluja",
+                     "assolellat", "ennuvolat", "tempesta", "calor",
+                     "fred"}),
+    "de": frozenset({"wetter", "vorhersage", "temperatur", "regen",
+                     "sonnig", "bewölkt", "heiß", "kalt"}),
+    "en": frozenset({"weather", "forecast", "temperature", "temp",
+                     "rain", "sunny", "cloudy", "windy", "storm",
+                     "cold", "hot"}),
+    "es": frozenset({"tiempo", "clima", "temperatura", "lluvia",
+                     "soleado", "nublado", "tormenta", "calor",
+                     "frío"}),
+    "eu": frozenset({"eguraldi", "euria", "tenperatura", "hotza",
+                     "beroa", "ekaitza"}),
+    "fr": frozenset({"météo", "temps", "prévision", "pluie",
+                     "ensoleillé", "nuageux", "chaud", "froid",
+                     "température"}),
+    "gl": frozenset({"tempo", "clima", "temperatura", "chuvia",
+                     "nublado", "treboada", "calor", "frío"}),
+    "hi": frozenset({"मौसम", "बारिश", "तापमान", "गर्मी", "ठंड",
+                     "तूफ़ान", "धूप"}),
+    "hr": frozenset({"vrijeme", "prognoza", "kiša", "sunčano",
+                     "vruće", "hladno", "temperatura"}),
+    "it": frozenset({"meteo", "tempo", "previsione", "pioggia",
+                     "soleggiato", "nuvoloso", "caldo", "freddo",
+                     "temperatura"}),
+    "ja": frozenset({"天気", "予報", "雨", "気温", "暑い", "寒い"}),
+    "nl": frozenset({"weer", "weersvoorspelling", "regen", "zonnig",
+                     "koud", "warm", "temperatuur"}),
+    "pt": frozenset({"tempo", "previsão", "chuva", "ensolarado",
+                     "nublado", "quente", "frio", "temperatura"}),
+    "ru": frozenset({"погода", "прогноз", "температура", "дождь",
+                     "солнечно", "холодно", "жарко"}),
+    "uk": frozenset({"погода", "прогноз", "температура", "дощ",
+                     "сонячно", "хмарно", "холодно", "спека"}),
+    "zh": frozenset({"天气", "预报", "下雨", "气温", "热", "冷"}),
+}
+WEATHER_INTENT_TERMS_ALL = _all_terms(WEATHER_INTENT_TERMS)
 
 
 def is_weather_request(question: str) -> bool:
@@ -393,10 +467,10 @@ def is_weather_request(question: str) -> bool:
     """
     terms = tokenize(question)
     return any(
-        term in WEATHER_INTENT_TERMS
+        term in WEATHER_INTENT_TERMS_ALL
         or any(
             len(term) >= 4 and term.startswith(intent)
-            for intent in WEATHER_INTENT_TERMS if len(intent) >= 4
+            for intent in WEATHER_INTENT_TERMS_ALL if len(intent) >= 4
         )
         for term in terms
     )
@@ -419,19 +493,27 @@ WEATHER_LOOKUP_ENFORCED_INSTRUCTION = (
 # records carry the proper noun "UNESCO" in every language — so the
 # forced lookup queries "unesco" directly (the full visitor question
 # would miss: evidence search requires all tokens in one record).
-DESIGNATION_INTENT_PHRASES = (
-    "unesco",
-    "world heritage",
-    "patrimonio de la humanidad",    # es / gl
-    "patrimonio de la humanitat",    # ca
-    "patrimonio da humanidade",      # pt
-    "patrimonio dell umanita",       # it (normalized)
-    "patrimonio mundial",            # gl / pt variant
-    "patrimoine mondial",            # fr
-    "weltkulturerbe",                # de
-    "werelderfgoed",                 # nl
-    "svjetska bastina",              # hr (normalized)
-)
+DESIGNATION_INTENT_PHRASES: dict[str, tuple] = {
+    "ca": ("unesco", "patrimoni de la humanitat"),
+    "de": ("unesco", "weltkulturerbe", "welterbe"),
+    "en": ("unesco", "world heritage"),
+    "es": ("unesco", "patrimonio de la humanidad", "patrimonio mundial"),
+    "eu": ("unesco", "gizateriaren ondarea"),
+    "fr": ("unesco", "patrimoine mondial"),
+    "gl": ("unesco", "patrimonio da humanidade", "patrimonio mundial"),
+    "hi": ("unesco", "यूनेस्को", "विश्व धरोहर"),
+    "hr": ("unesco", "svjetska baština"),
+    "it": ("unesco", "patrimonio dell'umanità"),
+    "ja": ("unesco", "ユネスコ", "世界遺産"),
+    "nl": ("unesco", "werelderfgoed"),
+    "pt": ("unesco", "património da humanidade", "património mundial"),
+    "ru": ("unesco", "юнеско", "всемирное наследие",
+           "всемирного наследия"),
+    "uk": ("unesco", "юнеско", "світова спадщина", "світової спадщини"),
+    "zh": ("unesco", "联合国教科文组织", "世界遗产"),
+}
+DESIGNATION_INTENT_PHRASES_ALL = tuple(sorted(_all_terms(
+    DESIGNATION_INTENT_PHRASES)))
 DESIGNATION_LOOKUP_INSTRUCTION = (
     "The visitor asks about an official designation or status (e.g. "
     "UNESCO World Heritage). An evidence search has already run. Answer "
@@ -445,7 +527,7 @@ DESIGNATION_LOOKUP_INSTRUCTION = (
 def is_designation_question(question: str) -> bool:
     """True for official designation/status questions (UNESCO, …)."""
     normalized = normalize_text(question)
-    return any(p in normalized for p in DESIGNATION_INTENT_PHRASES)
+    return any(p in normalized for p in DESIGNATION_INTENT_PHRASES_ALL)
 
 # English-only, model-facing note appended to a get_weather(day=...) tool
 # result when that specific day exceeds the outdoor-plan heat threshold.
@@ -458,24 +540,44 @@ OUTDOOR_HEAT_NOTE = (
 )
 
 
-TRIP_PLAN_INTENT_TERMS = frozenset({
-    # English
-    "plan", "itinerary", "itiner", "day", "days", "weekend",
-    # Spanish / Catalan / Galician / Basque
-    # NOTE: "visita"/"visitar" is deliberately excluded — it is too
-    # generic a verb (used in ordinary "what can I visit" questions) to
-    # reliably signal an itinerary/plan request, and previously forced a
-    # curated-trip offer instead of real retrieval on plain sightseeing
-    # questions.
-    "plan", "itinerario", "recorrido", "dia", "dias", "semana",
-    "detalle", "detalles",
-    # Italian / French / Portuguese
-    "piano", "itinerario", "giorno", "giorni", "fine", "settimana",
-    "programme", "jour", "jours", "semaine", "roteiro", "dia", "dias",
-    # German / Dutch / Croatian
-    "plan", "tag", "tage", "wochenende", "reiseroute", "dagen",
-    "weekend", "itinerar", "dan", "dana",
-})
+# NOTE: "visita"/"visitar" (and equivalents) are deliberately excluded
+# everywhere — too generic a verb (used in ordinary "what can I visit"
+# questions) to reliably signal an itinerary/plan request; it previously
+# forced a curated-trip offer instead of real retrieval on plain
+# sightseeing questions.
+TRIP_PLAN_INTENT_TERMS: dict[str, frozenset] = {
+    "ca": frozenset({"pla", "itinerari", "recorregut", "dia", "dies",
+                     "setmana", "detall", "detalls"}),
+    "de": frozenset({"plan", "tag", "tage", "wochenende", "reiseroute",
+                     "ausflug", "programm"}),
+    "en": frozenset({"plan", "itinerary", "itiner", "day", "days",
+                     "weekend"}),
+    "es": frozenset({"plan", "itinerario", "recorrido", "dia", "dias",
+                     "semana", "detalle", "detalles"}),
+    "eu": frozenset({"plana", "eguna", "egunak", "asteburu",
+                     "xehetasun"}),
+    "fr": frozenset({"programme", "jour", "jours", "semaine",
+                     "itinéraire", "séjour", "plan"}),
+    "gl": frozenset({"plan", "itinerario", "percorrido", "día", "días",
+                     "semana", "detalle", "detalles"}),
+    "hi": frozenset({"योजना", "कार्यक्रम", "दिन", "सप्ताहांत",
+                     "यात्रा"}),
+    "hr": frozenset({"plan", "dan", "dana", "vikend", "itinerar",
+                     "program"}),
+    "it": frozenset({"piano", "itinerario", "giorno", "giorni", "fine",
+                     "settimana", "programma"}),
+    "ja": frozenset({"計画", "旅程", "プラン", "日程"}),
+    "nl": frozenset({"plan", "dag", "dagen", "weekend", "reisroute",
+                     "programma"}),
+    "pt": frozenset({"plano", "roteiro", "dia", "dias", "semana",
+                     "programa"}),
+    "ru": frozenset({"план", "программа", "день", "дня", "выходные",
+                     "поездка"}),
+    "uk": frozenset({"план", "програма", "день", "вихідні",
+                     "подорож"}),
+    "zh": frozenset({"计划", "行程", "安排", "周末", "一日游"}),
+}
+TRIP_PLAN_INTENT_TERMS_ALL = _all_terms(TRIP_PLAN_INTENT_TERMS)
 TRIP_DETAIL_REQUIRED_INSTRUCTION = (
     "The visitor asked for a plan or itinerary. You have source trip "
     "suggestions, but you must not invent a new option or combine stops "
@@ -499,10 +601,10 @@ def requires_trip_detail(question: str) -> bool:
     """True when a visitor requests a concrete curated plan/detail."""
     terms = tokenize(question)
     return any(
-        term in TRIP_PLAN_INTENT_TERMS
+        term in TRIP_PLAN_INTENT_TERMS_ALL
         or any(
             len(term) >= 4 and term.startswith(intent)
-            for intent in TRIP_PLAN_INTENT_TERMS if len(intent) >= 4
+            for intent in TRIP_PLAN_INTENT_TERMS_ALL if len(intent) >= 4
         )
         for term in terms
     )

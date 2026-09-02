@@ -30,7 +30,15 @@ from common.lang_support import (
     lang_rule,
     recovery_msg,
 )
-from run_eval import GROUNDING_FAILURE_MESSAGES, HISTORY_FOLLOWUP_LEADS
+from run_eval import (
+    DESIGNATION_INTENT_PHRASES,
+    GROUNDING_FAILURE_MESSAGES,
+    HISTORY_FOLLOWUP_LEADS,
+    RENTAL_INTENT_TERMS,
+    ROUTE_INTENT_TERMS,
+    TRIP_PLAN_INTENT_TERMS,
+    WEATHER_INTENT_TERMS,
+)
 from index_tools import (
     WEATHER_UNAVAILABLE_MESSAGES,
     _TRIP_CHOICE_MESSAGES,
@@ -47,6 +55,17 @@ VISITOR_FACING_TABLES = {
     "WEATHER_UNAVAILABLE_MESSAGES": WEATHER_UNAVAILABLE_MESSAGES,
     "_WEATHER_STALE_MESSAGES": _WEATHER_STALE_MESSAGES,
     "_TRIP_CHOICE_MESSAGES": _TRIP_CHOICE_MESSAGES,
+}
+
+# Intent-detection lexicons: not visitor-facing text, but the same
+# per-language table shape — the guard ensures every supported language
+# has a non-empty term set in each lexicon.
+INTENT_LEXICON_TABLES = {
+    "ROUTE_INTENT_TERMS": ROUTE_INTENT_TERMS,
+    "WEATHER_INTENT_TERMS": WEATHER_INTENT_TERMS,
+    "RENTAL_INTENT_TERMS": RENTAL_INTENT_TERMS,
+    "TRIP_PLAN_INTENT_TERMS": TRIP_PLAN_INTENT_TERMS,
+    "DESIGNATION_INTENT_PHRASES": DESIGNATION_INTENT_PHRASES,
 }
 
 
@@ -70,6 +89,20 @@ class TestTranslationCompleteness:
                     )
                 else:
                     assert str(value).strip(), f"{name}[{code}]: empty string"
+
+    def test_every_supported_language_has_intent_terms(self):
+        for name, table in INTENT_LEXICON_TABLES.items():
+            missing = [code for code in SUPPORTED_LANGS if code not in table]
+            assert not missing, f"{name}: missing term set for {missing}"
+
+    def test_no_empty_intent_terms(self):
+        for name, table in INTENT_LEXICON_TABLES.items():
+            for code in SUPPORTED_LANGS:
+                terms = table[code]
+                assert terms, f"{name}[{code}]: empty term set"
+                assert all(str(t).strip() for t in terms), (
+                    f"{name}[{code}]: blank term"
+                )
 
     def test_stale_template_keeps_day_placeholder(self):
         # format_weather() does template.format(n=...); a translation
