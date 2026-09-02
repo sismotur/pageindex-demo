@@ -135,7 +135,8 @@ direct API/DB access at all — it only reads the resulting index files.
 ### Index format: structured JSON, not Markdown
 
 The sibling repo's pipeline produces a single artifact per
-`(destination, language)` pair: `indexes/{destination}_{lang}.json`.
+`(destination, language)` pair: `indexes/{destination}_{lang}.json`,
+stored in this repo as `indexes/{destination}/{lang}.json`.
 The shape is:
 
 ```
@@ -246,9 +247,11 @@ produced by the sibling
 repo (`src/pipeline/extract_pois.py` → `extract_destination_data.py` →
 `build_index.py`, plus `build_weather.py` — see that repo's AGENTS.md).
 To add or refresh a destination, run the pipeline there and copy the
-resulting `indexes/{dest}_{lang}.json` and `weather/{dest}_{lang}.json`
-here. No code changes are needed in this repo — the destination display
-name comes from the index's own `meta.destination_display` field.
+resulting `indexes/{dest}_{lang}.json` here as
+`indexes/{dest}/{lang}.json` (one subfolder per destination), and
+`weather/{dest}_{lang}.json` as-is. No code changes are needed in this
+repo — the destination display name comes from the index's own
+`meta.destination_display` field.
 
 ## Running the assistant
 
@@ -257,23 +260,23 @@ name comes from the index's own `meta.destination_display` field.
 ```bash
 # English (default). --model defaults to the E2B mobile model; pass
 # --model openai/gemma-4-26B-A4B-it-MLX-4bit for the server ceiling.
-.venv/bin/python assistant/run_eval.py --index indexes/ubeda_en.json
+.venv/bin/python assistant/run_eval.py --index indexes/ubeda/en.json
 
 # Spanish
 .venv/bin/python assistant/run_eval.py \
   --questions eval/ubeda/questions_es.json \
-  --index indexes/ubeda_es.json \
+  --index indexes/ubeda/es.json \
   --lang es
 
 # Interactive chat
 .venv/bin/python assistant/chat_demo.py --interactive
 .venv/bin/python assistant/chat_demo.py --interactive --lang es \
-  --index indexes/ubeda_es.json
+  --index indexes/ubeda/es.json
 ```
 
 `--structure` is accepted as a deprecated alias for `--index` — when
 given an old `results/{name}_structure.json` path, it remaps to
-`indexes/{name}.json` if that exists.
+`indexes/{dest}/{lang}.json` if that exists.
 
 ### Score and report
 
@@ -367,8 +370,14 @@ pageindex-demo/
 │   └── score_results.py               ← score grounding + retrieval
 │
 ├── indexes/                           ← committed fixture copies, refreshed from
-│   ├── ubeda_{en,es,it}.json             inventrip-rag-data's build output
-│   └── montancheztamuja_es.json
+│   │                                     inventrip-rag-data's build output;
+│   │                                     one subfolder per destination
+│   ├── ubeda/
+│   │   ├── en.json
+│   │   ├── es.json
+│   │   └── it.json
+│   └── montancheztamuja/
+│       └── es.json
 │
 ├── weather/                           ← same fixture-copy convention as indexes/
 │   ├── ubeda_{en,es,it}.json
@@ -395,7 +404,7 @@ pageindex-demo/
 ### Naming convention
 
 ```
-indexes/{destination}_{lang}.json
+indexes/{destination}/{lang}.json
 weather/{destination}_{lang}.json
 eval/{destination}/questions_{lang}.json    (English: questions.json, no suffix)
 eval/{destination}/conversations.json

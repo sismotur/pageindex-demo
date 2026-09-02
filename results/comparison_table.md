@@ -1,7 +1,7 @@
 # Cross-Model Evaluation Report — Inventrip POI-Index RAG
 
 > **Scope:** 20 visitor questions per language (10 easy / 7 medium / 3 hard).
-> **Index:** `indexes/ubeda_*.json` (367 POIs EN, 369 ES/IT, 18 sections,
+> **Index:** `indexes/ubeda/*.json` (367 POIs EN, 369 ES/IT, 18 sections,
 > deterministic summaries, no LLM section-summarisation step).
 > **Hardware:** Apple Silicon Mac, 128 GB unified memory, Ollama / MLX
 > backend (`OLLAMA_NEW_ENGINE=true`, `OLLAMA_KV_CACHE_TYPE=q8_0`).

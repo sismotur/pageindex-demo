@@ -16,7 +16,7 @@ Usage:
     .venv/bin/python assistant/chat_demo.py --model openai/gemma-4-E2B-it-MLX-8bit
     .venv/bin/python assistant/chat_demo.py --interactive
     .venv/bin/python assistant/chat_demo.py --interactive --lang es \
-        --index indexes/ubeda_es.json
+        --index indexes/ubeda/es.json
 """
 
 from __future__ import annotations
@@ -1128,6 +1128,12 @@ def _resolve_index_arg(args) -> Path:
         guess_name = legacy.name.replace("_guide", "").replace(
             "_structure.json", ".json")
         guessed = legacy.parent.parent / "indexes" / guess_name
+        if not guessed.exists():
+            # One subfolder per destination: {dest}_{lang}.json ->
+            # {dest}/{lang}.json
+            dest, _, lang_file = guess_name.rpartition("_")
+            if dest:
+                guessed = legacy.parent.parent / "indexes" / dest / lang_file
         if guessed.exists():
             print(f"[WARN] --structure is deprecated; using {guessed}",
                   file=sys.stderr)

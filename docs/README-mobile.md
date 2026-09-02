@@ -168,7 +168,7 @@ GET /v1/weather/{dest}/{lang}         → one weather file (~1 KB)
 Same ETag / 304 semantics as the index endpoint but re-checked every
 day (the object rotates on the server-side daily cron). Store the file
 and its ETag next to the index; the offline assistant loads it beside
-`indexes/{dest}_{lang}.json` and exposes it via the `get_weather` tool.
+`indexes/{dest}/{lang}.json` and exposes it via the `get_weather` tool.
 
 The schema and refresh contract live in `docs/mobile-offline-contract.md`
 §2.4 and §3.12. Fields the mobile UI cares about beyond the runtime
@@ -493,5 +493,5 @@ the manifest is the source of truth.
 | Runtime contract (tools, prompt, loop, verification) | `docs/mobile-offline-contract.md` |
 | Server-side build & distribution spec | `docs/cloudflare-worker-spec.md` |
 | Reference implementation (Python) | `assistant/` (tools) · `pipeline/` (index builder) |
-| Sample index files | `indexes/ubeda_{en,es,it}.json` (tracked in git) |
+| Sample index files | `indexes/ubeda/{en,es,it}.json` (tracked in git) |
 | Sample question sets for QA | `eval/ubeda/questions_{,es_,it_}json` |

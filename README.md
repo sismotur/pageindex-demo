@@ -23,9 +23,10 @@ The reference destination is Úbeda, Spain — 367 POIs returned by
 `/v120/pois` under the [UNE 178503](https://www.une.org) Spanish tourism
 standard. The index format supports **multiple destinations** and
 **multiple languages** (currently also Sierra de Montánchez y Tamuja,
-Spanish-only); all artifacts use the `{destination}_*_{lang}` naming
-convention so different `(destination, language)` pairs never overwrite
-each other.
+Spanish-only); index and eval artifacts are grouped one subfolder per
+destination (`indexes/{dest}/{lang}.json`, `eval/{dest}/…`), while
+weather files keep the flat `{destination}_{lang}` name, so different
+`(destination, language)` pairs never overwrite each other.
 
 ---
 
@@ -85,7 +86,7 @@ POI-aware index uses the structure that already exists in the source.
 └─────────────────────────────┬────────────────────────────────────────┘
                               │
               ┌──────────────────────────────────┐
-              │  indexes/{dest}_{lang}.json      │ ← THE OFFLINE ARTIFACT
+              │  indexes/{dest}/{lang}.json      │ ← THE OFFLINE ARTIFACT
               │  meta · overview · trips · paths │   (phone downloads this
               │  sections (deterministic         │   once, then works with
               │     summaries) · pois · facets · │   no internet connection;
@@ -201,8 +202,14 @@ pageindex-demo/
 │   └── score_results.py               ← score grounding + retrieval
 │
 ├── indexes/                           ← committed fixture copies, refreshed from
-│   ├── ubeda_{en,es,it}.json             inventrip-rag-data's build output
-│   └── montancheztamuja_es.json
+│   │                                     inventrip-rag-data's build output;
+│   │                                     one subfolder per destination
+│   ├── ubeda/
+│   │   ├── en.json
+│   │   ├── es.json
+│   │   └── it.json
+│   └── montancheztamuja/
+│       └── es.json
 │
 ├── weather/                           ← same fixture-copy convention as indexes/
 │   ├── ubeda_{en,es,it}.json
@@ -223,7 +230,7 @@ pageindex-demo/
 ### Naming convention
 
 ```
-indexes/{destination}_{lang}.json
+indexes/{destination}/{lang}.json
 weather/{destination}_{lang}.json
 eval/{destination}/questions_{lang}.json    (English: questions.json, no suffix)
 eval/{destination}/conversations.json
@@ -293,7 +300,7 @@ that only happens in the sibling `inventrip-rag-data` repo now.
 ```bash
 # Run the Q&A evaluation (defaults to the E2B mobile model, ~75 s on oMLX;
 # the 26B server ceiling is opt-in via --model openai/gemma-4-26B-A4B-it-MLX-4bit)
-.venv/bin/python assistant/run_eval.py --index indexes/ubeda_en.json
+.venv/bin/python assistant/run_eval.py --index indexes/ubeda/en.json
 
 # Score and summarise
 .venv/bin/python assistant/score_results.py \
@@ -308,11 +315,11 @@ that only happens in the sibling `inventrip-rag-data` repo now.
 ```bash
 .venv/bin/python assistant/run_eval.py \
   --questions eval/ubeda/questions_es.json \
-  --index indexes/ubeda_es.json \
+  --index indexes/ubeda/es.json \
   --lang es
 
 .venv/bin/python assistant/chat_demo.py --interactive \
-  --index indexes/ubeda_es.json \
+  --index indexes/ubeda/es.json \
   --lang es
 ```
 
@@ -321,10 +328,11 @@ that only happens in the sibling `inventrip-rag-data` repo now.
 Run the pipeline in the sibling
 [`inventrip-rag-data`](https://github.com/sismotur/inventrip-rag-data)
 repo (`src/pipeline/extract_pois.py` → `extract_destination_data.py` →
-`build_index.py`), then copy the resulting `indexes/{dest}_{lang}.json`
-(and `weather/{dest}_{lang}.json`) here. No code changes are required in
-this repo — the destination display name comes from the index's own
-`meta.destination_display` field.
+`build_index.py`), then copy the resulting index here as
+`indexes/{dest}/{lang}.json` (one subfolder per destination) and the
+weather file as `weather/{dest}_{lang}.json`. No code changes are
+required in this repo — the destination display name comes from the
+index's own `meta.destination_display` field.
 
 ---
 
@@ -386,7 +394,9 @@ titles.
     for every listed language is guarded by `tests/test_i18n.py`.
     Smoke-tested in 26B for Italian; Spanish and English are part of the
     full eval baselines.
-- Every artifact name carries a `_{lang}` suffix. Pairs never overwrite.
+- Indexes and eval assets are grouped in one subfolder per destination;
+  weather and results files carry a flat `_{lang}` suffix. Pairs never
+  overwrite.
 - The system prompt template ends with the language rule from
   `lang_rule()` (English template, e.g. "Always respond in Spanish…").
   The corpus language is independent — a French question

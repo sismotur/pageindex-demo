@@ -2,9 +2,9 @@
 """
 assistant/run_eval.py — Q&A evaluation runner over the POI-aware index.
 
-Loads indexes/{destination}_{lang}.json (built by pipeline/build_index.py)
-and runs each question in eval/ubeda/questions.json through litellm tool
-calling.
+Loads indexes/{destination}/{lang}.json (a committed fixture copy of the
+sibling pipeline's build) and runs each question in
+eval/ubeda/questions.json through litellm tool calling.
 
 Six tools are exposed to the model:
 
@@ -32,7 +32,7 @@ Usage:
     .venv/bin/python assistant/run_eval.py
     .venv/bin/python assistant/run_eval.py --model openai/gemma-4-E2B-it-MLX-8bit
     .venv/bin/python assistant/run_eval.py --lang es \
-        --questions eval/ubeda/questions_es.json --index indexes/ubeda_es.json
+        --questions eval/ubeda/questions_es.json --index indexes/ubeda/es.json
 """
 
 from __future__ import annotations
@@ -100,7 +100,7 @@ from common.textnorm import normalize_text, tokenize
 
 # ── Constants ───────────────────────────────────────────────────────────────────────
 QUESTIONS_FILE  = PROJECT_ROOT / "eval" / "ubeda" / "questions.json"
-DEFAULT_INDEX   = PROJECT_ROOT / "indexes" / "ubeda_en.json"
+DEFAULT_INDEX   = PROJECT_ROOT / "indexes" / "ubeda" / "en.json"
 RESULTS_DIR     = PROJECT_ROOT / "results"
 DEFAULT_MODEL   = DEFAULT_EVAL_MODEL   # oMLX E2B; the mobile deployment target
 MAX_TOOL_ROUNDS = 14
@@ -1813,6 +1813,12 @@ def _resolve_index_arg(args) -> Path:
         guess_name = legacy.name.replace("_guide", "").replace(
             "_structure.json", ".json")
         guessed = legacy.parent.parent / "indexes" / guess_name
+        if not guessed.exists():
+            # One subfolder per destination: {dest}_{lang}.json ->
+            # {dest}/{lang}.json
+            dest, _, lang_file = guess_name.rpartition("_")
+            if dest:
+                guessed = legacy.parent.parent / "indexes" / dest / lang_file
         if guessed.exists():
             print(f"[WARN] --structure is deprecated; using {guessed}",
                   file=sys.stderr)

@@ -7,7 +7,7 @@ previously artefact-failing questions keep acceptable scores, and that
 the aggregate grounding stays at or above the production threshold.
 
 Also validates the deterministic section summaries baked into
-indexes/ubeda_en.json by pipeline/build_index.py.
+indexes/ubeda/en.json by the sibling pipeline's build_index.py.
 
 Run with:
     cd /path/to/pageindex-demo
@@ -26,7 +26,7 @@ sys.path.insert(0, str(PROJECT_ROOT / "assistant"))
 from score_results import score_result, score_factual_grounding, _matches
 
 EVAL_FILE = PROJECT_ROOT / "results" / "eval_gemma4-26b.json"
-INDEX_FILE = PROJECT_ROOT / "indexes" / "ubeda_en.json"
+INDEX_FILE = PROJECT_ROOT / "indexes" / "ubeda" / "en.json"
 
 
 # ── Fixtures ───────────────────────────────────────────────────────────────────
@@ -141,7 +141,7 @@ class TestAggregateThresholds:
 
 # ── Section summary quality tests (POI-aware index format) ──────────────────────
 # These validate the deterministic summaries produced by pipeline/build_index.py
-# inside indexes/ubeda_en.json.  They replace the retired PageIndex-era tests
+# inside indexes/ubeda/en.json.  They replace the retired PageIndex-era tests
 # that targeted results/ubeda_guide_structure.json (removed in 8df83d2).
 
 @pytest.fixture(scope="module")

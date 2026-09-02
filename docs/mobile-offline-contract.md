@@ -802,7 +802,7 @@ largest POI ≈0.8K, and largest trip detail ≈2.2K.
 
 ## 8. Verifying a port
 
-1. Load `indexes/ubeda_en.json` (tracked in this repo).
+1. Load `indexes/ubeda/en.json` (tracked in this repo).
 2. Implement §3 tools + §5 prompt + §6 loop.
 3. Run the 20 questions of `eval/ubeda/questions.json` single-turn,
    temperature 0, recording per question: answer, tool calls, sections
@@ -811,8 +811,8 @@ largest POI ≈0.8K, and largest trip detail ≈2.2K.
    `results/eval_*.json`-shaped file).
 5. Pass bar: grounding ≥ 70% and content-fetch ≥ 70% — the same gates
    the Python reference meets (E2B: 72.5% / 95%).
-6. Repeat with `eval/ubeda/questions_es.json` + `indexes/ubeda_es.json` and
-   `eval/ubeda/questions_it.json` + `indexes/ubeda_it.json` for multilingual
+6. Repeat with `eval/ubeda/questions_es.json` + `indexes/ubeda/es.json` and
+   `eval/ubeda/questions_it.json` + `indexes/ubeda/it.json` for multilingual
    coverage (E2B reference: ES 0.830, IT 0.760 composite).
 
 Multi-turn behaviour is exercised by `eval/ubeda/conversations.json`

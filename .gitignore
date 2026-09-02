@@ -14,5 +14,6 @@ results/*.json
 # Generated Markdown (optional human-readable export from json_to_markdown.py)
 data/*_guide_*.md
 
-# Note: indexes/*.json IS tracked — it is the build artifact consumed by
-# run_eval.py, chat_demo.py, and the Cloudflare Worker.
+# Note: indexes/*/*.json IS tracked (one {lang}.json per destination
+# subfolder) — it is the build artifact consumed by run_eval.py and
+# chat_demo.py.

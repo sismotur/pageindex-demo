@@ -28,8 +28,8 @@ sys.path.insert(0, str(PROJECT_ROOT / "assistant"))
 from index_tools import load_index, format_sections_overview  # noqa: E402
 from run_eval import make_system_prompt  # noqa: E402
 
-UBEDA_INDEX_FILE = PROJECT_ROOT / "indexes" / "ubeda_es.json"
-MONTANCHEZ_INDEX_FILE = PROJECT_ROOT / "indexes" / "montancheztamuja_es.json"
+UBEDA_INDEX_FILE = PROJECT_ROOT / "indexes" / "ubeda" / "es.json"
+MONTANCHEZ_INDEX_FILE = PROJECT_ROOT / "indexes" / "montancheztamuja" / "es.json"
 
 # Distinctive, destination-only terms that must never cross over. Deliberately
 # narrow (proper nouns, not generic Spanish words) so the check cannot produce

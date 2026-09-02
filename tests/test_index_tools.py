@@ -71,8 +71,8 @@ from run_eval import (
     requires_trip_detail,
 )
 
-INDEX_FILE = PROJECT_ROOT / "indexes" / "ubeda_en.json"
-SPANISH_INDEX_FILE = PROJECT_ROOT / "indexes" / "ubeda_es.json"
+INDEX_FILE = PROJECT_ROOT / "indexes" / "ubeda" / "en.json"
+SPANISH_INDEX_FILE = PROJECT_ROOT / "indexes" / "ubeda" / "es.json"
 
 
 @pytest.fixture(scope="module")
