@@ -787,6 +787,7 @@ def make_system_prompt(sections_text: str, destination: str,
     )
 
 
+
 # ── Tool definitions exposed to the LLM ─────────────────────────────────────
 
 TOOL_DEFS = [
@@ -1079,6 +1080,59 @@ TOOL_DEFS = [
         },
     },
 ]
+
+
+# ── Tool-call validation feedback ─────────────────────────────────────────
+# Validate each call against its schema BEFORE execution and return the
+# problem as the tool result (the gemini-cli scheduler pattern): a small
+# model then re-issues a corrected call on the next round instead of
+# silently getting a misleading answer from defaulted arguments.
+_TOOL_SCHEMAS = {d["function"]["name"]: d["function"]["parameters"]
+                 for d in TOOL_DEFS}
+
+
+def validate_tool_call(name: str, args: dict | None,
+                       raw_arguments: str = "") -> str | None:
+    """Return an error string for an invalid tool call, else None.
+
+    The error text becomes the tool result, so the model sees exactly
+    what was wrong.  Checks: known tool, parseable JSON (args is None
+    when the model's arguments string was not valid JSON), required
+    arguments present, enum values, and integer/boolean types.
+    """
+    if name not in _TOOL_SCHEMAS:
+        valid = ", ".join(sorted(_TOOL_SCHEMAS))
+        return (f"[ERROR] Unknown tool: {name}. "
+                f"Available tools: {valid}.")
+    if args is None:
+        excerpt = (raw_arguments or "")[:200]
+        return (f"[ERROR] {name}: invalid JSON in arguments "
+                f"(received: {excerpt!r}). Re-issue the call with valid "
+                f"JSON matching the tool schema.")
+    schema = _TOOL_SCHEMAS[name]
+    props = schema.get("properties", {})
+    for req in schema.get("required", []):
+        if req not in args or args[req] is None or args[req] == "":
+            hint = props.get(req, {}).get("type", "string")
+            return (f"[ERROR] {name}: missing required argument '{req}' "
+                    f"({hint}). Re-issue the call with it.")
+    for arg, value in args.items():
+        spec = props.get(arg)
+        if not spec:
+            continue   # unknown extra arguments are ignored by the tools
+        enum = spec.get("enum")
+        if enum and str(value).lower() not in [str(v).lower() for v in enum]:
+            return (f"[ERROR] {name}: '{arg}' must be one of "
+                    f"{', '.join(str(v) for v in enum)}; got {value!r}.")
+        expected = spec.get("type")
+        if expected == "integer" and (
+                not isinstance(value, int) or isinstance(value, bool)):
+            return (f"[ERROR] {name}: '{arg}' must be an integer; "
+                    f"got {value!r}.")
+        if expected == "boolean" and not isinstance(value, bool):
+            return (f"[ERROR] {name}: '{arg}' must be a boolean "
+                    f"(true/false); got {value!r}.")
+    return None
 
 
 # ── Tool dispatch ──────────────────────────────────────────────────────────
@@ -1729,13 +1783,17 @@ def run_agentic_loop(question: str, system_prompt: str,
 
         for tc in message.tool_calls:
             fn_name = tc.function.name
-            fn_args: dict = {}
+            fn_args: dict | None = {}
             try:
                 fn_args = json.loads(tc.function.arguments or "{}")
             except json.JSONDecodeError:
-                pass
+                fn_args = None
 
-            call_keys.append(tool_call_key(fn_name, fn_args))
+            # Keep distinct broken-JSON payloads distinct for the loop
+            # detector; identical ones trip it like any other repeat.
+            key_args = fn_args if fn_args is not None else {
+                "__raw__": (tc.function.arguments or "")[:200]}
+            call_keys.append(tool_call_key(fn_name, key_args))
             if is_repeat_tool_call(call_keys):
                 # Third identical call this turn: block the execution and
                 # answer with a stub.  Correct the model once; on any
@@ -1747,7 +1805,7 @@ def run_agentic_loop(question: str, system_prompt: str,
                     loop_correction_pending = fn_name
                 tool_calls_made.append({
                     "tool":           fn_name,
-                    "args":           fn_args,
+                    "args":           fn_args or {},
                     "result_preview": LOOP_REPEAT_STUB,
                     "cache_hit":      False,
                     "loop_blocked":   True,
@@ -1756,6 +1814,23 @@ def run_agentic_loop(question: str, system_prompt: str,
                     "role":         "tool",
                     "tool_call_id": tc.id,
                     "content":      LOOP_REPEAT_STUB,
+                })
+                continue
+
+            invalid = validate_tool_call(fn_name, fn_args,
+                                         tc.function.arguments or "")
+            if invalid:
+                tool_calls_made.append({
+                    "tool":           fn_name,
+                    "args":           fn_args or {},
+                    "result_preview": invalid,
+                    "cache_hit":      False,
+                    "invalid_args":   True,
+                })
+                messages.append({
+                    "role":         "tool",
+                    "tool_call_id": tc.id,
+                    "content":      invalid,
                 })
                 continue
 

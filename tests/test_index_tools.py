@@ -76,6 +76,7 @@ from run_eval import (
     requires_trip_detail,
     run_agentic_loop,
     tool_call_key,
+    validate_tool_call,
 )
 
 INDEX_FILE = PROJECT_ROOT / "indexes" / "ubeda" / "en.json"
@@ -1309,3 +1310,91 @@ class TestToolCallLoopBreak:
         assert result["answer"] == "Recovered chat answer."
         blocked = [c for c in result["tool_calls"] if c.get("loop_blocked")]
         assert len(blocked) == 2
+
+
+# ── Tool-call validation feedback ─────────────────────────────────────────
+
+class TestValidateToolCall:
+    """Invalid calls are rejected with an explanatory [ERROR] tool result
+    instead of executing on silently defaulted arguments."""
+
+    def test_valid_call_passes(self):
+        assert validate_tool_call("get_poi", {"poi_id": "poi/5155"}) is None
+
+    def test_unknown_tool_lists_valid_names(self):
+        err = validate_tool_call("get_castle", {})
+        assert "Unknown tool" in err
+        assert "get_poi" in err and "find_poi_by_name" in err
+
+    def test_malformed_json_reported(self):
+        err = validate_tool_call("find_poi_by_name", None, '{"query": ')
+        assert "invalid JSON" in err
+        assert "find_poi_by_name" in err
+
+    def test_missing_required_argument(self):
+        err = validate_tool_call("get_poi", {})
+        assert "missing required argument 'poi_id'" in err
+
+    def test_empty_required_argument(self):
+        err = validate_tool_call("find_poi_by_name", {"query": ""})
+        assert "missing required argument 'query'" in err
+
+    def test_enum_violation(self):
+        err = validate_tool_call(
+            "get_section", {"section_id": "gastronomy", "sort": "random"})
+        assert "'sort'" in err and "interest" in err
+
+    def test_enum_case_variant_accepted(self):
+        # The tools normalise case themselves; rejecting 'Full' would
+        # churn a round for no benefit.
+        assert validate_tool_call(
+            "find_poi_by_name", {"query": "x", "detail": "Full"}) is None
+
+    def test_integer_type_mismatch(self):
+        err = validate_tool_call("filter_pois", {"interest_level": "high"})
+        assert "'interest_level' must be an integer" in err
+
+    def test_boolean_type_mismatch(self):
+        err = validate_tool_call("filter_pois", {"indispensable": "yes"})
+        assert "'indispensable' must be a boolean" in err
+
+    def test_extra_arguments_ignored(self):
+        assert validate_tool_call(
+            "get_poi", {"poi_id": "poi/5155", "foo": 1}) is None
+
+    def test_invalid_call_gets_error_then_recovers(self, index, monkeypatch):
+        """A malformed first call produces an error tool result (never
+        executes); the model's corrected retry executes normally."""
+        calls: list = []
+
+        def fake(*args, **kwargs):
+            calls.append(list(kwargs.get("messages") or []))
+            if len(calls) == 1:
+                tc = SimpleNamespace(id="c1", function=SimpleNamespace(
+                    name="get_poi", arguments='{"poi_id": '))  # malformed
+            elif len(calls) == 2:
+                tc = SimpleNamespace(id="c2", function=SimpleNamespace(
+                    name="get_poi", arguments='{"poi_id": "poi/5155"}'))
+            else:
+                tc = None
+            if tc is None:
+                return SimpleNamespace(choices=[SimpleNamespace(
+                    message=SimpleNamespace(content="Castle answer.",
+                                            tool_calls=None))], usage=None)
+            return SimpleNamespace(choices=[SimpleNamespace(
+                message=SimpleNamespace(content=None, tool_calls=[tc]))],
+                usage=None)
+
+        monkeypatch.setattr(litellm, "completion", fake)
+        result = run_agentic_loop(
+            "Tell me about the castle", "You are a tourism assistant.",
+            index, "", "fake-model", {},
+        )
+        assert result["answer"] == "Castle answer."
+        entries = result["tool_calls"]
+        assert entries[0].get("invalid_args")
+        assert "invalid JSON" in entries[0]["result_preview"]
+        assert entries[1]["args"] == {"poi_id": "poi/5155"}
+        assert not entries[1].get("invalid_args")
+        # The malformed call never executed: exactly one real lookup ran.
+        assert sum(1 for c in entries if not c.get("invalid_args")) == 1

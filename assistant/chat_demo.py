@@ -71,6 +71,7 @@ from run_eval import (   # noqa: E402
     selected_source_context,
     requires_trip_detail,
     tool_call_key,
+    validate_tool_call,
     TRIP_DETAIL_REQUIRED_INSTRUCTION,
     WEATHER_LOOKUP_ENFORCED_INSTRUCTION,
 )
@@ -865,13 +866,17 @@ def run_turn(question: str, messages: list[dict],
         # Execute tool calls and append results
         for tc in raw_tool_calls:
             fn_name = tc.function.name
-            fn_args: dict = {}
+            fn_args: dict | None = {}
             try:
                 fn_args = json.loads(tc.function.arguments or "{}")
             except json.JSONDecodeError:
-                pass
+                fn_args = None
 
-            call_keys.append(tool_call_key(fn_name, fn_args))
+            # Keep distinct broken-JSON payloads distinct for the loop
+            # detector; identical ones trip it like any other repeat.
+            key_args = fn_args if fn_args is not None else {
+                "__raw__": (tc.function.arguments or "")[:200]}
+            call_keys.append(tool_call_key(fn_name, key_args))
             if is_repeat_tool_call(call_keys):
                 # Third identical call this turn: block the execution and
                 # answer with a stub.  Correct the model once; on any
@@ -883,7 +888,7 @@ def run_turn(question: str, messages: list[dict],
                     loop_correction_pending = fn_name
                 tool_calls_made.append({
                     "tool":           fn_name,
-                    "args":           fn_args,
+                    "args":           fn_args or {},
                     "result_preview": LOOP_REPEAT_STUB,
                     "cache_hit":      False,
                     "loop_blocked":   True,
@@ -892,6 +897,23 @@ def run_turn(question: str, messages: list[dict],
                     "role":         "tool",
                     "tool_call_id": tc.id,
                     "content":      LOOP_REPEAT_STUB,
+                })
+                continue
+
+            invalid = validate_tool_call(fn_name, fn_args,
+                                         tc.function.arguments or "")
+            if invalid:
+                tool_calls_made.append({
+                    "tool":           fn_name,
+                    "args":           fn_args or {},
+                    "result_preview": invalid,
+                    "cache_hit":      False,
+                    "invalid_args":   True,
+                })
+                messages.append({
+                    "role":         "tool",
+                    "tool_call_id": tc.id,
+                    "content":      invalid,
                 })
                 continue
 

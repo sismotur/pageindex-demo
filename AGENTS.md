@@ -351,7 +351,12 @@ Typical flows handled by the model:
   corrects the model once with the offending call named, and on any
   further repeat aborts the tool loop so the tail recovery forces a
   final answer — worst-case latency stays bounded instead of burning
-  all 14 rounds. The localized safe failure remains only for turns that
+  all 14 rounds. Every tool call is validated against its schema before
+  execution: malformed JSON, unknown tools, missing required arguments,
+  wrong-typed values, and out-of-enum values return an `[ERROR] …`
+  tool result naming the problem (never executing), so the model
+  re-issues a corrected call instead of running on silently defaulted
+  arguments. The localized safe failure remains only for turns that
   never produce an answer.
 
 Pre-warm: every section's `get_section(id, "interest", 50)` result is
