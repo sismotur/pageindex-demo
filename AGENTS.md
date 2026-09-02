@@ -250,6 +250,13 @@ stack therefore stays instruction-based; the on-device LiteRT port
 (Google AI Edge) does expose `ToolChoice.REQUIRED` if a future mobile
 stack needs decode-time forcing.
 
+oMLX 0.6.4 does **prefix-cache** shared prompt prefixes server-side
+(`cache.enabled`, on by default): a repeated 13K-char system prefix
+costs ~0.7 s vs ~3.7 s cold (measured 2026-09-02), which is what makes
+the multi-round eval latencies possible. The on-device equivalent is
+session/KV reuse — a porting requirement documented in
+`docs/mobile-offline-contract.md` §7.2.
+
 ---
 
 ## Data preparation (sibling repo)

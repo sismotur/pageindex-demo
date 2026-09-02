@@ -229,6 +229,7 @@ def run_turn(question: str, messages: list[dict],
     loop_correction_pending: str | None = None
     loop_abort = False
     results_by_key: dict[str, str] = {}
+    chant_truncated = False
 
     # Resolve concise selections against validated tags from earlier
     # assistant turns before asking the model to answer. This prevents
@@ -384,6 +385,7 @@ def run_turn(question: str, messages: list[dict],
                         # stream and keep only the non-repetitive prefix.
                         acc_content = acc_content[:keep]
                         chant_detected = True
+                        chant_truncated = True
                         break
 
                 if delta.tool_calls:
@@ -1157,6 +1159,7 @@ def run_turn(question: str, messages: list[dict],
         "grounded":   grounded or not grounding_required,
         "grounding_tools": grounding_tools,
         "automatic_source_calls": automatic_source_calls,
+        "chant_truncated": chant_truncated,
         "error":      error,
     }
 
@@ -1226,6 +1229,7 @@ def run_conversation(thread: dict, system_prompt: str,
             "grounded":   result["grounded"],
             "grounding_tools": result["grounding_tools"],
             "automatic_source_calls": result["automatic_source_calls"],
+            "chant_truncated": result["chant_truncated"],
             "error":      result["error"],
         })
 

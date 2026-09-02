@@ -262,6 +262,28 @@ def score_language(result: dict) -> float:
     return 1.0  # other languages: skip the check
 
 
+_GUARD_FLAGS = ("repeat_cached", "loop_blocked", "invalid_args")
+
+
+def guard_tallies(result: dict) -> dict:
+    """Count runtime guard interventions logged in one result.
+
+    The guards (tool-call loop block, repeat-call cache stub, schema
+    validation rejection, stream chant truncation) fire only on small
+    models that dither or degenerate — a nonzero tally in an eval or
+    conversation log is the signal to watch when porting to a new model.
+    """
+    tally = {key: 0 for key in _GUARD_FLAGS}
+    tally["chant_truncated"] = 0
+    for call in result.get("tool_calls", []):
+        for key in _GUARD_FLAGS:
+            if call.get(key):
+                tally[key] += 1
+    if result.get("chant_truncated"):
+        tally["chant_truncated"] = 1
+    return tally
+
+
 def score_result(result: dict) -> dict:
     """Return a dict of all dimension scores for one result."""
     lang = result.get("lang", "en")
@@ -289,6 +311,7 @@ def score_result(result: dict) -> dict:
         "completion_tokens": result.get("completion_tokens"),
         "error":            has_error,
         "missing_facts":    missing,
+        "guard_events":     guard_tallies(result),
     }
 
 
@@ -355,6 +378,17 @@ def print_summary(scores: list[dict], model: str) -> None:
         max_prompt = max(r["prompt_tokens"] for r in with_usage)
         print(f"  Avg tokens/question   :  {avg_prompt} prompt + {avg_completion} completion"
               f"  (max prompt {max_prompt}, {m}/{n} measured)")
+
+    # Guard interventions (nonzero only when the model dithered or
+    # degenerated — a health signal when porting to a new model).
+    guard_totals: dict[str, int] = {}
+    for s in scores:
+        for key, count in (s.get("guard_events") or {}).items():
+            guard_totals[key] = guard_totals.get(key, 0) + count
+    if any(guard_totals.values()):
+        parts = ", ".join(f"{k} {v}" for k, v in sorted(guard_totals.items())
+                         if v)
+        print(f"  Guard events          :  {parts}")
 
     # Thresholds from plan
     passes_grounding  = grounding_avg >= 0.70

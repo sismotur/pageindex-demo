@@ -800,6 +800,42 @@ largest POI ≈0.8K, and largest trip detail ≈2.2K.
 
 ---
 
+## 7.2 KV cache / session reuse (latency-critical)
+
+The §7 per-round base cost (~3.5K tokens) assumes the model re-reads the
+system prompt, tool schemas, and history on every round.  Whether that
+cost is real depends on KV-cache reuse — and that is a **porting
+decision**, not a given.
+
+Measured on the reference stack (oMLX 0.6.4 server, `cache.enabled`,
+2026-09-02): a cold 13 K-character system prefix costs **3.7 s**, an
+immediate repeat of the same prefix costs **0.7 s** (~5× faster) — the
+server keeps the prefix KV between requests.  The per-question latencies
+quoted in §7 (3–8 s, 2–3 rounds each) are only achievable because every
+round shares that cached prefix.
+
+On-device requirements (the shipping stack — Android **LiteRT-LM** /
+iOS **MLX Swift**; oMLX is the reference server only):
+
+1. **Create the inference session once per conversation and reuse it**
+   across visitor turns and across tool-call rounds within a turn.  Both
+   LiteRT-LM (`Conversation`/`Chat`) and MLX Swift keep the KV cache
+   inside the session object; rebuilding the session per round forces a
+   full re-prefill of the system prompt plus history every time — the
+   single worst latency mistake a port can make.
+2. **Keep the system prompt a byte-stable prefix.**  No timestamps,
+   request ids, or per-turn data inside it.  The one variable part, the
+   weather hint line (§3.12), changes at most once per day — an
+   acceptable prefix invalidation.
+3. **Append-only history.**  Tool results are appended, never edited
+   in place (the compaction rule in §7.1 rewrites only *old* tool
+   messages; everything after the most recent edit point must be
+   re-prefilled, so compact early, not often).
+4. Verify on target hardware: time turn 1 (cold) vs turn 2 (warm) of a
+   conversation.  If they are equal, the session is not being reused.
+
+---
+
 ## 8. Verifying a port
 
 1. Load `indexes/ubeda/en.json` (tracked in this repo).

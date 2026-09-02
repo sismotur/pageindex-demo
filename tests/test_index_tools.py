@@ -1526,6 +1526,7 @@ class TestChantGuard:
                           "fake-model", {}, stream=True)
         assert result["answer"] == intro.strip()
         assert result["rounds"] == 1
+        assert result["chant_truncated"] is True
         assert len(captured) == 1   # no re-generation after the chant
 
     def test_stream_chant_without_prefix_fails_safe(self, index, monkeypatch):
@@ -1539,6 +1540,7 @@ class TestChantGuard:
         result = run_turn("Tell me about the castle", messages, index, "",
                           "fake-model", {}, stream=True)
         assert result["answer"] == grounding_failure_message(index)
+        assert result["chant_truncated"] is True
         assert len(captured) == 1
 
 
@@ -1616,6 +1618,7 @@ class TestRepeatAnswerGuard:
         result = run_turn("What can I see?", self._history(), index, "",
                           "fake-model", {})
         assert result["answer"] == "Real overview answer."
+        assert result["chant_truncated"] is False
         # Two brush-off replies, then the answer composed from the
         # deterministically retrieved records.
         assert len(captured) == 3

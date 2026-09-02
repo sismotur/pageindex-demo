@@ -23,7 +23,12 @@ import pytest
 PROJECT_ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(PROJECT_ROOT / "assistant"))
 
-from score_results import score_result, score_factual_grounding, _matches
+from score_results import (
+    guard_tallies,
+    score_result,
+    score_factual_grounding,
+    _matches,
+)
 
 EVAL_FILE = PROJECT_ROOT / "results" / "eval_gemma4-26b.json"
 INDEX_FILE = PROJECT_ROOT / "indexes" / "ubeda" / "en.json"
@@ -67,7 +72,47 @@ class TestPhoneNormalization:
         assert not _matches("vázquez de molina", "visit the cathedral")
 
 
-# ── Per-question assertions ────────────────────────────────────────────────────
+# ── Guard telemetry ─────────────────────────────────────────────────────────
+
+class TestGuardTelemetry:
+    """Runtime guard interventions (loop block, repeat cache stub,
+    validation rejection, chant truncation) are tallied per question so a
+    nonzero count is visible when porting to a new model."""
+
+    def test_counts_flags_from_tool_calls(self):
+        result = {
+            "tool_calls": [
+                {"tool": "get_poi", "args": {}},
+                {"tool": "get_poi", "args": {}, "repeat_cached": True},
+                {"tool": "get_poi", "args": {}, "loop_blocked": True},
+                {"tool": "get_poi", "args": {}, "invalid_args": True},
+                {"tool": "get_poi", "args": {}, "loop_blocked": True},
+            ],
+            "chant_truncated": True,
+        }
+        assert guard_tallies(result) == {
+            "repeat_cached": 1,
+            "loop_blocked": 2,
+            "invalid_args": 1,
+            "chant_truncated": 1,
+        }
+
+    def test_clean_run_has_zero_tallies(self):
+        result = {"tool_calls": [{"tool": "get_poi", "args": {}}]}
+        assert not any(guard_tallies(result).values())
+
+    def test_score_result_carries_guard_events(self):
+        result = {
+            "id": "QX", "answer": "Some answer text.",
+            "tool_calls": [{"tool": "get_poi", "args": {},
+                            "repeat_cached": True}],
+        }
+        scored = score_result(result)
+        assert scored["guard_events"]["repeat_cached"] == 1
+        assert scored["guard_events"]["loop_blocked"] == 0
+
+
+# ── Per-question assertions ───────────────────────────────────────────────────
 
 class TestPreviouslyFailingQuestions:
     """All four artefact-failing questions must now score composite=1.0."""
