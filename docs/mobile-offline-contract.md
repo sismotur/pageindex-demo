@@ -514,21 +514,31 @@ Tourist answers use a fail-closed source rule:
 1. Every non-social user turn must have a current-turn source retrieval
    (`get_poi`, `get_section`, name/facet/evidence search, trip, or path)
    before an answer is accepted. `list_sections` alone is not enough.
-2. If the model tries to answer without retrieval, the runtime gives it
-   one internal grounding retry. A second no-tool answer returns a
-   localized safe failure message instead of model-memory prose.
+   **Only usable tool results count as grounding** — pure `[ERROR]`
+   batches (e.g. hallucinated `get_poi` ids) must not set `grounded`.
+2. If the model tries to answer without usable retrieval, the runtime
+   gives it one internal grounding retry. Further no-tool or brush-off
+   answers do not fall through to model-memory prose: deterministic
+   backstops run instead (below), and only turns that never produce an
+   answer use the localized safe failure message.
 3. A concise selection of a validated prior tag is resolved
    deterministically. For example, after
    `<trip id=4453>Ú. en Familia-R. Secundaria 2</trip>`, the user can say
    `Secundaria 2`; the runtime automatically calls
    `get_trip("trip/4453")` before response generation.
 4. The turn log carries `grounded`, `grounding_tools`, and
-   `automatic_source_calls` for QA. The app should treat an ungrounded
+   `automatic_source_calls` for QA. Automatic recoveries may also set
+   `deterministic_present` when the runtime itself presents lookup text
+   after a failed model recovery. The app should treat an ungrounded
    failure response as ordinary text, not a recommendation.
 5. A plan request that finds a curated trip must retrieve `get_trip`
    before rendering a day-by-day or ordered-stop answer. The runtime
    renders the retrieved source steps directly; it does not let the model
    invent named option headings or merge stops from several trips.
+   **Trip-detail intent matching** must treat short stems such as `plan`
+   as whole tokens only (do not let `planetarium` prefix-match `plan`).
+   Longer deliberate stems (e.g. `itiner` → `itinerary`/`itinerario`)
+   may still use prefix matching.
 6. When a plan-shaped question has no deterministic selection and
    `search_trips` returns ≥2 candidates, the runtime emits a
    deterministic **choice offer**: up to three `<trip id=…>` tags with a
@@ -537,6 +547,22 @@ Tourist answers use a fail-closed source rule:
    numeric id (e.g. typing `4457` opens `<trip id=4457>`). If exactly
    one trip matches, the runtime opens it directly; if none match, the
    loop proceeds normally so the model can answer from other tools.
+7. **Named-POI backstop** (after the grounding retry fails): resolve
+   places the visitor named via focus phrases (`tell me about X` and
+   multilingual equivalents) with fuzzy name search that requires a
+   shared content token (length ≥ 4), then exact `name_index`
+   substrings, then short yes-to-offer confirmations against the
+   assistant's previous message. Inject the full `get_poi` record(s)
+   and require an answer from them — covers English visitor phrasing of
+   Spanish catalogue names (e.g. "Sacred Chapel of El Salvador" →
+   `Sacra Capilla del Salvador`).
+8. **Brush-off / parrot recovery**: a bare clarifying question, a
+   promise-to-search-later decline, or (ongoing conversation) a
+   verbatim repeat of the previous visitor-facing assistant turn —
+   including warm greetings with `!` — triggers one deterministic
+   content inject (`search_pois` / `filter_pois`). If the model still
+   brushes off or parrots after that inject, the runtime **presents the
+   lookup result directly** with no further model round (do not loop).
 
 Grounding means the answer is based on the current downloaded index. It
 does not promise verbatim wording: the model may paraphrase retrieved

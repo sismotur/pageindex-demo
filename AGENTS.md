@@ -367,42 +367,59 @@ Typical flows handled by the model:
   required. When a turn ends without retrieval, the model self-classifies
   once (generic → answer from the catalogue; specific → call a tool; a
   short confirmation like "sí" answering the assistant's own offer → act
-  on that offer, never re-ask). If the model still declines, two
-  deterministic backstops fire: the destination's own `name_index` is
-  probed against the question — and, after a short confirmation, against
-  the assistant's previous offer — to fetch the named records; and when
-  the model answers with yet another bare clarifying question (on ANY
-  turn — warm greeting replies carry "!" markers and are unaffected) or
-  repeats its previous answer verbatim (ongoing conversations only;
-  `is_repeat_of_previous_answer` compares against the last assistant
-  message before the current question, so current-turn drafts do not
-  count) — the runtime retrieves content itself
+  on that offer, never re-ask). **Usable retrieval only counts as
+  grounded** (`tool_result_is_usable`): pure `[ERROR]` batches (e.g.
+  hallucinated `get_poi(poi/1)`) do not flip `grounded`, so recovery still
+  runs — observed C01 failure where E2B invented ids then offered to
+  "search later". If the model still declines, deterministic backstops
+  fire in order: (1) **named-POI backstop** — focus phrases
+  (`tell me about…` / `cuéntame sobre…`) via fuzzy name search that must
+  share a content token (len ≥ 4) with the POI name, then exact
+  `name_index` substrings, then short yes-to-offer confirmations against
+  the assistant's previous message — so English "Sacred Chapel of El
+  Salvador" still resolves to Spanish catalogue `Sacra Capilla del
+  Salvador`; (2) history-followup over previously tagged POIs; (3) when
+  the draft is a bare clarifying question, a promise-to-search-later
+  decline, or (ongoing chats) a verbatim repeat of the previous
+  visitor-facing assistant turn (`final_answer_needs_recovery`; repeats
+  include warm greetings with "!" that `is_pure_reask` deliberately
+  ignores; `is_repeat_of_previous_answer` compares against the last
+  assistant message **before** the current question so current-turn
+  drafts do not count) — the runtime retrieves content itself
   (`search_pois` on the question, else `filter_pois` indispensable
-  highlights) and makes the model present it. A per-turn loop detector
-  blocks the third identical `(tool, args)` call (every tool is a
-  deterministic read-only lookup, so a repeat can return nothing new),
-  corrects the model once with the offending call named, and on any
-  further repeat aborts the tool loop so the tail recovery forces a
-  final answer — worst-case latency stays bounded instead of burning
-  all 14 rounds. The second occurrence of an identical call is not
-  blocked but answered from a per-turn result cache: a short stub
-  while the original result is still in context, or the cached result
-  itself when history compaction has since replaced it — a repeated
-  full result no longer doubles the context cost. Every tool call is
-  validated against its schema before
+  highlights) and injects it for the model to present. **If the model
+  still brushes off or parrots after that one recovery inject**, the
+  runtime does not ask again: `serve_deterministic_recovery_answer`
+  presents the lookup result directly (`deterministic_present` on the
+  tool log) with no further LLM round. A per-turn loop detector blocks
+  the third identical `(tool, args)` call (every tool is a deterministic
+  read-only lookup, so a repeat can return nothing new), corrects the
+  model once with the offending call named, and on any further repeat
+  aborts the tool loop so the tail recovery forces a final answer —
+  worst-case latency stays bounded instead of burning all 14 rounds. The
+  second occurrence of an identical call is not blocked but answered from
+  a per-turn result cache: a short stub while the original result is
+  still in context, or the cached result itself when history compaction
+  has since replaced it — a repeated full result no longer doubles the
+  context cost. Every tool call is validated against its schema before
   execution: malformed JSON, unknown tools, missing required arguments,
-  wrong-typed values, and out-of-enum values return an `[ERROR] …`
-  tool result naming the problem (never executing), so the model
-  re-issues a corrected call instead of running on silently defaulted
-  arguments. On the streaming path (interactive chat), a content-chant
-  guard (`chant_repeat_prefix`: the trailing 50-char chunk repeated
-  six or more times in the last 2 000 characters) stops a degenerating
-  stream and serves the non-repetitive prefix as the answer — at
-  temperature=0 re-asking would chant again deterministically. All
-  generation calls carry a 1 024-token answer cap (`MAX_ANSWER_TOKENS`),
-  so a degenerating non-streaming response stays bounded as well. The
-  localized safe failure remains only for turns that never produce an
-  answer.
+  wrong-typed values, and out-of-enum values return an `[ERROR] …` tool
+  result naming the problem (never executing), so the model re-issues a
+  corrected call instead of running on silently defaulted arguments. On
+  the streaming path (interactive chat), a content-chant guard
+  (`chant_repeat_prefix`: the trailing 50-char chunk repeated six or more
+  times in the last 2 000 characters) stops a degenerating stream and
+  serves the non-repetitive prefix as the answer — at temperature=0
+  re-asking would chant again deterministically. All generation calls
+  carry a 1 024-token answer cap (`MAX_ANSWER_TOKENS`), so a degenerating
+  non-streaming response stays bounded as well. The localized safe
+  failure remains only for turns that never produce an answer.
+- **Trip-detail intent** (`requires_trip_detail`): short lexicon stems
+  such as `plan` match **whole tokens only** (`_token_matches_intent`,
+  min prefix stem length 5). Longer deliberate stems (`itiner`) still
+  prefix-match `itinerary`/`itinerario`. This stops false triggers like
+  `planetarium`.startswith(`plan`) forcing curated-trip mode on ordinary
+  POI questions.
 
 Pre-warm: every section's `get_section(id, "interest", 50)` result is
 cached at session start, so subsequent calls are instant.

@@ -414,9 +414,12 @@ reproducible multi-turn dialogue instead of an LLM-simulated user.
 Every turn also gets two always-on structural checks regardless of
 authoring: a bare re-ask, or a verbatim repeat of the previous turn's
 answer (the greeting/confirmation "double-parrot" failure mode) hard-
-floors that thread's composite to 0.0. Threads with no authored checks
-stay manual QA — `assistant/score_conversations.py` still reports their
-structural signals but excludes them from the composite average.
+floors that thread's composite to 0.0. The **runtime** also guards that
+class: after one recovery inject, a second parrot/brush-off is answered
+from the deterministic lookup result directly (see AGENTS.md "Strict
+grounding"). Threads with no authored checks stay manual QA —
+`assistant/score_conversations.py` still reports their structural
+signals but excludes them from the composite average.
 
 ---
 
