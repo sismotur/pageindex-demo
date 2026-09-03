@@ -26,6 +26,7 @@ sys.path.insert(0, str(PROJECT_ROOT / "assistant"))       # index_tools
 from index_tools import (
     load_index,
     extract_poi_tags,
+    find_poi_by_name,
     format_find_poi_by_name,
     format_filter_pois,
     format_history_followup,
@@ -1006,6 +1007,73 @@ class TestEvidenceSearch:
         out = format_search_pois(index, "olive oil", section_id="gastronomy")
         assert "<poi id=" in out
         assert " type=OilMill>" in out
+
+
+class TestLookupFocusAndMorphology:
+    """Lead-strip + light morphology so gastronomy nouns resolve without lists."""
+
+    def test_lookup_focus_strips_info_and_buy_leads(self):
+        from index_tools import lookup_focus_query
+        assert lookup_focus_query("dame info de queso") == "queso"
+        assert lookup_focus_query("dónde comprar queso") == "queso"
+        assert lookup_focus_query("tell me about cheese") in {"cheese", "about cheese"} or (
+            "cheese" in lookup_focus_query("tell me about cheese")
+        )
+
+    def test_queso_name_search_finds_cheese_shops(self):
+        mont = PROJECT_ROOT / "indexes" / "montancheztamuja" / "es.json"
+        if not mont.exists():
+            pytest.skip(f"Index file not found: {mont}")
+        midx = load_index(mont)
+        for q in ("queso", "dame info de queso", "dónde comprar queso"):
+            ids = {p["poi_id"] for p in find_poi_by_name(midx, q, limit=8)}
+            # Shops are named quesería/quesos — morphology + lead-strip must hit.
+            assert ids & {
+                "poi/45522",  # Quesería Tamussia
+                "poi/41923",  # Quesos Valpe
+                "poi/45951",  # Queseria artesana Carrasco
+                "poi/9929",   # Quesería Pastorvelia
+            }, q
+            # Must not be only noise from dame/info particles.
+            assert "poi/9960" not in ids  # Ermita de la Virgen del Salor
+
+    def test_queso_evidence_search_not_empty_with_lead_in(self):
+        mont = PROJECT_ROOT / "indexes" / "montancheztamuja" / "es.json"
+        if not mont.exists():
+            pytest.skip(f"Index file not found: {mont}")
+        midx = load_index(mont)
+        matches = search_pois(midx, "dame info de queso", limit=8)
+        assert matches
+        ids = {m["poi"]["poi_id"] for m in matches}
+        # At least one cheese-related record (shop, festival, or route).
+        assert ids & {
+            "poi/45522", "poi/41923", "poi/45951", "poi/9929",
+            "poi/51977", "poi/51983",
+        }
+
+    def test_casa_does_not_invent_caseria_shops(self):
+        mont = PROJECT_ROOT / "indexes" / "montancheztamuja" / "es.json"
+        if not mont.exists():
+            pytest.skip(f"Index file not found: {mont}")
+        midx = load_index(mont)
+        from index_tools import _term_variants
+        st = (midx.get("facets") or {}).get("search_terms") or {}
+        variants = _term_variants("casa", known_terms=st)
+        assert "caseria" not in variants
+        # Name hits stay real "Casa …" lodgings, not invented agentives.
+        names = [p.get("name") or "" for p in find_poi_by_name(midx, "casa", limit=5)]
+        assert names
+        assert all("casa" in normalize_text(n) for n in names)
+
+    def test_jamon_iberico_lead_in_still_finds_ham_shop(self):
+        mont = PROJECT_ROOT / "indexes" / "montancheztamuja" / "es.json"
+        if not mont.exists():
+            pytest.skip(f"Index file not found: {mont}")
+        midx = load_index(mont)
+        ids = {p["poi_id"] for p in find_poi_by_name(
+            midx, "dame info de jamón ibérico", limit=5,
+        )}
+        assert "poi/45590" in ids  # Carlos Rosco shop
 
 # ── Curated trip suggestions and physical paths ─────────────────────────────
 

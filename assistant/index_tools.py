@@ -729,45 +729,102 @@ def format_poi(index: dict, poi_id: str) -> str:
 
 # ── Name search ─────────────────────────────────────────────────────────────
 
+# Intent verbs/adverbs stripped for lookup only (not history selection).
+# Keeps "dónde comprar queso" / "where to buy cheese" focused on the noun.
+_LOOKUP_INTENT_STOPWORDS = frozenset({
+    "donde", "where", "comprar", "buy", "buscar", "find", "encontrar",
+    "ver", "see", "visitar", "visit", "quiero", "want", "necesito",
+    "need", "hay", "existe", "exist", "cerca", "near", "nearby",
+    "comprar", "acheter", "comprare", "kaufen",
+})
+
+
+def lookup_focus_query(query: str) -> str:
+    """Strip info/detail lead-ins and stopwords for name/evidence lookup.
+
+    "dame info de queso" → "queso" so find/search do not AND on dame/info
+    or tier-3 match random POIs via those particles.
+    """
+    focus = _history_focus_query(query) or normalize_text(query)
+    if not focus:
+        return ""
+    stop = _HISTORY_FOCUS_STOPWORDS | _LOOKUP_INTENT_STOPWORDS
+    kept = [
+        t for t in focus.split()
+        if len(t) >= 3 and t not in stop
+    ]
+    return " ".join(kept) if kept else focus
+
+
 def find_poi_by_name(index: dict, query: str, limit: int = 5) -> list[dict]:
     """Return up to `limit` matching POIs as light dicts.
 
     Matching strategy (in order):
-      1. exact normalised name match
-      2. all query tokens present in normalised name (substring)
-      3. any query token present in normalised name
-    Higher-quality matches are returned first; ties broken by interest level.
+      1. exact normalised name match (on focus and raw query)
+      2. all focus tokens present in normalised name (with light morphology)
+      3. any focus token present in normalised name (morphology allowed)
+    Lead-ins ("dame info de …") are stripped first. Higher-quality matches
+    are returned first; ties broken by interest level.
     """
-    q_norm = normalize_text(query)
-    if not q_norm:
+    raw_norm = normalize_text(query)
+    focus = lookup_focus_query(query) or raw_norm
+    if not focus:
         return []
-    q_tokens = set(q_norm.split())
+    q_tokens = [t for t in focus.split() if len(t) >= 3]
+    if not q_tokens:
+        q_tokens = focus.split()
+    if not q_tokens:
+        return []
 
     by_norm = (index.get("name_index") or {})  # {normalized_name: poi_id}
     pois = index.get("pois", {})
+    search_terms = ((index.get("facets") or {}).get("search_terms") or {})
 
-    # Tier 1: exact normalised match
+    # Per-query-token variant sets (queso → quesos, queseria, …).
+    token_variants = [
+        _term_variants(t, known_terms=search_terms or None) for t in q_tokens
+    ]
+
+    def _name_hits_token(n_tokens: set[str], variants: set[str]) -> bool:
+        if variants & n_tokens:
+            return True
+        # Prefix: name token "queseria" starts with variant "queso" only when
+        # the name token is clearly derived (variant + ≥2 chars), not bare
+        # equality already handled above.
+        for variant in variants:
+            if len(variant) < 4:
+                continue
+            for nt in n_tokens:
+                if len(nt) >= len(variant) + 2 and nt.startswith(variant):
+                    return True
+        return False
+
+    # Tier 1: exact normalised match on focus or raw query
     tier1: list[dict] = []
-    if q_norm in by_norm:
-        pid = by_norm[q_norm]
-        if pid in pois:
-            tier1.append(pois[pid])
+    for key in (focus, raw_norm):
+        if key and key in by_norm:
+            pid = by_norm[key]
+            if pid in pois and pois[pid] not in tier1:
+                tier1.append(pois[pid])
 
-    # Tier 2 + 3: scan all POIs (367 entries — trivial to iterate)
+    # Tier 2 + 3: scan all POIs (destination-sized — trivial to iterate)
     tier2: list[tuple[int, dict]] = []  # (negative-score, poi)
     tier3: list[tuple[int, dict]] = []
     for pid, p in pois.items():
         norm = p.get("normalized_name") or normalize_text(p.get("name") or "")
-        if not norm or norm == q_norm:
+        if not norm or norm in {focus, raw_norm}:
             continue  # already in tier 1
         n_tokens = set(norm.split())
-        common = q_tokens & n_tokens
-        if not common:
+        hit_flags = [
+            _name_hits_token(n_tokens, variants) for variants in token_variants
+        ]
+        if not any(hit_flags):
             continue
-        if q_tokens.issubset(n_tokens) or q_norm in norm:
-            tier2.append((-len(common), p))
+        hit_count = sum(1 for h in hit_flags if h)
+        if all(hit_flags) or focus in norm:
+            tier2.append((-hit_count, p))
         else:
-            tier3.append((-len(common), p))
+            tier3.append((-hit_count, p))
 
     # Sort each tier by token-overlap desc, then interest level asc
     tier2.sort(key=lambda x: (x[0], x[1].get("interest_level") or 99))
@@ -971,31 +1028,44 @@ def _searchable_text(poi: dict) -> str:
 
 def _search_postings(index: dict, term: str) -> set[str]:
     """Resolve a normalized query term to its inverted-index postings.
-    Plural variants handle harmless morphology (restaurant/restaurants)
-    without a language-specific stemmer. A v2 index falls back to a
-    small local scan during a staged corpus upgrade.
+
+    Plural and light agentive variants (queso→queseria) expand coverage
+    without a food lexicon. A v2 index falls back to a small local scan
+    during a staged corpus upgrade.
     """
     search_terms = ((index.get("facets") or {}).get("search_terms") or {})
     if not search_terms:
+        variants = _term_variants(term)
         return {
             pid for pid, poi in (index.get("pois") or {}).items()
-            if term in set(tokenize(_searchable_text(poi)))
+            if variants & set(tokenize(_searchable_text(poi)))
         }
 
     matched: set[str] = set()
-    for variant in _term_variants(term):
+    for variant in _term_variants(term, known_terms=search_terms):
         matched.update(search_terms.get(variant) or [])
     return matched
 
 
-def _term_variants(term: str) -> set[str]:
-    """Return conservative spelling variants for a single search term.
+# Bases that must never grow an -eria shop form (casa→caseria noise).
+_AGENTIVE_EXPAND_BLOCKLIST = frozenset({
+    "casa", "casas", "playa", "playas", "plaza", "plazas", "mesa", "mesas",
+    "vida", "dia", "dias", "agua", "calle", "calles", "iglesia", "iglesias",
+    "villa", "villas", "costa", "paso", "pasos", "puerta", "puertas",
+    "ruta", "rutas", "sede", "modo", "modos", "tipo", "tipos",
+    "zona", "zonas", "hora", "horas", "foto", "fotos", "guia", "guias",
+})
 
-    This intentionally avoids general prefix matching: a query such as
-    ``riverwalk`` must not match an unrelated ``river`` token. The three
-    transformations cover the common singular/plural forms used in the
-    catalogue while leaving other languages as exact lexical matches.
+
+def _term_variants_strip(term: str) -> set[str]:
+    """Singularize-only variants (safe for curated trip OR-matching).
+
+    Expanding *to* plurals (path→paths) is too loose when any single term
+    hit scores a trip; stripping restaurants→restaurant stays useful.
     """
+    term = (term or "").strip().lower()
+    if not term:
+        return set()
     variants = {term}
     if len(term) >= 4 and term.endswith("ies"):
         variants.add(term[:-3] + "y")
@@ -1006,6 +1076,51 @@ def _term_variants(term: str) -> set[str]:
     return variants
 
 
+def _term_variants(term: str,
+                    known_terms: dict | None = None) -> set[str]:
+    """Return conservative spelling variants for a single search term.
+
+    Covers singular/plural and a light agentive shop form (queso→queseria)
+    without open prefix matching (riverwalk must not match river).
+    When `known_terms` is the index postings map, agentive candidates are
+    kept only if they exist in the catalogue — no food word list required.
+    Pass known_terms=None only for POI name scans that also use prefix
+    guards; curated itinerary scoring must use `_term_variants_strip`.
+    """
+    term = (term or "").strip().lower()
+    if not term:
+        return set()
+    variants = _term_variants_strip(term)
+    # Pluralize bare singulars (queso→quesos) for name_index / postings.
+    if len(term) >= 4 and not term.endswith("s"):
+        variants.add(term + "s")
+        if term[-1] in "aeiou":
+            variants.add(term + "es")
+
+    # Agentive / workshop form: queso→queseria, vino does not invent
+    # vinoria unless that token exists when known_terms is provided.
+    agentive: set[str] = set()
+    if (len(term) >= 4 and term not in _AGENTIVE_EXPAND_BLOCKLIST
+            and not term.endswith("eria")):
+        if term[-1] in "aeiou":
+            stem = term[:-1]
+        else:
+            stem = term
+        if len(stem) >= 3:
+            agentive.add(stem + "eria")
+            if term[-1] in "aeiou":
+                agentive.add(term + "ria")
+
+    if known_terms is not None:
+        for cand in agentive:
+            if cand in known_terms:
+                variants.add(cand)
+        return variants
+
+    variants |= agentive
+    return variants
+
+
 def _evidence_snippet(poi: dict, terms: list[str],
                       max_chars: int = 180) -> str:
     """Return a concise visitor-facing sentence supporting a search hit."""
@@ -1013,41 +1128,40 @@ def _evidence_snippet(poi: dict, terms: list[str],
     if not description:
         return ""
     sentences = re.split(r"(?<=[.!?])\s+", description)
-    best = max(
-        sentences,
-        key=lambda sentence: sum(
-            term in set(tokenize(sentence)) for term in terms
-        ),
-    )
+    term_set = set(terms)
+
+    def _sentence_score(sentence: str) -> int:
+        tokens = set(tokenize(sentence))
+        score = sum(1 for term in term_set if term in tokens)
+        # Count morphology hits (queso in query, queseria in sentence).
+        for term in term_set:
+            for variant in _term_variants(term):
+                if variant != term and variant in tokens:
+                    score += 1
+                    break
+        return score
+
+    best = max(sentences, key=_sentence_score)
     if len(best) > max_chars:
         best = best[:max_chars].rsplit(" ", 1)[0] + "…"
     return best
 
 
-def search_pois(index: dict, query: str, section_id: str | None = None,
-                limit: int = 10) -> list[dict]:
-    """Find POIs whose same record explicitly matches every query term.
-
-    This is deterministic lexical evidence search, not embeddings and not
-    a category alias. An empty result means the catalogue does not support
-    the requested combination on one POI; callers can search individual
-    concepts separately for complementary options.
-    """
-    terms = [term for term in tokenize(query) if len(term) >= 3]
+def _search_pois_and(index: dict, terms: list[str],
+                     section_id: str | None,
+                     limit: int) -> list[dict]:
+    """AND-intersection evidence search for an already-cleaned term list."""
     if not terms:
         return []
-
     postings = [_search_postings(index, term) for term in terms]
     if any(not ids for ids in postings):
         return []
     candidate_ids = set.intersection(*postings)
-
     if section_id:
         section = find_section(index, section_id)
         if not section:
             return []
         candidate_ids &= set(section.get("poi_ids") or [])
-
     pois = index.get("pois") or {}
     matches = [pois[pid] for pid in candidate_ids if pid in pois]
     matches.sort(key=lambda poi: (
@@ -1067,23 +1181,62 @@ def search_pois(index: dict, query: str, section_id: str | None = None,
     ]
 
 
+def search_pois(index: dict, query: str, section_id: str | None = None,
+                limit: int = 10) -> list[dict]:
+    """Find POIs whose same record explicitly matches query evidence terms.
+
+    Lead-ins are stripped ("dame info de queso" → queso). Terms use light
+    morphology via postings. If full AND is empty, fall back to the best
+    single content-token search so multi-word chit-chat does not wipe a
+    real topic hit. Not embeddings and not a category alias.
+    """
+    focus = lookup_focus_query(query) or normalize_text(query)
+    stop = _HISTORY_FOCUS_STOPWORDS | _LOOKUP_INTENT_STOPWORDS
+    terms = [
+        term for term in tokenize(focus)
+        if len(term) >= 3 and term not in stop
+    ]
+    if not terms:
+        terms = [term for term in tokenize(focus) if len(term) >= 3]
+    if not terms:
+        return []
+
+    limit = _bounded_limit(
+        limit, MAX_EVIDENCE_SEARCH_LIMIT, MAX_EVIDENCE_SEARCH_LIMIT
+    )
+    matches = _search_pois_and(index, terms, section_id, limit)
+    if matches:
+        return matches
+
+    # Multi-term AND miss stays empty so compound questions
+    # ("olive oil restaurant") still trigger complementary retrieval.
+    # Single-term miss already exhausted morphology inside postings.
+    return []
+
+
 def format_search_pois(index: dict, query: str, section_id: str | None = None,
                        limit: int = 10) -> str:
     """Render evidence-backed search results without catalog internals."""
     limit = _bounded_limit(
         limit, MAX_EVIDENCE_SEARCH_LIMIT, MAX_EVIDENCE_SEARCH_LIMIT
     )
+    focus = lookup_focus_query(query) or normalize_text(query)
     matches = search_pois(index, query, section_id=section_id, limit=limit)
-    terms = [term for term in tokenize(query) if len(term) >= 3]
+    stop = _HISTORY_FOCUS_STOPWORDS | _LOOKUP_INTENT_STOPWORDS
+    terms = [
+        term for term in tokenize(focus)
+        if len(term) >= 3 and term not in stop
+    ] or [term for term in tokenize(focus) if len(term) >= 3]
     if not matches:
-        rendered = ", ".join(f'"{term}"' for term in terms)
+        rendered = ", ".join(f'"{term}"' for term in terms) or f'"{query}"'
         return (
             f"No place record explicitly mentions all of: {rendered}. "
             "Search the concepts separately for related visitor options; "
             "do not claim they are the same place."
         )
 
-    lines = [f'Evidence-backed matches for "{query}" ({len(matches)}):']
+    label = focus or query
+    lines = [f'Evidence-backed matches for "{label}" ({len(matches)}):']
     for item in matches:
         poi = item["poi"]
         evidence = item["evidence"]
@@ -1275,7 +1428,10 @@ def _itinerary_relevance(itinerary: dict, terms: list[str],
     labelled Food even if the literal adjective "focused" is absent.
     """
     haystack = set(tokenize(_itinerary_search_text(itinerary, index)))
-    return sum(bool(_term_variants(term) & haystack) for term in terms)
+    # Strip-only morphology: path must not match paths inside a trip.
+    return sum(
+        bool(_term_variants_strip(term) & haystack) for term in terms
+    )
 
 
 def _search_curated(index: dict, query: str, collection: str,

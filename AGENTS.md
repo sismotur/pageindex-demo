@@ -388,7 +388,11 @@ Typical flows handled by the model:
   topic words (e.g. "gastronomía de jamón" after a jamón shop tag),
   `resolve_history_weak_place` + `build_place_or_topic_offer` refuse
   auto-`get_poi` and offer the concrete place vs related topic hits.
-  Final answers pass `sanitize_tourist_answer`: unknown
+  Name/evidence lookup strips info lead-ins via `lookup_focus_query`
+  ("dame info de queso" → "queso") and applies light morphology
+  (`queso`→`quesos`/`queseria` when the catalogue indexes those forms)
+  so gastronomy nouns resolve without a food term list. Final answers
+  pass `sanitize_tourist_answer`: unknown
   dangling `<poi id=N…>` fragments (invented section numbers) are
   stripped, and list markers glued to `</poi>` get a newline break.
   Generic overview questions ("what can I see?") may be answered from the
