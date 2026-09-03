@@ -875,6 +875,65 @@ def _resolve_facet_ids(index: dict, facet: str, value: Any) -> set[str] | None:
     return None
 
 
+def index_localities(index: dict) -> list[str]:
+    """Distinct address_locality values, longest first for phrase matching."""
+    seen: set[str] = set()
+    out: list[str] = []
+    for poi in (index.get("pois") or {}).values():
+        loc = (poi.get("address_locality") or "").strip()
+        if not loc or loc in seen:
+            continue
+        seen.add(loc)
+        out.append(loc)
+    out.sort(key=lambda s: (-len(normalize_text(s)), normalize_text(s)))
+    return out
+
+
+def match_locality(text: str, index: dict) -> str | None:
+    """Return the longest catalogue locality named in `text`, or None.
+
+    Matching is diacritic-insensitive and requires the locality phrase to
+    appear on token boundaries so short names do not hit inside longer
+    words. Longest match wins (\"Santa Marta de Magasca\" before
+    \"Santa Ana\").
+    """
+    normalized = f" {normalize_text(text)} "
+    if not normalized.strip():
+        return None
+    for loc in index_localities(index):
+        needle = normalize_text(loc)
+        if not needle:
+            continue
+        # Space-padded boundary check keeps multi-word towns intact.
+        if f" {needle} " in normalized:
+            return loc
+    return None
+
+
+def resolve_active_locality(messages: list[dict], index: dict) -> str | None:
+    """Most recent visitor-named locality in prior turns, or None.
+
+    Scans user messages newest-first. Assistant text is ignored so a
+    reply that mentions another town does not steal the focus the
+    visitor set (e.g. Albalá stay after the model drifted to
+    Arroyomolinos).
+    """
+    for message in reversed(messages or []):
+        if message.get("role") != "user":
+            continue
+        content = message.get("content") or ""
+        # Skip internal runtime injects — they are English instructions,
+        # not visitor locality cues.
+        if content.startswith("[") or content.startswith("The visitor"):
+            continue
+        if content.startswith("A ") and "lookup has already" in content:
+            continue
+        loc = match_locality(content, index)
+        if loc:
+            return loc
+    return None
+
+
 def filter_pois(index: dict, **filters: Any) -> list[dict]:
     """Intersect facet sets and return matching POI records."""
     pois = index.get("pois", {})

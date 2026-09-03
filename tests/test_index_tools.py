@@ -42,7 +42,10 @@ from index_tools import (
     get_pois,
     get_trip,
     get_path,
+    index_localities,
+    match_locality,
     poi_uri,
+    resolve_active_locality,
     resolve_history_selection,
     resolve_sole_recent_source,
     resolve_trip_query,
@@ -73,7 +76,10 @@ from run_eval import (
     final_answer_needs_recovery,
     grounding_failure_message,
     is_brush_off_answer,
+    detect_category_section,
+    inject_locality_scoped_lookup,
     is_designation_question,
+    is_destination_wide_request,
     is_physical_route_request,
     is_promise_to_search_later,
     is_pure_reask,
@@ -83,6 +89,7 @@ from run_eval import (
     reask_fallback_applies,
     requires_current_turn_grounding,
     requires_trip_detail,
+    resolve_locality_category_query,
     run_agentic_loop,
     tool_call_key,
     tool_result_is_usable,
@@ -741,6 +748,109 @@ class TestContextReduction:
             for p in hits
         )
         assert not any("Jurramachos" in n for n in names)
+
+
+class TestStickyLocalityAndCategory:
+    """A1 sticky town + B category+town force filter_pois, not city overview."""
+
+    @pytest.fixture(scope="class")
+    def mont_index(self):
+        mont = PROJECT_ROOT / "indexes" / "montancheztamuja" / "es.json"
+        if not mont.exists():
+            pytest.skip(f"Index file not found: {mont}")
+        return load_index(mont)
+
+    def test_match_locality_longest_town(self, mont_index):
+        assert match_locality("qué hay en Albalá?", mont_index) == "Albalá"
+        assert match_locality(
+            "Casas de Don Antonio museo", mont_index
+        ) == "Casas de Don Antonio"
+        assert match_locality("hola", mont_index) is None
+
+    def test_active_locality_from_prior_user_turn(self, mont_index):
+        prior = [
+            {"role": "user", "content": "qué puedo hacer en Albalá?"},
+            {"role": "assistant", "content": "ferias en Albalá"},
+        ]
+        assert resolve_active_locality(prior, mont_index) == "Albalá"
+        # Assistant-only mentions must not set sticky focus.
+        assert resolve_active_locality(
+            [{"role": "assistant", "content": "visita Montánchez"}],
+            mont_index,
+        ) is None
+
+    def test_category_maps_church_to_religious_section(self):
+        assert detect_category_section("dónde está la iglesia?") == (
+            "religious-heritage"
+        )
+        assert detect_category_section("iglesias en Albalá") == (
+            "religious-heritage"
+        )
+        assert detect_category_section("qué puedo hacer?") is None
+
+    def test_sticky_category_followup_scopes_to_albala(self, mont_index):
+        # Montánchez chat: after Albalá, bare "la iglesia" must not open
+        # Arroyomolinos.
+        prior = [{"role": "user", "content": "qué puedo hacer en Albalá?"}]
+        scoped = resolve_locality_category_query(
+            "dónde está la iglesia?", prior, mont_index,
+        )
+        assert scoped == {
+            "section_id": "religious-heritage",
+            "locality": "Albalá",
+            "limit": 20,
+            "source": "sticky",
+        }
+
+    def test_explicit_category_plus_town(self, mont_index):
+        scoped = resolve_locality_category_query(
+            "iglesias en Albalá", [], mont_index,
+        )
+        assert scoped["source"] == "explicit"
+        assert scoped["locality"] == "Albalá"
+        assert scoped["section_id"] == "religious-heritage"
+
+    def test_destination_wide_skips_sticky(self, mont_index):
+        prior = [{"role": "user", "content": "Albalá"}]
+        assert is_destination_wide_request("iglesias en la comarca")
+        assert resolve_locality_category_query(
+            "iglesias en la comarca", prior, mont_index,
+        ) is None
+        # Quantifier alone must not drop an explicit town.
+        assert resolve_locality_category_query(
+            "todos los museos de Albalá", [], mont_index,
+        )["locality"] == "Albalá"
+
+    def test_inject_forces_albala_churches(self, mont_index):
+        from index_tools import format_sections_overview
+        sections = format_sections_overview(mont_index)
+        messages = [
+            {"role": "system", "content": "sys"},
+            {"role": "user", "content": "qué puedo hacer en Albalá?"},
+            {"role": "assistant", "content": "hay ferias"},
+            {"role": "user", "content": "dónde está la iglesia?"},
+        ]
+        tools: list = []
+        gtools: list = []
+        auto: list = []
+        ok, _ = inject_locality_scoped_lookup(
+            "dónde está la iglesia?", messages[:-1], messages, mont_index,
+            sections, {}, None, tools, gtools, auto,
+        )
+        assert ok
+        assert tools[0]["tool"] == "filter_pois"
+        assert tools[0]["args"]["locality"] == "Albalá"
+        assert tools[0]["locality_scope"] == "sticky"
+        body = messages[-1]["content"]
+        assert "Parroquia Santa María Magdalena" in body
+        assert "Consolación" not in body  # Arroyomolinos church
+
+    def test_index_localities_covers_montanchez_towns(self, mont_index):
+        locs = index_localities(mont_index)
+        assert "Albalá" in locs
+        assert "Montánchez" in locs
+        # Longest first so multi-word towns win phrase match.
+        assert locs[0] == max(locs, key=lambda s: len(normalize_text(s)))
 
 
 class TestEvidenceSearch:

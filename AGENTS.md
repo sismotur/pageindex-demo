@@ -352,6 +352,16 @@ Typical flows handled by the model:
 - **"Events in Albalá"** (named town inside a multi-town destination) →
   `filter_pois(locality="Albalá", section_id="events-and-festivals")` or
   `find_poi_by_name("Albalá")` — not a whole-destination `get_section`.
+- **Category + town** (same turn or sticky): when the visitor names a
+  category word (`iglesia`/`church`/`museo`/…) **and** a catalogue
+  `address_locality` (explicitly, or sticky from a prior user turn),
+  the runtime forces one `filter_pois(section_id=…, locality=…)` before
+  the model runs — so bare “dónde está la iglesia?” after Albalá cannot
+  open another town’s church via `find_poi_by_name`, and “iglesias en
+  Albalá” cannot be answered from the City overview POI alone. Lexicon
+  is `CATEGORY_SECTION_TERMS` / `CATEGORY_INTENT_TERMS` (i18n, all
+  `SUPPORTED_LANGS`). Destination-wide wording (`comarca` / “toda la
+  comarca”) clears sticky scope for that turn.
 - **Physical route intent** is guarded deterministically: one
   `search_paths` lookup is forced, then the assistant answers once. This
   prevents repeated clarification/instruction loops on small models.

@@ -64,6 +64,7 @@ from run_eval import (   # noqa: E402
     LOOP_REPEAT_STUB,
     chant_repeat_prefix,
     execute_reask_fallback,
+    inject_locality_scoped_lookup,
     inject_named_poi_backstop,
     final_answer_needs_recovery,
     is_brush_off_answer,
@@ -294,7 +295,19 @@ def run_turn(question: str, messages: list[dict],
                 "role": "user",
                 "content": selected_source_context(selection, result),
             })
-    elif trip_detail_required:
+    else:
+        # A1 sticky locality / B same-turn category+town: force
+        # filter_pois before the model can wander destination-wide.
+        # prior_messages exclude the just-appended current question.
+        injected, hit_delta = inject_locality_scoped_lookup(
+            question, messages[:-1], messages, index, sections_text, cache,
+            weather, tool_calls_made, grounding_tools, automatic_source_calls,
+            preview_chars=250,
+        )
+        cache_hits += hit_delta
+        if injected:
+            grounded = True
+    if (not selection) and (not grounded) and trip_detail_required:
         # No deterministic selection but the visitor asked for a plan.
         # Present up to three curated trips deterministically so they
         # can choose, instead of letting the model pick one silently.

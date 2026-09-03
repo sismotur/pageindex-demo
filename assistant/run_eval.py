@@ -83,6 +83,8 @@ from index_tools import (
     get_weather_entry,
     is_forecast_too_hot,
     load_weather,
+    match_locality,
+    resolve_active_locality,
     resolve_history_selection,
     resolve_trip_query,
     sanitize_tourist_answer,
@@ -702,6 +704,322 @@ def requires_trip_detail(question: str) -> bool:
         )
         for term in tokenize(question)
     )
+
+
+# Category words → section_id. Used to force filter_pois when the visitor
+# names a town (or a prior turn stuck one) so bare "la iglesia" / "iglesias
+# en Albalá" cannot fall through to destination-wide find_poi_by_name or a
+# City overview POI. Whole-token match only (no open prefixing).
+CATEGORY_SECTION_TERMS: dict[str, dict[str, frozenset]] = {
+    "religious-heritage": {
+        "ca": frozenset({"església", "esglésies", "capella", "catedral",
+                         "convent", "monestir", "parròquia", "ermita",
+                         "basílica"}),
+        "de": frozenset({"kirche", "kirchen", "kapelle", "kathedrale",
+                         "dom", "kloster", "pfarrkirche", "basilika"}),
+        "en": frozenset({"church", "churches", "chapel", "chapels",
+                         "cathedral", "convent", "monastery", "parish",
+                         "hermitage", "basilica", "shrine"}),
+        "es": frozenset({"iglesia", "iglesias", "capilla", "catedral",
+                         "convento", "monasterio", "parroquia", "ermita",
+                         "basílica", "basilica", "templo", "templos"}),
+        "eu": frozenset({"eliza", "elizak", "kapera", "katedral",
+                         "komnentu", "monasterio", "parrokia", "ermita"}),
+        "fr": frozenset({"église", "églises", "chapelle", "cathédrale",
+                         "couvent", "monastère", "paroisse", "ermitage",
+                         "basilique"}),
+        "gl": frozenset({"igrexa", "igrexas", "capela", "catedral",
+                         "convento", "mosteiro", "parroquia", "ermida",
+                         "basílica"}),
+        "hi": frozenset({"चर्च", "गिरजा", "मंदिर", "कैथेड्रल", "चैपल"}),
+        "hr": frozenset({"crkva", "crkve", "kapela", "katedrala",
+                         "samostan", "župa", "bazilika"}),
+        "it": frozenset({"chiesa", "chiese", "cappella", "cattedrale",
+                         "convento", "monastero", "parrocchia", "eremo",
+                         "basilica", "tempio"}),
+        "ja": frozenset({"教会", "聖堂", "大聖堂", "礼拝堂", "寺院", "神社"}),
+        "nl": frozenset({"kerk", "kerken", "kapel", "kathedraal",
+                         "klooster", "parochie", "basiliek"}),
+        "pt": frozenset({"igreja", "igrejas", "capela", "catedral",
+                         "convento", "mosteiro", "paróquia", "ermida",
+                         "basílica", "templo"}),
+        "ru": frozenset({"церковь", "церкви", "часовня", "собор",
+                         "монастырь", "приход", "храм", "базилика"}),
+        "uk": frozenset({"церква", "церкви", "каплиця", "собор",
+                         "монастир", "парафія", "храм", "базиліка"}),
+        "zh": frozenset({"教堂", "教会", "大教堂", "礼拜堂", "修道院",
+                         "圣堂", "寺庙"}),
+    },
+    "museums-and-culture": {
+        "ca": frozenset({"museu", "museus", "cultura"}),
+        "de": frozenset({"museum", "museen", "kultur"}),
+        "en": frozenset({"museum", "museums", "gallery", "galleries"}),
+        "es": frozenset({"museo", "museos", "galería", "galeria"}),
+        "eu": frozenset({"museo", "museoak"}),
+        "fr": frozenset({"musée", "musées", "galerie"}),
+        "gl": frozenset({"museo", "museos", "galería"}),
+        "hi": frozenset({"संग्रहालय", "म्यूज़ियम"}),
+        "hr": frozenset({"muzej", "muzeji", "galerija"}),
+        "it": frozenset({"museo", "musei", "galleria"}),
+        "ja": frozenset({"博物館", "美術館", "ミュージアム"}),
+        "nl": frozenset({"museum", "musea", "galerij"}),
+        "pt": frozenset({"museu", "museus", "galeria"}),
+        "ru": frozenset({"музей", "музеи", "галерея"}),
+        "uk": frozenset({"музей", "музеї", "галерея"}),
+        "zh": frozenset({"博物馆", "美术馆", "展览馆"}),
+    },
+    "gastronomy": {
+        "ca": frozenset({"restaurant", "restaurants", "menjar", "gastronomia",
+                         "bar", "bars", "cafeteria"}),
+        "de": frozenset({"restaurant", "restaurants", "essen", "gastro",
+                         "bar", "café", "cafe"}),
+        "en": frozenset({"restaurant", "restaurants", "food", "eat",
+                         "dining", "bar", "bars", "cafe", "cafes"}),
+        "es": frozenset({"restaurante", "restaurantes", "comer", "comida",
+                         "gastronomía", "gastronomia", "bar", "bars",
+                         "cafetería", "cafeteria"}),
+        "eu": frozenset({"jatetxe", "jatetxeak", "jan", "taberna"}),
+        "fr": frozenset({"restaurant", "restaurants", "manger", "gastronomie",
+                         "bar", "café"}),
+        "gl": frozenset({"restaurante", "restaurantes", "comer", "comida",
+                         "bar", "cafetería"}),
+        "hi": frozenset({"रेस्तरां", "खाना", "कैफ़े", "बार"}),
+        "hr": frozenset({"restoran", "restorani", "hrana", "jelo", "bar"}),
+        "it": frozenset({"ristorante", "ristoranti", "mangiare", "cibo",
+                         "gastronomia", "bar", "caffè"}),
+        "ja": frozenset({"レストラン", "食事", "グルメ", "カフェ", "食堂"}),
+        "nl": frozenset({"restaurant", "restaurants", "eten", "horeca",
+                         "café", "bar"}),
+        "pt": frozenset({"restaurante", "restaurantes", "comer", "comida",
+                         "gastronomia", "bar", "café"}),
+        "ru": frozenset({"ресторан", "рестораны", "еда", "поесть", "бар",
+                         "кафе"}),
+        "uk": frozenset({"ресторан", "ресторани", "їжа", "поїсти", "бар",
+                         "кафе"}),
+        "zh": frozenset({"餐厅", "餐馆", "美食", "吃饭", "咖啡馆", "酒吧"}),
+    },
+    "accommodation": {
+        "ca": frozenset({"hotel", "hotels", "allotjament", "hostal"}),
+        "de": frozenset({"hotel", "hotels", "unterkunft", "herberge"}),
+        "en": frozenset({"hotel", "hotels", "accommodation", "lodging",
+                         "hostel", "stay"}),
+        "es": frozenset({"hotel", "hoteles", "alojamiento", "hostal",
+                         "hospedaje"}),
+        "eu": frozenset({"hotel", "hotelak", "ostatua"}),
+        "fr": frozenset({"hôtel", "hotels", "hébergement", "auberge"}),
+        "gl": frozenset({"hotel", "hoteis", "aloxamento", "hostal"}),
+        "hi": frozenset({"होटल", "आवास", "लॉज"}),
+        "hr": frozenset({"hotel", "hoteli", "smještaj", "hostels"}),
+        "it": frozenset({"hotel", "albergo", "alberghi", "alloggio",
+                         "ostello"}),
+        "ja": frozenset({"ホテル", "宿泊", "宿"}),
+        "nl": frozenset({"hotel", "hotels", "accommodatie", "pension"}),
+        "pt": frozenset({"hotel", "hoteis", "alojamento", "hospedagem",
+                         "pensão"}),
+        "ru": frozenset({"отель", "отели", "гостиница", "жильё",
+                         "хостел"}),
+        "uk": frozenset({"готель", "готелі", "житло", "хостел"}),
+        "zh": frozenset({"酒店", "旅馆", "住宿", "宾馆"}),
+    },
+    "events-and-festivals": {
+        "ca": frozenset({"event", "esdeveniment", "festa", "festes",
+                         "fira", "fir"}),
+        "de": frozenset({"event", "veranstaltung", "fest", "feste",
+                         "festival", "messe"}),
+        "en": frozenset({"event", "events", "festival", "festivals",
+                         "fair", "fairs", "fiesta"}),
+        "es": frozenset({"evento", "eventos", "fiesta", "fiestas",
+                         "feria", "ferias", "festival", "festivales"}),
+        "eu": frozenset({"ekitaldi", "jai", "jaialdi", "azoka"}),
+        "fr": frozenset({"événement", "evenement", "fête", "festival",
+                         "foire"}),
+        "gl": frozenset({"evento", "eventos", "festa", "festas", "feira"}),
+        "hi": frozenset({"उत्सव", "मेला", "त्योहार", "इवेंट"}),
+        "hr": frozenset({"događaj", "festival", "sajam", "fešta"}),
+        "it": frozenset({"evento", "eventi", "festa", "feste", "fiera",
+                         "festival"}),
+        "ja": frozenset({"イベント", "祭り", "フェスティバル", "フェア"}),
+        "nl": frozenset({"evenement", "feest", "festival", "jaarmarkt"}),
+        "pt": frozenset({"evento", "eventos", "festa", "festas", "feira",
+                         "festival"}),
+        "ru": frozenset({"событие", "события", "праздник", "фестиваль",
+                         "ярмарка"}),
+        "uk": frozenset({"подія", "події", "свято", "фестиваль",
+                         "ярмарок"}),
+        "zh": frozenset({"活动", "节日", "庆典", "展会", "集市"}),
+    },
+}
+# Flattened per-language view for the i18n completeness guard.
+CATEGORY_INTENT_TERMS: dict[str, frozenset] = {
+    code: frozenset().union(
+        *(terms.get(code, frozenset())
+          for terms in CATEGORY_SECTION_TERMS.values())
+    )
+    for code in SUPPORTED_LANGS
+}
+CATEGORY_TERM_TO_SECTION: dict[str, str] = {
+    normalize_text(term): section_id
+    for section_id, per_lang in CATEGORY_SECTION_TERMS.items()
+    for terms in per_lang.values()
+    for term in terms
+}
+# Visitor asks to widen past the sticky town — do not inherit locality.
+# Keep this list specific to destination/region words. Bare quantifiers
+# (todo/all/whole) are handled only via multi-word phrases below so
+# "todos los museos de Albalá" still scopes to Albalá.
+DESTINATION_WIDE_TERMS: dict[str, frozenset] = {
+    "ca": frozenset({"comarca", "destí", "destino", "regió"}),
+    "de": frozenset({"region", "comarca", "destination", "überall"}),
+    "en": frozenset({"everywhere", "destination", "comarca", "region"}),
+    "es": frozenset({"comarca", "destino", "región", "region"}),
+    "eu": frozenset({"eskualde", "helmuga"}),
+    "fr": frozenset({"région", "destination", "partout", "comarque"}),
+    "gl": frozenset({"comarca", "destino", "rexión"}),
+    "hi": frozenset({"क्षेत्र", "गंतव्य"}),
+    "hr": frozenset({"regija", "odredište", "svuda"}),
+    "it": frozenset({"comarca", "destinazione", "regione", "ovunque"}),
+    "ja": frozenset({"全域", "目的地", "どこでも"}),
+    "nl": frozenset({"regio", "bestemming", "overal"}),
+    "pt": frozenset({"comarca", "destino", "região"}),
+    "ru": frozenset({"регион", "везде", "направление"}),
+    "uk": frozenset({"регіон", "скрізь", "напрямок"}),
+    "zh": frozenset({"全区", "目的地", "到处"}),
+}
+DESTINATION_WIDE_TERMS_ALL = _all_terms(DESTINATION_WIDE_TERMS)
+LOCALITY_SCOPED_INSTRUCTION = (
+    "The visitor is asking about a category inside one town ({locality}). "
+    "Results below are already scoped to that town via filter_pois. Answer "
+    "from these results only. Do not list places from other towns. When the "
+    "visitor asks for 'the church' / singular, prefer the main parish if "
+    "present, and still mention the other matches briefly. Tag every POI "
+    "you name with the exact <poi> tag from the results. Do not answer from "
+    "a City overview record alone."
+)
+
+
+def is_destination_wide_request(question: str) -> bool:
+    """True when the visitor explicitly widens past a single town."""
+    tokens = set(tokenize(question))
+    if tokens & DESTINATION_WIDE_TERMS_ALL:
+        return True
+    normalized = normalize_text(question)
+    return any(
+        phrase in normalized
+        for phrase in (
+            "todo el destino", "toda la comarca", "toda la region",
+            "toda la región", "whole destination", "entire destination",
+            "all over", "en todo el", "in the whole",
+        )
+    )
+
+
+def detect_category_section(question: str) -> str | None:
+    """Map a visitor category word to a catalogue section_id, or None."""
+    for term in tokenize(question):
+        section = CATEGORY_TERM_TO_SECTION.get(term)
+        if section:
+            return section
+    return None
+
+
+def resolve_locality_category_query(
+    question: str,
+    prior_messages: list[dict],
+    index: dict,
+) -> dict | None:
+    """Build filter_pois args for category+town (explicit or sticky).
+
+    A1 — sticky locality: prior user turn named a town; this turn is a
+    bare category follow-up (\"dónde está la iglesia?\").
+    B — same-turn category+town: \"iglesias en Albalá\" must use
+    filter_pois(section, locality), never the City overview POI alone.
+
+    Returns None when there is no category, no usable locality, or the
+    visitor explicitly asked about the whole destination/comarca.
+    """
+    section_id = detect_category_section(question)
+    if not section_id:
+        return None
+    if is_destination_wide_request(question):
+        return None
+    explicit = match_locality(question, index)
+    sticky = None if explicit else resolve_active_locality(prior_messages, index)
+    locality = explicit or sticky
+    if not locality:
+        return None
+    # Refuse to force a section the destination index does not carry.
+    known = {s.get("section_id") for s in (index.get("sections") or [])}
+    if section_id not in known:
+        return None
+    return {
+        "section_id": section_id,
+        "locality": locality,
+        "limit": 20,
+        "source": "explicit" if explicit else "sticky",
+    }
+
+
+def locality_scoped_context(locality: str, result: str) -> str:
+    """Instruction + filter results for a town-scoped category lookup."""
+    return (
+        LOCALITY_SCOPED_INSTRUCTION.format(locality=locality)
+        + "\n\n" + result
+    )
+
+
+def inject_locality_scoped_lookup(
+    question: str,
+    prior_messages: list[dict],
+    messages: list[dict],
+    index: dict,
+    sections_text: str,
+    cache: dict,
+    weather: dict | None,
+    tool_calls_made: list,
+    grounding_tools: list[str],
+    automatic_source_calls: list,
+    preview_chars: int = 300,
+) -> tuple[bool, int]:
+    """Force filter_pois for category+town (sticky or explicit).
+
+    Returns (injected, cache_hit_delta). When True, a user message with
+    the scoped results has been appended and the turn is grounded.
+    """
+    scoped = resolve_locality_category_query(question, prior_messages, index)
+    if not scoped:
+        return False, 0
+    args = {
+        "section_id": scoped["section_id"],
+        "locality": scoped["locality"],
+        "limit": scoped["limit"],
+    }
+    result, hit = execute_tool(
+        "filter_pois", args, index, sections_text, cache, weather=weather,
+    )
+    if not tool_result_is_usable(result):
+        return False, (1 if hit else 0)
+    # Empty-but-usable "No places matched" still grounds the turn so the
+    # model can say the town has no entries rather than inventing others.
+    tool_calls_made.append({
+        "tool": "filter_pois",
+        "args": args,
+        "result_preview": result[:preview_chars],
+        "cache_hit": hit,
+        "automatic": True,
+        "locality_scope": scoped["source"],
+    })
+    if "filter_pois" not in grounding_tools:
+        grounding_tools.append("filter_pois")
+    automatic_source_calls.append({
+        "tool": "filter_pois",
+        "args": args,
+        "locality_scope": scoped["source"],
+    })
+    messages.append({
+        "role": "user",
+        "content": locality_scoped_context(scoped["locality"], result),
+    })
+    return True, (1 if hit else 0)
 
 
 def grounding_failure_message(index: dict) -> str:
@@ -1361,6 +1679,14 @@ full record in one call.
   Do not list places from other towns unless the visitor asked about the
   whole destination or comarca. Never invent section numbers as <poi>
   tags — only tag ids that appeared in a tool result.
+- When the visitor names BOTH a category and a town (\"iglesias en Albalá\",
+  \"museums in Montánchez\"), call filter_pois(section_id=…, locality=…)
+  — never answer from the town's City/overview POI alone.
+- When a prior turn already established a town and this turn is a bare
+  category follow-up (\"dónde está la iglesia?\", \"y museos?\"), keep that
+  town: filter_pois(locality=that town, …). Only widen when the visitor
+  names another town or explicitly asks about the whole destination/
+  comarca.
 - For outdoor, walking, or day-plan questions, call get_weather(day) \
 before recommending. When the forecast is unfavourable (>35 °C, rain, \
 storms), prefer indoor stops or early-morning windows. If the tool \
@@ -2136,7 +2462,18 @@ def run_agentic_loop(question: str, system_prompt: str,
         })
         trip_detail_started = True
         source_detail_answer = result
-    elif trip_detail_required:
+    else:
+        # Category + town (explicit or sticky from prior user turns).
+        # Single-turn eval has no prior sticky; same-turn "iglesias en
+        # Albalá" still forces filter_pois so the City overview is not used.
+        injected, hit_delta = inject_locality_scoped_lookup(
+            question, [], messages, index, sections_text, cache, weather,
+            tool_calls_made, grounding_tools, automatic_source_calls,
+        )
+        cache_hits += hit_delta
+        if injected:
+            grounded = True
+    if (not direct_trip_selection) and (not grounded) and trip_detail_required:
         offer_candidates = ix_search_trips(index, question, limit=3)
         if len(offer_candidates) >= 2:
             offer_text = format_trip_choice_offer(index, offer_candidates[:3])

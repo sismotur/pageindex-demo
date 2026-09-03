@@ -660,6 +660,9 @@ You have ELEVEN tools. Pick the one that fits the question:
           - filter_pois(interest_level=1, section_id="religious-heritage")
           - filter_pois(locality="Albalá", section_id="events-and-festivals")
         locality is a runtime address_locality scan (no by_locality facet).
+        Ports must also force this call when a category word pairs with a
+        town (same turn) or with the sticky town from a prior user message
+        (see resolve_locality_category_query / inject_locality_scoped_lookup).
 
   • search_trips(query, limit?) / get_trip(trip_id)
         Curated theme/day/multi-day visit suggestions. A trip is not a route.
@@ -715,6 +718,10 @@ MAX_TOOL_ROUNDS = 14
 messages = [system_prompt, ...history, user_question]
 cache    = prewarmed: for each section id:
            cache[("get_section", id, "interest", 50)] = get_section(id, "interest", 50)
+
+# Before the model loop (after history tag selection):
+# if category+town (explicit or sticky prior user locality):
+#   force filter_pois(section_id, locality) once and inject results
 
 for round in 1..MAX_TOOL_ROUNDS:
     response = llm.chat(messages, tools=TOOL_DEFS, temperature=0)
