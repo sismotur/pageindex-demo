@@ -1453,6 +1453,19 @@ _HISTORY_FOCUS_ARTICLES = frozenset({
     "het",
 })
 
+# Connectives ignored when detecting leftover topic tokens on a weak
+# history match ("gastronomia de jamon" vs store label containing jamon).
+_HISTORY_FOCUS_STOPWORDS = _HISTORY_FOCUS_ARTICLES | frozenset({
+    "de", "del", "y", "e", "o", "u", "of", "and", "or", "for", "with",
+    "con", "en", "al", "a", "por", "para", "sobre", "about", "from",
+    "to", "in", "on", "at", "da", "do", "di", "du", "des", "von", "zum",
+})
+
+# Scores at/above this are name-like (substring / multi-token). Below,
+# a unique hit is only accepted when the focus has no leftover content
+# tokens outside the label — otherwise treat as topic shift.
+_STRONG_HISTORY_SCORE = 50
+
 
 def _history_focus_query(question: str) -> str:
     """Strip detail/info lead-ins and leading articles; return focus span."""
@@ -1594,6 +1607,38 @@ def _top_score_ties(scored: list[tuple[int, dict]]) -> list[dict]:
     return ties
 
 
+def _history_focus_extras(question: str, label: str) -> set[str]:
+    """Content tokens in the focus span that are absent from the label.
+
+    "info de gastronomía de jamón" vs store "Jamón Ibérico …" leaves
+    {gastronomia} — a topic-shift signal, not a pure place rename.
+    """
+    focus = _history_focus_query(question)
+    content = {
+        t for t in focus.split()
+        if len(t) >= 4 and t not in _HISTORY_FOCUS_STOPWORDS
+    }
+    label_tokens = set(normalize_text(label or "").split())
+    return content - label_tokens
+
+
+def _score_for_item(scored: list[tuple[int, dict]], item: dict) -> int:
+    key = (item.get("kind"), item.get("id"))
+    for score, candidate in scored:
+        if (candidate.get("kind"), candidate.get("id")) == key:
+            return score
+    return 0
+
+
+def _is_strong_history_match(question: str, item: dict, score: int) -> bool:
+    """True when the hit is name-like enough to open get_poi alone."""
+    if score >= _STRONG_HISTORY_SCORE:
+        return True
+    # Weak single-token hit is OK only when the focus is just that name
+    # ("la Parroquia", "info de jamón"). Leftover topic words refuse.
+    return not _history_focus_extras(question, item.get("label") or "")
+
+
 def _narrow_ties_to_recent_turn(
     ties: list[dict], messages: list[dict], index: dict,
 ) -> list[dict]:
@@ -1635,18 +1680,50 @@ def resolve_history_selection(question: str, messages: list[dict],
     stripping "detail/info about" lead-ins and articles, content-token
     overlap on labels, a unique single content token of length ≥4 among
     shown labels, or a bare numeric id token that matches a shown tag id.
-    Ambiguous references return None — callers may use
-    `resolve_history_ambiguity` for a bounded choice offer instead of
-    guessing.
+    Weak unique hits with leftover topic tokens ("gastronomía de jamón"
+    after a ham shop tag) return None so callers can offer place-vs-topic
+    disambiguation instead of sticking to the shop.
+    Ambiguous multi-tag ties return None — use `resolve_history_ambiguity`.
     """
     unique = _history_tag_candidates(messages, index)
     scored = _score_history_candidates(question, unique)
     ties = _narrow_ties_to_recent_turn(
         _top_score_ties(scored), messages, index,
     )
-    if len(ties) == 1:
-        return ties[0]
-    return None
+    if len(ties) != 1:
+        return None
+    item = ties[0]
+    score = _score_for_item(scored, item)
+    if not _is_strong_history_match(question, item, score):
+        return None
+    return item
+
+
+def resolve_history_weak_place(question: str, messages: list[dict],
+                               index: dict) -> dict | None:
+    """Return a unique weak prior-POI hit that looks like a topic shift.
+
+    Example: after showing a jamón shop, "info de gastronomía de jamón"
+    matches the shop only via "jamón" while "gastronomía" remains extra.
+    Callers should offer the concrete place alongside broader topic hits
+    rather than auto-opening get_poi.
+    """
+    unique = _history_tag_candidates(messages, index)
+    scored = _score_history_candidates(question, unique)
+    ties = _narrow_ties_to_recent_turn(
+        _top_score_ties(scored), messages, index,
+    )
+    if len(ties) != 1:
+        return None
+    item = ties[0]
+    if item.get("kind") != "poi":
+        return None
+    score = _score_for_item(scored, item)
+    if _is_strong_history_match(question, item, score):
+        return None
+    if not _history_focus_extras(question, item.get("label") or ""):
+        return None
+    return item
 
 
 def resolve_history_ambiguity(question: str, messages: list[dict],
@@ -1991,6 +2068,183 @@ def format_poi_choice_offer(index: dict, selections: list[dict]) -> str:
         return ""
     lines.extend(["", msgs["outro"]])
     return "\n".join(lines)
+
+
+# Place-vs-topic offer when a weak prior-POI hit coexists with broader
+# topic wording ("gastronomía de jamón" after a jamón shop tag).
+_PLACE_TOPIC_CHOICE_MESSAGES: dict[str, dict[str, str]] = {
+    "ca": {
+        "lead":  "No tinc clar si vols el lloc concret o informació general sobre el tema:",
+        "place": "Lloc concret ja esmentat",
+        "topic": "Altres referències relacionades",
+        "outro": "Digues el nom del lloc per al detall, o demana el llistat general.",
+    },
+    "de": {
+        "lead":  "Meinen Sie den konkreten Ort oder allgemeine Informationen zum Thema?",
+        "place": "Bereits genannter Ort",
+        "topic": "Weitere passende Hinweise",
+        "outro": "Nennen Sie den Ortsnamen für Details, oder bitten Sie um die allgemeine Liste.",
+    },
+    "en": {
+        "lead":  "Do you mean the specific place, or general information on the topic?",
+        "place": "Specific place already mentioned",
+        "topic": "Other related references",
+        "outro": "Say the place name for full detail, or ask for the general list.",
+    },
+    "es": {
+        "lead":  "¿Te refieres al lugar concreto o a información general sobre el tema?",
+        "place": "Lugar concreto ya mencionado",
+        "topic": "Otras referencias relacionadas",
+        "outro": "Dime el nombre del lugar para el detalle, o pide el listado general.",
+    },
+    "eu": {
+        "lead":  "Leku zehatza nahi duzu ala gaiari buruzko informazio orokorra?",
+        "place": "Aipatutako leku zehatza",
+        "topic": "Beste erreferentzia erlazionatuak",
+        "outro": "Esan lekuaren izena xehetasunerako, edo eskatu zerrenda orokorra.",
+    },
+    "fr": {
+        "lead":  "Parlez-vous du lieu précis, ou d'informations générales sur le sujet ?",
+        "place": "Lieu précis déjà mentionné",
+        "topic": "Autres références liées",
+        "outro": "Donnez le nom du lieu pour le détail, ou demandez la liste générale.",
+    },
+    "gl": {
+        "lead":  "Refíreste ao lugar concreto ou a información xeral sobre o tema?",
+        "place": "Lugar concreto xa mencionado",
+        "topic": "Outras referencias relacionadas",
+        "outro": "Dime o nome do lugar para o detalle, ou pide o listado xeral.",
+    },
+    "hi": {
+        "lead":  "क्या आप वह विशिष्ट स्थान चाहते हैं, या विषय की सामान्य जानकारी?",
+        "place": "पहले बताया गया विशिष्ट स्थान",
+        "topic": "अन्य संबंधित संदर्भ",
+        "outro": "विवरण के लिए स्थान का नाम कहें, या सामान्य सूची माँगें।",
+    },
+    "hr": {
+        "lead":  "Mislite li na konkretno mjesto ili na opće informacije o temi?",
+        "place": "Već spomenuto konkretno mjesto",
+        "topic": "Ostale povezane reference",
+        "outro": "Recite ime mjesta za detalj, ili zatražite opći popis.",
+    },
+    "it": {
+        "lead":  "Intendi il luogo concreto o informazioni generali sul tema?",
+        "place": "Luogo concreto già menzionato",
+        "topic": "Altri riferimenti correlati",
+        "outro": "Dimmi il nome del luogo per il dettaglio, oppure chiedi l'elenco generale.",
+    },
+    "ja": {
+        "lead":  "具体的な場所と、テーマの一般情報のどちらをご希望ですか？",
+        "place": "すでに挙げた具体的な場所",
+        "topic": "関連するその他の情報",
+        "outro": "詳細は場所の名前を、一覧は「一般」と伝えてください。",
+    },
+    "nl": {
+        "lead":  "Bedoel je de specifieke plek, of algemene info over het onderwerp?",
+        "place": "Reeds genoemde specifieke plek",
+        "topic": "Andere gerelateerde verwijzingen",
+        "outro": "Zeg de plaatsnaam voor detail, of vraag de algemene lijst.",
+    },
+    "pt": {
+        "lead":  "Refere-se ao lugar concreto ou a informação geral sobre o tema?",
+        "place": "Lugar concreto já mencionado",
+        "topic": "Outras referências relacionadas",
+        "outro": "Diga o nome do lugar para o detalhe, ou peça a lista geral.",
+    },
+    "ru": {
+        "lead":  "Вы про конкретное место или про общую информацию по теме?",
+        "place": "Уже упомянутое конкретное место",
+        "topic": "Другие связанные объекты",
+        "outro": "Назовите место для подробностей или попросите общий список.",
+    },
+    "uk": {
+        "lead":  "Йдеться про конкретне місце чи про загальну інформацію з теми?",
+        "place": "Вже згадане конкретне місце",
+        "topic": "Інші пов’язані об’єкти",
+        "outro": "Назвіть місце для деталей або попросіть загальний список.",
+    },
+    "zh": {
+        "lead":  "您是指具体地点，还是该主题的一般信息？",
+        "place": "已提到的具体地点",
+        "topic": "其他相关参考",
+        "outro": "说出地点名称查看详情，或要求一般列表。",
+    },
+}
+
+
+def format_place_or_topic_offer(
+    index: dict, place_sel: dict, related_pois: list[dict],
+) -> str:
+    """Disambiguate a weak prior place hit vs broader topic results.
+
+    `place_sel` is a history selection `{kind: poi, id, label}`.
+    `related_pois` are other index POI dicts (not the same id).
+    """
+    if not place_sel or place_sel.get("kind") != "poi":
+        return ""
+    place = get_poi(index, place_sel["id"])
+    if not place:
+        return ""
+    lang = (index.get("meta") or {}).get("lang") or "en"
+    msgs = _PLACE_TOPIC_CHOICE_MESSAGES.get(
+        lang, _PLACE_TOPIC_CHOICE_MESSAGES["en"],
+    )
+    lines = [msgs["lead"], ""]
+    place_preview = _short_preview(place, max_chars=120).strip(" -–—")
+    place_line = f"  - {msgs['place']}: {_poi_tag(place)}"
+    if place_preview:
+        place_line += f" — {place_preview}"
+    lines.append(place_line)
+    others = [
+        p for p in related_pois
+        if p and p.get("poi_id") and p.get("poi_id") != place_sel["id"]
+    ][:5]
+    if others:
+        lines.append("")
+        lines.append(f"  - {msgs['topic']}:")
+        for poi in others:
+            preview = _short_preview(poi, max_chars=100).strip(" -–—")
+            line = f"      · {_poi_tag(poi)}"
+            if preview:
+                line += f" — {preview}"
+            lines.append(line)
+    lines.extend(["", msgs["outro"]])
+    return "\n".join(lines)
+
+
+def build_place_or_topic_offer(
+    index: dict, place_sel: dict, question: str,
+) -> str:
+    """Search related POIs for a weak history place and format the offer."""
+    focus = _history_focus_query(question) or normalize_text(question)
+    related: list[dict] = []
+    seen: set[str] = {str(place_sel.get("id") or "")}
+
+    def _absorb(matches: list) -> None:
+        for item in matches or []:
+            poi = item.get("poi") if isinstance(item, dict) else None
+            if not isinstance(poi, dict):
+                poi = item if isinstance(item, dict) else None
+            if not poi:
+                continue
+            pid = str(poi.get("poi_id") or "")
+            if not pid or pid in seen:
+                continue
+            seen.add(pid)
+            related.append(poi)
+
+    if focus:
+        # Prefer AND evidence on the full focus, then fall back to each
+        # content token so multi-word topics still surface relatives.
+        _absorb(search_pois(index, focus, limit=8))
+        if len(related) < 2:
+            for token in focus.split():
+                if len(token) < 4 or token in _HISTORY_FOCUS_STOPWORDS:
+                    continue
+                _absorb(search_pois(index, token, limit=5))
+                if len(related) >= 5:
+                    break
+    return format_place_or_topic_offer(index, place_sel, related)
 
 
 def _render_curated_items(items: list[dict], index: dict,

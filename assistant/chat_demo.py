@@ -92,10 +92,12 @@ from index_tools import (   # noqa: E402
     format_sections_overview,
     format_section,
     extract_poi_tags,
+    build_place_or_topic_offer,
     format_poi_choice_offer,
     format_trip_choice_offer,
     resolve_history_ambiguity,
     resolve_history_selection,
+    resolve_history_weak_place,
     resolve_sole_recent_source,
     resolve_trip_query,
     search_trips,
@@ -330,6 +332,38 @@ def run_turn(question: str, messages: list[dict],
                     },
                 })
                 source_detail_answer = offer_text
+        if not source_detail_answer:
+            # Weak unique history hit with leftover topic tokens
+            # ("gastronomía de jamón" after a jamón shop): offer the
+            # concrete place vs related topic hits, do not stick to get_poi.
+            weak = resolve_history_weak_place(
+                question, messages[:-1], index,
+            )
+            if weak:
+                offer_text = build_place_or_topic_offer(
+                    index, weak, question,
+                )
+                if offer_text:
+                    tool_calls_made.append({
+                        "tool": "history_topic_offer",
+                        "args": {
+                            "query": question,
+                            "place_id": weak["id"],
+                        },
+                        "result_preview": offer_text[:250],
+                        "cache_hit": False,
+                        "automatic": True,
+                    })
+                    grounded = True
+                    grounding_tools.append("history_topic_offer")
+                    automatic_source_calls.append({
+                        "tool": "history_topic_offer",
+                        "args": {
+                            "query": question,
+                            "place_id": weak["id"],
+                        },
+                    })
+                    source_detail_answer = offer_text
         if not source_detail_answer:
             # A1 sticky locality / B same-turn category+town: force
             # filter_pois before the model can wander destination-wide.

@@ -38,6 +38,7 @@ from index_tools import (
     format_trip,
     format_trip_choice_offer,
     format_poi_choice_offer,
+    build_place_or_topic_offer,
     format_path,
     get_poi,
     get_pois,
@@ -49,6 +50,7 @@ from index_tools import (
     resolve_active_locality,
     resolve_history_ambiguity,
     resolve_history_selection,
+    resolve_history_weak_place,
     resolve_sole_recent_source,
     resolve_trip_query,
     search_pois,
@@ -592,6 +594,38 @@ class TestStrictGrounding:
             "id": "poi/51530",
             "label": "Feria del Ganado Selecto de Albalá",
         }
+
+    def test_topic_shift_does_not_stick_to_prior_shop(self):
+        # After a jamón shop tag, "info de gastronomía de jamón" must not
+        # auto-open that shop; offer place vs related topic hits instead.
+        mont = PROJECT_ROOT / "indexes" / "montancheztamuja" / "es.json"
+        if not mont.exists():
+            pytest.skip(f"Index file not found: {mont}")
+        midx = load_index(mont)
+        history = [{
+            "role": "assistant",
+            "content": (
+                "<poi id=45590 type=Store>"
+                "Jamón Ibérico de bellota y Recebo (CARLOS ROSCO)</poi>"
+            ),
+        }]
+        q = "info de gastronomía de jamón"
+        assert resolve_history_selection(q, history, midx) is None
+        weak = resolve_history_weak_place(q, history, midx)
+        assert weak == {
+            "kind": "poi",
+            "id": "poi/45590",
+            "label": "Jamón Ibérico de bellota y Recebo (CARLOS ROSCO)",
+        }
+        offer = build_place_or_topic_offer(midx, weak, q)
+        assert "lugar concreto" in offer.lower() or "Lugar concreto" in offer
+        assert "<poi id=45590" in offer
+        assert "Otras referencias" in offer or "referencias relacionadas" in offer.lower()
+        assert "27585" in offer or "Jornadas" in offer or "poi id=" in offer
+        # Strong name follow-up still opens the shop.
+        assert resolve_history_selection(
+            "dame info de jamón ibérico", history, midx,
+        )["id"] == "poi/45590"
 
     def test_unknown_history_tag_cannot_be_selected(self, index):
         from index_tools import resolve_history_selection
