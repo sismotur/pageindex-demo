@@ -37,6 +37,7 @@ from index_tools import (
     format_sections_overview,
     format_trip,
     format_trip_choice_offer,
+    format_poi_choice_offer,
     format_path,
     get_poi,
     get_pois,
@@ -46,6 +47,7 @@ from index_tools import (
     match_locality,
     poi_uri,
     resolve_active_locality,
+    resolve_history_ambiguity,
     resolve_history_selection,
     resolve_sole_recent_source,
     resolve_trip_query,
@@ -556,10 +558,8 @@ class TestStrictGrounding:
                 "label": "Parroquia Santa María Magdalena",
             }, question
 
-    def test_ambiguous_feria_info_followup_stays_unresolved(self):
-        # Two fairs shown: bare "feria" / "info de la feria" must not pick.
-        from index_tools import resolve_history_selection
-
+    def test_ambiguous_feria_info_followup_offers_choice(self):
+        # Two fairs shown: bare "feria" must not auto-pick; offer both tags.
         mont = PROJECT_ROOT / "indexes" / "montancheztamuja" / "es.json"
         if not mont.exists():
             pytest.skip(f"Index file not found: {mont}")
@@ -574,6 +574,24 @@ class TestStrictGrounding:
         assert resolve_history_selection(
             "dame info de la feria", history, midx,
         ) is None
+        ties = resolve_history_ambiguity(
+            "dame info de la feria", history, midx,
+        )
+        assert ties is not None
+        assert {t["id"] for t in ties} == {"poi/46306", "poi/51530"}
+        offer = format_poi_choice_offer(midx, ties)
+        assert "Hay varias opciones que encajan" in offer
+        assert "<poi id=46306" in offer and "<poi id=51530" in offer
+        # Next turn names one fair → unique full get_poi path.
+        assert resolve_history_selection(
+            "Ganado", history + [
+                {"role": "assistant", "content": offer},
+            ], midx,
+        ) == {
+            "kind": "poi",
+            "id": "poi/51530",
+            "label": "Feria del Ganado Selecto de Albalá",
+        }
 
     def test_unknown_history_tag_cannot_be_selected(self, index):
         from index_tools import resolve_history_selection

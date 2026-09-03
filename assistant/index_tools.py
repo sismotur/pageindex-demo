@@ -1477,30 +1477,8 @@ def _history_focus_query(question: str) -> str:
     return " ".join(parts).strip(" ?!.")
 
 
-def resolve_history_selection(question: str, messages: list[dict],
-                              index: dict) -> dict | None:
-    """Resolve a concise follow-up against validated prior assistant tags.
-
-    Example: after the assistant offers
-    `<trip id=4453>Ú. en Familia-R. Secundaria 2</trip>`, the user can
-    say “Secundaria 2”. This returns a validated source selection:
-    `{kind: "trip", id: "trip/4453", label: "…"}`.
-
-    Matching is deliberately conservative: a unique normalized substring,
-    an all-token match against a shown label, a focus-span match after
-    stripping "detail/info about" lead-ins and articles, content-token
-    overlap on labels, a unique single content token of length ≥4 among
-    shown labels, or a bare numeric id token that matches a shown tag id.
-    Ambiguous references return None so the grounding gate asks the model
-    to retrieve rather than guessing.
-    """
-    query = normalize_text(question)
-    query_tokens = set(query.split())
-    if len(query) < 3 or not query_tokens:
-        return None
-    focus = _history_focus_query(question)
-    focus_tokens = set(focus.split()) if focus else set()
-
+def _history_tag_candidates(messages: list[dict], index: dict) -> dict:
+    """Collect known prior tags keyed by (kind, id); preserve first label."""
     candidates: list[dict] = []
     for message in messages:
         if message.get("role") != "assistant":
@@ -1529,14 +1507,21 @@ def resolve_history_selection(question: str, messages: list[dict],
                     "id": item["itinerary_id"],
                     "label": match.group(2).strip() or item.get("name", ""),
                 })
+    return {(item["kind"], item["id"]): item for item in candidates}
 
-    # Keep one candidate per source id.
-    unique = {(item["kind"], item["id"]): item for item in candidates}
-    if not unique:
-        return None
 
-    # Bare-id follow-up: a numeric token uniquely matching a shown tag id
-    # opens that record deterministically (e.g. user types "4457").
+def _score_history_candidates(
+    question: str, unique: dict,
+) -> list[tuple[int, dict]]:
+    """Score prior-tag candidates for a follow-up; may include tied tops."""
+    query = normalize_text(question)
+    query_tokens = set(query.split())
+    if len(query) < 3 or not query_tokens or not unique:
+        return []
+    focus = _history_focus_query(question)
+    focus_tokens = set(focus.split()) if focus else set()
+
+    # Bare-id follow-up: a numeric token matching a shown tag id.
     id_matches: list[dict] = []
     for token in query_tokens:
         if not _BARE_ID_TOKEN_RE.match(token):
@@ -1545,10 +1530,9 @@ def resolve_history_selection(question: str, messages: list[dict],
             item_bare = str(item["id"]).split("/", 1)[-1]
             if item_bare == token and item not in id_matches:
                 id_matches.append(item)
-    if len(id_matches) == 1:
-        return id_matches[0]
-    if len(id_matches) > 1:
-        return None
+    if id_matches:
+        # Unique bare id → high score; several bare ids → equal ties.
+        return [(200, item) for item in id_matches]
 
     scored: list[tuple[int, dict]] = []
     for item in unique.values():
@@ -1574,9 +1558,8 @@ def resolve_history_selection(question: str, messages: list[dict],
         if score > 0:
             scored.append((score, item))
 
-    # Unique single content token (≥4 chars) among shown labels — e.g.
-    # "Parroquia" after a worship list where only one tag carries it.
-    # Ambiguous tokens ("feria" with two fairs) stay unresolved.
+    # Single content token (≥4 chars) among shown labels — unique or a
+    # small multi-hit set ("feria" with two fairs) for the ambiguity path.
     if not scored:
         content = {t for t in (focus_tokens or query_tokens) if len(t) >= 4}
         for token in content:
@@ -1584,16 +1567,106 @@ def resolve_history_selection(question: str, messages: list[dict],
                 item for item in unique.values()
                 if token in set(normalize_text(item["label"]).split())
             ]
-            if len(hits) == 1:
-                scored.append((30 + len(token), hits[0]))
+            if 1 <= len(hits) <= 3:
+                for item in hits:
+                    scored.append((30 + len(token), item))
+                break
 
-    if not scored:
-        return None
     scored.sort(key=lambda pair: pair[0], reverse=True)
-    best_score, best = scored[0]
-    if len(scored) > 1 and scored[1][0] == best_score:
-        return None
-    return best
+    return scored
+
+
+def _top_score_ties(scored: list[tuple[int, dict]]) -> list[dict]:
+    """Deduped candidates sharing the highest score, stable order."""
+    if not scored:
+        return []
+    best_score = scored[0][0]
+    ties: list[dict] = []
+    seen: set[tuple] = set()
+    for score, item in scored:
+        if score != best_score:
+            break
+        key = (item["kind"], item["id"])
+        if key in seen:
+            continue
+        seen.add(key)
+        ties.append(item)
+    return ties
+
+
+def _narrow_ties_to_recent_turn(
+    ties: list[dict], messages: list[dict], index: dict,
+) -> list[dict]:
+    """Prefer the latest assistant turn that still contains ≥1 tied tag.
+
+    If that turn leaves exactly one tie, the follow-up is unique without
+    asking. If it leaves 2–3, those are the disambiguation set. If no
+    recent turn intersects, keep the full tie list.
+    """
+    if len(ties) <= 1:
+        return ties
+    tie_keys = {(item["kind"], item["id"]) for item in ties}
+    for message in reversed(messages):
+        if message.get("role") != "assistant":
+            continue
+        recent = _history_tag_candidates([message], index)
+        narrowed = [
+            item for item in ties
+            if (item["kind"], item["id"]) in recent
+            and (item["kind"], item["id"]) in tie_keys
+        ]
+        # Preserve original tie order.
+        if len(narrowed) >= 1:
+            return narrowed
+    return ties
+
+
+def resolve_history_selection(question: str, messages: list[dict],
+                              index: dict) -> dict | None:
+    """Resolve a concise follow-up against validated prior assistant tags.
+
+    Example: after the assistant offers
+    `<trip id=4453>Ú. en Familia-R. Secundaria 2</trip>`, the user can
+    say “Secundaria 2”. This returns a validated source selection:
+    `{kind: "trip", id: "trip/4453", label: "…"}`.
+
+    Matching is deliberately conservative: a unique normalized substring,
+    an all-token match against a shown label, a focus-span match after
+    stripping "detail/info about" lead-ins and articles, content-token
+    overlap on labels, a unique single content token of length ≥4 among
+    shown labels, or a bare numeric id token that matches a shown tag id.
+    Ambiguous references return None — callers may use
+    `resolve_history_ambiguity` for a bounded choice offer instead of
+    guessing.
+    """
+    unique = _history_tag_candidates(messages, index)
+    scored = _score_history_candidates(question, unique)
+    ties = _narrow_ties_to_recent_turn(
+        _top_score_ties(scored), messages, index,
+    )
+    if len(ties) == 1:
+        return ties[0]
+    return None
+
+
+def resolve_history_ambiguity(question: str, messages: list[dict],
+                              index: dict) -> list[dict] | None:
+    """Return 2–3 tied prior-tag matches for a disambiguation offer.
+
+    Used when `resolve_history_selection` is None but the visitor clearly
+    pointed at several previously shown sources (e.g. "dame info de la
+    feria" after two fair tags). Caps at three; larger ties stay None so
+    normal retrieval runs. Prefer the latest assistant turn when it still
+    contains multiple of the tied tags.
+    """
+    unique = _history_tag_candidates(messages, index)
+    scored = _score_history_candidates(question, unique)
+    ties = _narrow_ties_to_recent_turn(
+        _top_score_ties(scored), messages, index,
+    )
+    if 2 <= len(ties) <= 3:
+        return ties
+    return None
 
 
 def resolve_sole_recent_source(messages: list[dict], index: dict) -> dict | None:
@@ -1811,6 +1884,111 @@ def format_trip_choice_offer(index: dict, matches: list[dict]) -> str:
             parts.append(f"{msgs['highlights']}: {', '.join(headline)}.")
         summary = " ".join(parts).strip()
         lines.append(f"  - {tag}{f' — {summary}' if summary else ''}")
+    lines.extend(["", msgs["outro"]])
+    return "\n".join(lines)
+
+
+# Localized wrappers for the multi-POI history disambiguation offer.
+# Rendered when a follow-up matches 2–3 prior tags equally (e.g. two
+# fairs and "dame info de la feria"). English is the safe fallback.
+_POI_CHOICE_MESSAGES: dict[str, dict[str, str]] = {
+    "ca": {
+        "lead":  "Hi ha diverses opcions que encaixen. Quina t'interessa?",
+        "outro": "Digues-me el nom o l'identificador del lloc que vols veure.",
+    },
+    "de": {
+        "lead":  "Mehrere Orte passen. Welcher interessiert Sie?",
+        "outro": "Nennen Sie mir den Namen oder die Kennung des Ortes.",
+    },
+    "en": {
+        "lead":  "Several places match. Which one would you like?",
+        "outro": "Tell me the name or id of the place you want to see.",
+    },
+    "es": {
+        "lead":  "Hay varias opciones que encajan. ¿Cuál te interesa?",
+        "outro": "Dime el nombre o el identificador del lugar que prefieras.",
+    },
+    "eu": {
+        "lead":  "Hainbat aukera bat datoz. Zein interesatzen zaizu?",
+        "outro": "Esadazu ikusi nahi duzun lekuaren izena edo identifikatzailea.",
+    },
+    "fr": {
+        "lead":  "Plusieurs lieux correspondent. Lequel vous intéresse ?",
+        "outro": "Indiquez le nom ou l'identifiant du lieu que vous souhaitez voir.",
+    },
+    "gl": {
+        "lead":  "Hai varias opcións que encaixan. Cal che interesa?",
+        "outro": "Dime o nome ou o identificador do lugar que queres ver.",
+    },
+    "hi": {
+        "lead":  "कई स्थान मेल खाते हैं। आप किसे देखना चाहेंगे?",
+        "outro": "बताइए आप कौन-सा स्थान देखना चाहते हैं, नाम या पहचान से।",
+    },
+    "hr": {
+        "lead":  "Nekoliko mjesta odgovara. Koje vas zanima?",
+        "outro": "Recite mi naziv ili identifikator mjesta koje želite vidjeti.",
+    },
+    "it": {
+        "lead":  "Ci sono diverse opzioni che corrispondono. Quale ti interessa?",
+        "outro": "Dimmi il nome o l'identificativo del luogo che preferisci.",
+    },
+    "ja": {
+        "lead":  "該当する場所がいくつかあります。どれをご覧になりますか？",
+        "outro": "見たい場所の名前またはIDを教えてください。",
+    },
+    "nl": {
+        "lead":  "Er zijn meerdere plekken die passen. Welke wil je zien?",
+        "outro": "Zeg me de naam of het id van de plek die je wilt zien.",
+    },
+    "pt": {
+        "lead":  "Há várias opções que correspondem. Qual lhe interessa?",
+        "outro": "Diga-me o nome ou o identificador do lugar que quer ver.",
+    },
+    "ru": {
+        "lead":  "Подходят несколько мест. Какое вас интересует?",
+        "outro": "Назовите название или идентификатор места, которое хотите посмотреть.",
+    },
+    "uk": {
+        "lead":  "Підходить кілька місць. Яке вас цікавить?",
+        "outro": "Назвіть назву або ідентифікатор місця, яке хочете переглянути.",
+    },
+    "zh": {
+        "lead":  "有多处匹配。您想了解哪一处？",
+        "outro": "请告诉我您想查看的地点名称或编号。",
+    },
+}
+
+
+def format_poi_choice_offer(index: dict, selections: list[dict]) -> str:
+    """Deterministic multi-POI choice offer from prior history tags.
+
+    Each candidate is a `{kind, id, label}` selection (kind must be poi).
+    Emits validated `<poi>` tags plus a one-line preview so the next turn
+    can resolve via `resolve_history_selection` (name fragment or bare id).
+    """
+    if not selections:
+        return ""
+    lang = (index.get("meta") or {}).get("lang") or "en"
+    msgs = _POI_CHOICE_MESSAGES.get(lang, _POI_CHOICE_MESSAGES["en"])
+    lines = [msgs["lead"], ""]
+    for item in selections:
+        if item.get("kind") != "poi":
+            continue
+        poi = get_poi(index, item["id"])
+        if not poi:
+            continue
+        preview = _short_preview(poi, max_chars=120)
+        tag = _poi_tag(poi)
+        if preview:
+            if preview.endswith((".", "…", "!", "?")):
+                suffix = preview
+            else:
+                suffix = preview + "."
+            lines.append(f"  - {tag} — {suffix}")
+        else:
+            lines.append(f"  - {tag}")
+    if len(lines) <= 2:
+        return ""
     lines.extend(["", msgs["outro"]])
     return "\n".join(lines)
 

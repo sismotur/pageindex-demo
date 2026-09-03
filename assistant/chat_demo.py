@@ -92,7 +92,9 @@ from index_tools import (   # noqa: E402
     format_sections_overview,
     format_section,
     extract_poi_tags,
+    format_poi_choice_offer,
     format_trip_choice_offer,
+    resolve_history_ambiguity,
     resolve_history_selection,
     resolve_sole_recent_source,
     resolve_trip_query,
@@ -296,17 +298,51 @@ def run_turn(question: str, messages: list[dict],
                 "content": selected_source_context(selection, result),
             })
     else:
-        # A1 sticky locality / B same-turn category+town: force
-        # filter_pois before the model can wander destination-wide.
-        # prior_messages exclude the just-appended current question.
-        injected, hit_delta = inject_locality_scoped_lookup(
-            question, messages[:-1], messages, index, sections_text, cache,
-            weather, tool_calls_made, grounding_tools, automatic_source_calls,
-            preview_chars=250,
+        # Tied prior tags (e.g. two fairs + "dame info de la feria"):
+        # offer a short choice before sticky locality can re-list.
+        ambiguous = resolve_history_ambiguity(
+            question, messages[:-1], index,
         )
-        cache_hits += hit_delta
-        if injected:
-            grounded = True
+        poi_ties = [
+            item for item in (ambiguous or [])
+            if item.get("kind") == "poi"
+        ]
+        if 2 <= len(poi_ties) <= 3:
+            offer_text = format_poi_choice_offer(index, poi_ties)
+            if offer_text:
+                tool_calls_made.append({
+                    "tool": "history_choice_offer",
+                    "args": {
+                        "query": question,
+                        "poi_ids": [item["id"] for item in poi_ties],
+                    },
+                    "result_preview": offer_text[:250],
+                    "cache_hit": False,
+                    "automatic": True,
+                })
+                grounded = True
+                grounding_tools.append("history_choice_offer")
+                automatic_source_calls.append({
+                    "tool": "history_choice_offer",
+                    "args": {
+                        "query": question,
+                        "poi_ids": [item["id"] for item in poi_ties],
+                    },
+                })
+                source_detail_answer = offer_text
+        if not source_detail_answer:
+            # A1 sticky locality / B same-turn category+town: force
+            # filter_pois before the model can wander destination-wide.
+            # prior_messages exclude the just-appended current question.
+            injected, hit_delta = inject_locality_scoped_lookup(
+                question, messages[:-1], messages, index, sections_text, cache,
+                weather, tool_calls_made, grounding_tools,
+                automatic_source_calls,
+                preview_chars=250,
+            )
+            cache_hits += hit_delta
+            if injected:
+                grounded = True
     if (not selection) and (not grounded) and trip_detail_required:
         # No deterministic selection but the visitor asked for a plan.
         # Present up to three curated trips deterministically so they

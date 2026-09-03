@@ -43,6 +43,7 @@ from run_eval import (
 )
 from index_tools import (
     WEATHER_UNAVAILABLE_MESSAGES,
+    _POI_CHOICE_MESSAGES,
     _TRIP_CHOICE_MESSAGES,
     _WEATHER_STALE_MESSAGES,
 )
@@ -57,6 +58,7 @@ VISITOR_FACING_TABLES = {
     "WEATHER_UNAVAILABLE_MESSAGES": WEATHER_UNAVAILABLE_MESSAGES,
     "_WEATHER_STALE_MESSAGES": _WEATHER_STALE_MESSAGES,
     "_TRIP_CHOICE_MESSAGES": _TRIP_CHOICE_MESSAGES,
+    "_POI_CHOICE_MESSAGES": _POI_CHOICE_MESSAGES,
 }
 
 # Intent-detection lexicons: not visitor-facing text, but the same
@@ -136,6 +138,12 @@ class TestTranslationCompleteness:
             assert set(_TRIP_CHOICE_MESSAGES[code]) == {
                 "lead", "highlights", "outro",
             }, f"_TRIP_CHOICE_MESSAGES[{code}] keys incomplete"
+
+    def test_poi_choice_keys_complete(self):
+        for code in SUPPORTED_LANGS:
+            assert set(_POI_CHOICE_MESSAGES[code]) == {
+                "lead", "outro",
+            }, f"_POI_CHOICE_MESSAGES[{code}] keys incomplete"
 
     def test_english_templates_name_the_language(self):
         # Model-facing templates must interpolate the English language

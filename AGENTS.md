@@ -379,8 +379,12 @@ Typical flows handled by the model:
   leading articles, and scores content-token overlap — including a
   unique single token of length ≥4 — so follow-ups like "Feria del
   Ganado" or "dame info de la Parroquia" after a tagged list open full
-  `get_poi` rather than re-listing via sticky `filter_pois`). Final
-  answers pass `sanitize_tourist_answer`: unknown
+  `get_poi` rather than re-listing via sticky `filter_pois`). When 2–3
+  prior tags tie (e.g. "dame info de la feria" after two fairs),
+  `resolve_history_ambiguity` + `format_poi_choice_offer` present a
+  short tagged choice list before sticky locality runs; the next turn
+  resolves uniquely by name fragment or bare id. Final answers pass
+  `sanitize_tourist_answer`: unknown
   dangling `<poi id=N…>` fragments (invented section numbers) are
   stripped, and list markers glued to `</poi>` get a newline break.
   Generic overview questions ("what can I see?") may be answered from the
