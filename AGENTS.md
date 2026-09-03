@@ -423,12 +423,16 @@ Typical flows handled by the model:
   carry a 1 024-token answer cap (`MAX_ANSWER_TOKENS`), so a degenerating
   non-streaming response stays bounded as well. The localized safe
   failure remains only for turns that never produce an answer.
-- **Trip-detail intent** (`requires_trip_detail`): short lexicon stems
-  such as `plan` match **whole tokens only** (`_token_matches_intent`,
-  min prefix stem length 5). Longer deliberate stems (`itiner`) still
-  prefix-match `itinerary`/`itinerario`. This stops false triggers like
-  `planetarium`.startswith(`plan`) forcing curated-trip mode on ordinary
-  POI questions.
+- **Trip-detail intent** (`requires_trip_detail`): i18n lexicon
+  `TRIP_PLAN_INTENT_TERMS` (one frozenset per `SUPPORTED_LANGS` code —
+  plan/itinerary/day/weekend style terms only). Short stems such as
+  `plan` match **whole tokens only** (`_token_matches_intent`). Prefix
+  match is limited to `TRIP_PLAN_PREFIX_STEMS` (`itiner` →
+  itinerary/itinerario) so German `plane` (from *Pläne*) cannot match
+  English `planetarium`. Bare “detail” words (`detalle`/`detalls`/…)
+  are **excluded** so `dame el detalle de la Feria del Ganado` stays on
+  the POI path instead of the curated-trip picker. Completeness guarded
+  by `tests/test_i18n.py`.
 
 Pre-warm: every section's `get_section(id, "interest", 50)` result is
 cached at session start, so subsequent calls are instant.

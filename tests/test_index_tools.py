@@ -164,6 +164,10 @@ class TestStrictGrounding:
         "dame un plan de cosas que ver en dos días",
         "show me a weekend itinerary",
         "dame los detalles del recorrido",
+        "detalls del itinerari",
+        "detalles del viaje",
+        "un piano di due giorni",
+        "roteiro de fim de semana",
     ])
     def test_plan_detail_intent(self, question):
         assert requires_trip_detail(question)
@@ -172,9 +176,18 @@ class TestStrictGrounding:
         "Is there a planetarium?",
         "planetary museum nearby",
         "What is the plant museum?",
+        # Bare "detalle" is POI-fact language, not trip-plan intent
+        # (Montánchez: dame el detalle de la Feria del Ganado).
+        "dame el detalle de la Feria del Ganado",
+        "dame los detalles de la feria",
+        "cuentame el detalle del castillo",
+        "detalls de la fira",
+        "xehetasunak gazteluari buruz",
+        "tell me more details about the chapel",
     ])
     def test_plan_prefix_does_not_false_trigger_trip_detail(self, question):
         # "planetarium".startswith("plan") used to force curated-trip mode.
+        # Bare detail-words must not open the curated-trip picker either.
         assert not requires_trip_detail(question)
 
     def test_failure_message_follows_index_language(self, index):
@@ -2063,9 +2076,10 @@ class TestForcedToolChoice:
             )
 
         monkeypatch.setattr(litellm, "completion", fake)
-        # Plan intent via "detalles" with zero trip-text token matches,
-        # so the deterministic trip-offer shortcut stays out of the way.
-        run_agentic_loop("detalles zzzqqq",
+        # Plan intent via "itinerario" (not bare "detalle") with zero
+        # trip-text token matches, so the deterministic trip-offer
+        # shortcut stays out of the way.
+        run_agentic_loop("itinerario zzzqqq",
                          "You are a tourism assistant.", index, "",
                          "fake-model", {})
         assert len(captured) == 3

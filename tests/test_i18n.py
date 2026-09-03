@@ -104,6 +104,21 @@ class TestTranslationCompleteness:
                     f"{name}[{code}]: blank term"
                 )
 
+    def test_trip_plan_lexicon_excludes_bare_detail_words(self):
+        # "dame el detalle de <POI>" must not enter curated-trip mode.
+        banned = {
+            "detalle", "detalles", "detall", "detalls", "xehetasun",
+            "xehetasunak", "detail", "details", "detalhe", "detalhes",
+            "dettaglio", "dettagli", "detaille", "details",
+        }
+        for code in SUPPORTED_LANGS:
+            terms = {str(t).strip().lower() for t in TRIP_PLAN_INTENT_TERMS[code]}
+            overlap = terms & banned
+            assert not overlap, (
+                f"TRIP_PLAN_INTENT_TERMS[{code}] still has detail-words: "
+                f"{sorted(overlap)}"
+            )
+
     def test_stale_template_keeps_day_placeholder(self):
         # format_weather() does template.format(n=...); a translation
         # that drops the placeholder would crash at render time.

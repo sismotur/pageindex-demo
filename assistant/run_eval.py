@@ -546,39 +546,106 @@ OUTDOOR_HEAT_NOTE = (
 # questions) to reliably signal an itinerary/plan request; it previously
 # forced a curated-trip offer instead of real retrieval on plain
 # sightseeing questions.
+#
+# NOTE: bare "detail" words (detalle/detalls/xehetasun/…) are also
+# excluded. Visitors say "dame el detalle de <POI>" for ordinary place
+# facts; treating that as trip-plan intent forced a curated-trip picker
+# (Montánchez chat: Feria del Ganado). Plan/itinerary/day/weekend terms
+# remain. Every SUPPORTED_LANGS code must keep a non-empty set — guarded
+# by tests/test_i18n.py.
+#
+# Shape (i18n table): dict[lang_code, frozenset[str]] — natural written
+# forms; _all_terms() normalizes like tokenize() (no diacritics needed).
 TRIP_PLAN_INTENT_TERMS: dict[str, frozenset] = {
-    "ca": frozenset({"pla", "itinerari", "recorregut", "dia", "dies",
-                     "setmana", "detall", "detalls"}),
-    "de": frozenset({"plan", "tag", "tage", "wochenende", "reiseroute",
-                     "ausflug", "programm"}),
-    "en": frozenset({"plan", "itinerary", "itiner", "day", "days",
-                     "weekend"}),
-    "es": frozenset({"plan", "itinerario", "recorrido", "dia", "dias",
-                     "semana", "detalle", "detalles"}),
-    "eu": frozenset({"plana", "eguna", "egunak", "asteburu",
-                     "xehetasun"}),
-    "fr": frozenset({"programme", "jour", "jours", "semaine",
-                     "itinéraire", "séjour", "plan"}),
-    "gl": frozenset({"plan", "itinerario", "percorrido", "día", "días",
-                     "semana", "detalle", "detalles"}),
-    "hi": frozenset({"योजना", "कार्यक्रम", "दिन", "सप्ताहांत",
-                     "यात्रा"}),
-    "hr": frozenset({"plan", "dan", "dana", "vikend", "itinerar",
-                     "program"}),
-    "it": frozenset({"piano", "itinerario", "giorno", "giorni", "fine",
-                     "settimana", "programma"}),
-    "ja": frozenset({"計画", "旅程", "プラン", "日程"}),
-    "nl": frozenset({"plan", "dag", "dagen", "weekend", "reisroute",
-                     "programma"}),
-    "pt": frozenset({"plano", "roteiro", "dia", "dias", "semana",
-                     "programa"}),
-    "ru": frozenset({"план", "программа", "день", "дня", "выходные",
-                     "поездка"}),
-    "uk": frozenset({"план", "програма", "день", "вихідні",
-                     "подорож"}),
-    "zh": frozenset({"计划", "行程", "安排", "周末", "一日游"}),
+    # Catalan — plan / itinerary / multi-day visit
+    "ca": frozenset({
+        "pla", "plans", "itinerari", "itineraris", "recorregut",
+        "viatge", "viatges", "dia", "dies", "setmana",
+    }),
+    # German
+    "de": frozenset({
+        "plan", "plane", "programm", "reiseplan", "reiseroute",
+        "ausflug", "tagesplan", "tag", "tage", "wochenende",
+    }),
+    # English
+    "en": frozenset({
+        "plan", "plans", "itinerary", "itineraries", "itiner",
+        "day", "days", "weekend", "daytrip",
+    }),
+    # Spanish
+    "es": frozenset({
+        "plan", "planes", "itinerario", "itinerarios", "recorrido",
+        "viaje", "viajes", "dia", "dias", "semana",
+    }),
+    # Basque
+    "eu": frozenset({
+        "plana", "planak", "bidai", "bidaia", "eguna", "egunak",
+        "asteburu", "astea",
+    }),
+    # French
+    "fr": frozenset({
+        "plan", "plans", "programme", "itinéraire", "itinéraires",
+        "séjour", "circuit", "jour", "jours", "semaine",
+    }),
+    # Galician
+    "gl": frozenset({
+        "plan", "plans", "itinerario", "itinerarios", "percorrido",
+        "viaxe", "viaxes", "dia", "dias", "semana",
+    }),
+    # Hindi
+    "hi": frozenset({
+        "योजना", "योजनाएं", "कार्यक्रम", "यात्रा", "दिन",
+        "सप्ताहांत", "यात्राक्रम",
+    }),
+    # Croatian
+    "hr": frozenset({
+        "plan", "planovi", "program", "itinerar", "putovanje",
+        "dan", "dana", "vikend",
+    }),
+    # Italian
+    "it": frozenset({
+        "piano", "piani", "programma", "itinerario", "itinerari",
+        "viaggio", "viaggi", "giorno", "giorni", "settimana",
+        "weekend",
+    }),
+    # Japanese
+    "ja": frozenset({
+        "計画", "旅程", "プラン", "日程", "行程", "ツアー", "週末",
+    }),
+    # Dutch
+    "nl": frozenset({
+        "plan", "plannen", "programma", "reisplan", "reisroute",
+        "dag", "dagen", "weekend", "rondreis",
+    }),
+    # Portuguese
+    "pt": frozenset({
+        "plano", "planos", "roteiro", "roteiros", "programa",
+        "viagem", "viagens", "dia", "dias", "semana",
+    }),
+    # Russian
+    "ru": frozenset({
+        "план", "планы", "программа", "маршрут", "поездка",
+        "поездки", "день", "дня", "дни", "выходные",
+    }),
+    # Ukrainian
+    "uk": frozenset({
+        "план", "плани", "програма", "маршрут", "подорож",
+        "подорожі", "день", "дня", "дні", "вихідні",
+    }),
+    # Chinese
+    "zh": frozenset({
+        "计划", "行程", "安排", "周末", "一日游", "两日游", "旅游计划",
+    }),
 }
 TRIP_PLAN_INTENT_TERMS_ALL = _all_terms(TRIP_PLAN_INTENT_TERMS)
+# Only these stems may prefix-match longer tokens. Open prefixing of the
+# full lexicon reintroduced planetarium←plane (German Pläne normalizes to
+# "plane", length 5). Keep this set tiny and deliberate.
+TRIP_PLAN_PREFIX_STEMS = frozenset(
+    normalize_text(s) for s in (
+        "itiner",  # itinerary / itinerario / itinerari / itinerar
+    )
+)
 TRIP_DETAIL_REQUIRED_INSTRUCTION = (
     "The visitor asked for a plan or itinerary. You have source trip "
     "suggestions, but you must not invent a new option or combine stops "
@@ -599,25 +666,40 @@ def requires_current_turn_grounding(question: str) -> bool:
 
 
 def _token_matches_intent(term: str, intents: frozenset,
+                          prefix_stems: frozenset | None = None,
                           min_prefix_stem: int = 5) -> bool:
-    """Exact lexicon hit, or prefix only for longer stems.
+    """Exact lexicon hit, plus optional deliberate prefix stems.
 
     Short stems like "plan" must match as whole tokens — otherwise
     "planetarium".startswith("plan") false-triggers trip-detail mode.
-    Longer deliberate stems ("itiner") still cover "itinerary"/"itinerario".
+    When `prefix_stems` is given, only those stems may prefix-match
+    (e.g. "itiner" → itinerary/itinerario). When omitted, any intent of
+    length ≥ min_prefix_stem may prefix-match (legacy behaviour).
     """
     if term in intents:
         return True
+    stems = (prefix_stems if prefix_stems is not None
+             else frozenset(i for i in intents if len(i) >= min_prefix_stem))
     return any(
-        len(intent) >= min_prefix_stem and term.startswith(intent)
-        for intent in intents
+        len(stem) >= min_prefix_stem and term.startswith(stem)
+        for stem in stems
     )
 
 
 def requires_trip_detail(question: str) -> bool:
-    """True when a visitor requests a concrete curated plan/detail."""
+    """True when a visitor requests a concrete curated plan or itinerary.
+
+    Token match against TRIP_PLAN_INTENT_TERMS (all languages). Bare
+    "detail" vocabulary is intentionally absent — POI fact requests like
+    "dame el detalle de la Feria del Ganado" must not enter trip mode.
+    Prefix matching is limited to TRIP_PLAN_PREFIX_STEMS so German
+    "plane" (Pläne) does not match English "planetarium".
+    """
     return any(
-        _token_matches_intent(term, TRIP_PLAN_INTENT_TERMS_ALL)
+        _token_matches_intent(
+            term, TRIP_PLAN_INTENT_TERMS_ALL,
+            prefix_stems=TRIP_PLAN_PREFIX_STEMS,
+        )
         for term in tokenize(question)
     )
 
