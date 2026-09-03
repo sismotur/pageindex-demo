@@ -392,9 +392,13 @@ Typical flows handled by the model:
   ("dame info de queso" → "queso") and applies light morphology
   (`queso`→`quesos`/`queseria` when the catalogue indexes those forms)
   so gastronomy nouns resolve without a food term list. Final answers
-  pass `sanitize_tourist_answer`: unknown
-  dangling `<poi id=N…>` fragments (invented section numbers) are
-  stripped, and list markers glued to `</poi>` get a newline break.
+  pass `sanitize_tourist_answer`: unknown dangling `<poi id=N…>`
+  fragments (invented section numbers) are stripped, list markers glued
+  to `</poi>` get a newline break, and stock enthusiasm openers
+  (`¡Claro que sí!`, `Of course!`, …) are stripped via
+  `strip_filler_openers`. The system prompt asks for a professional,
+  welcoming visitor-information tone — lead with content, no cheerleader
+  openers on every turn.
   Generic overview questions ("what can I see?") may be answered from the
   destination overview and section catalogue preloaded in the system
   prompt — that content is itself index-derived, so no tool call is

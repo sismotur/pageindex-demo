@@ -118,6 +118,13 @@ class TestSystemPromptIsolation:
         assert "5155" not in _SYSTEM_PROMPT_TEMPLATE
         assert "San Nicolás" not in _SYSTEM_PROMPT_TEMPLATE
 
+    def test_prompt_template_bans_filler_enthusiasm_openers(self):
+        from run_eval import _SYSTEM_PROMPT_TEMPLATE
+        assert "Claro que sí" in _SYSTEM_PROMPT_TEMPLATE
+        assert "filler enthusiasm" in _SYSTEM_PROMPT_TEMPLATE.lower() \
+            or "stock affirmations" in _SYSTEM_PROMPT_TEMPLATE.lower()
+        assert "professional visitor-information host" in _SYSTEM_PROMPT_TEMPLATE
+
 
 # ── Destination metadata sanity ──────────────────────────────────────────────
 

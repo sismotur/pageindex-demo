@@ -465,15 +465,57 @@ def sanitize_itinerary_tags(answer: str, index: dict) -> str:
         full_re=PATH_TAG_RE, open_re=PATH_TAG_OPEN_RE,
     )
 
+# Leading stock affirmations small models reuse every turn. Matched at
+# answer start only; never mid-sentence. Surface forms only — not a
+# full i18n table. Bare words without "!" or a multi-word phrase are
+# intentionally excluded so "claramente" / "Great museum" stay intact.
+_FILLER_OPENER_RE = re.compile(
+    r"^(?:"
+    r"¡?\s*claro\s+que\s+s[ií]\s*!?"
+    r"|¡?\s*claro\s*!"
+    r"|¡?\s*por\s+supuesto\s*!?"
+    r"|¡?\s*desde\s+luego\s*!?"
+    r"|¡?\s*(?:genial|perfecto|excelente|encantado|encantada)\s*!"
+    r"|¡?\s*con\s+gusto\s*!"
+    r"|(?:of\s+course|absolutely|sure(?:\s+thing)?|definitely|"
+    r"you\s+got\s+it|great|perfect|wonderful|fantastic)\s*!"
+    r"|(?:certo|assolutamente|ma\s+certo|perfetto|ottimo)\s*!"
+    r"|(?:bien\s+sûr|absolument|parfait|avec\s+plaisir)\s*!"
+    r"|(?:natürlich|klar|absolut|gerne|perfekt)\s*!"
+    r"|(?:pois\s+n[aã]o|com\s+certeza|perfeito)\s*!"
+    r")"
+    r"[\s,.;:…—–-]*",
+    re.IGNORECASE | re.UNICODE,
+)
+
+
+def strip_filler_openers(answer: str) -> str:
+    """Remove repeated stock enthusiasm openers from the answer start.
+
+    Keeps real content and mid-sentence wording untouched. Strips at most
+    a few leading fillers so stacked openers (\"¡Claro! ¡Por supuesto!\")
+    collapse without eating the whole reply.
+    """
+    text = answer or ""
+    for _ in range(3):
+        cleaned = _FILLER_OPENER_RE.sub("", text, count=1)
+        if cleaned == text:
+            break
+        text = cleaned.lstrip()
+    return text
+
+
 def sanitize_tourist_answer(answer: str, index: dict) -> str:
     """Apply deterministic presentation rules to a final visitor answer.
 
-    This is deliberately narrow: validate tag ids, then replace only
-    catalog-language nouns that should never reach a tourist. It does not
-    infer facts, change names, or alter the meaning of retrieved evidence.
+    This is deliberately narrow: validate tag ids, strip stock filler
+    openers, then replace only catalog-language nouns that should never
+    reach a tourist. It does not infer facts, change names, or alter the
+    meaning of retrieved evidence.
     """
     sanitized = sanitize_poi_tags(answer, index)
     sanitized = sanitize_itinerary_tags(sanitized, index)
+    sanitized = strip_filler_openers(sanitized)
     protected_tags: list[str] = []
 
     def protect_tag(match: re.Match) -> str:

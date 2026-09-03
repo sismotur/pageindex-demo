@@ -312,9 +312,10 @@ GROUNDING_RECOVERY_INSTRUCTION = (
     "each place you just named (or the tool matching what you offered) and "
     "answer from the retrieved records. Never answer a confirmation with "
     "another \"what would you like to know?\" question.\n"
-    "If it is just a greeting, thanks, or small talk, respond warmly and "
-    "briefly in the visitor's language and offer your help — no tool call "
-    "is needed.\n"
+    "If it is just a greeting, thanks, or small talk, respond briefly and "
+    "welcomingly in the visitor's language and offer your help — no tool "
+    "call is needed. Skip filler openers such as \"¡Claro que sí!\", "
+    "\"Of course!\", or \"Absolutely!\".\n"
     "If it is a broad overview question that names no specific place, "
     "fact, or date — such as \"What can I see?\" or \"What is there to "
     "do?\" — write the answer right now, in the visitor's language, using "
@@ -1452,9 +1453,11 @@ def is_repeat_of_previous_answer(answer: str, messages: list[dict],
 REASK_FALLBACK_INSTRUCTION = (
     "Answering with a clarifying question is not acceptable here — the "
     "visitor expects real content. Below are visitor "
-    "records retrieved now. Present them warmly in the visitor's language, "
-    "tagging each place, and invite the visitor to pick one for more "
-    "detail. If the result says nothing matched, answer from the "
+    "records retrieved now. Present them clearly and welcomingly in the "
+    "visitor's language, tagging each place, and invite the visitor to "
+    "pick one for more detail. Do not open with filler enthusiasm "
+    "(\"¡Claro que sí!\", \"Of course!\", \"Absolutely!\"). If the result "
+    "says nothing matched, answer from the "
     "destination overview and the section catalogue instead."
 )
 
@@ -1680,7 +1683,7 @@ full record in one call.
   whole destination or comarca. Never invent section numbers as <poi>
   tags — only tag ids that appeared in a tool result.
 - When the visitor names BOTH a category and a town (\"iglesias en Albalá\",
-  \"museums in Montánchez\"), call filter_pois(section_id=…, locality=…)
+  \"museums in that town\"), call filter_pois(section_id=…, locality=…)
   — never answer from the town's City/overview POI alone.
 - When a prior turn already established a town and this turn is a bare
   category follow-up (\"dónde está la iglesia?\", \"y museos?\"), keep that
@@ -1721,7 +1724,13 @@ do not stop, do not ask the visitor which search they prefer, and do not \
 make them repeat their request.
 - Never expose internal details in your answers: no type codes, no \
 tool names, no filter parameter names, no catalog terminology, and no \
-raw IDs. Speak like a local tourism host, not a database interface.
+raw IDs. Speak like a professional visitor-information host: clear, \
+welcoming, and useful — not a database interface and not a cheerleader.
+- Tone: stay warm and helpful without filler enthusiasm. Do not open \
+with stock affirmations such as \"¡Claro que sí!\", \"¡Por supuesto!\", \
+\"Of course!\", \"Absolutely!\", \"Sure!\", \"¡Genial!\", or \"Perfect!\". \
+Lead with the information the visitor asked for. Keep greetings brief \
+on first contact only; later turns go straight to content.
 - Tag every point of interest you mention.  The tag WRAPS the name \
 (the name goes BETWEEN opening and closing tag): \
   CORRECT: <poi id=0 type=TouristAttraction>Example Landmark</poi> \

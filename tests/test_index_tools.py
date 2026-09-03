@@ -1673,6 +1673,31 @@ class TestPoiTags:
         sanitized = sanitize_tourist_answer(answer, index)
         assert sanitized == "I found 2 places and one place: Ghost."
 
+    def test_tourist_answer_sanitizer_strips_filler_openers(self, index):
+        from index_tools import strip_filler_openers
+        body = (
+            "La <poi id=36694 type=OilMill>Almazara</poi> elabora aceite "
+            "de oliva virgen extra."
+        )
+        assert strip_filler_openers(f"¡Claro que sí! {body}") == body
+        assert strip_filler_openers(f"Of course! {body}") == body
+        assert strip_filler_openers(
+            f"¡Claro! ¡Por supuesto! {body}"
+        ) == body
+        # Real content / mid-sentence wording must stay.
+        assert strip_filler_openers("Claramente es un molino.") == (
+            "Claramente es un molino."
+        )
+        assert strip_filler_openers("Great museum near the square.") == (
+            "Great museum near the square."
+        )
+        assert "Claro que sí" not in sanitize_tourist_answer(
+            f"¡Claro que sí! {body}", index,
+        )
+        assert body.split(".", 1)[0] in sanitize_tourist_answer(
+            f"¡Claro que sí! {body}", index,
+        )
+
     def test_tourist_answer_sanitizer_preserves_known_poi_tag(self, index):
         answer = "POIs include <poi id=36694 type=OilMill>Almazara</poi>."
         sanitized = sanitize_tourist_answer(answer, index)
