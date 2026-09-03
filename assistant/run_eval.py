@@ -1204,15 +1204,18 @@ complete record in the same call; with the default detail="brief", always \
 follow up with get_poi() on the best match before answering specific facts.
 
   • filter_pois(interest_level?, type?, tourist_type?, section_id?, \
-indispensable?, limit?)
+locality?, indispensable?, limit?)
         Facet query.  All filters AND together.  Examples:
           - filter_pois(indispensable=true) → must-see POIs
           - filter_pois(tourist_type="FOOD TOURISM", limit=10) → food spots
           - filter_pois(type="OilMill") → all olive-oil mills / producers
           - filter_pois(type="Restaurant", section_id="gastronomy") → restaurants
           - filter_pois(interest_level=1, section_id="religious-heritage")
+          - filter_pois(locality="Albalá", section_id="events-and-festivals")
         Use the UNE type codes you see in tool results (e.g. Restaurant, \
-OilMill, Museum); do not guess codes from the user's words.
+OilMill, Museum); do not guess codes from the user's words.  When the \
+visitor names a town or locality, pass locality= that place so results \
+stay inside it.
   • search_pois(query, section_id?, limit?)
         Evidence search across POI names and visitor descriptions. Use it to \
 check whether several visitor concepts appear on the SAME place, for example \
@@ -1270,6 +1273,12 @@ full record in one call.
   route requests, search physical paths first. A curated trip is never a
   physical route; if no path is available, say so rather than substituting
   a trip. Do not ask the visitor to reformulate the route request.
+- When the visitor names a town or locality (e.g. Albalá, a village inside
+  the destination), prefer find_poi_by_name of that place or
+  filter_pois(locality="…", …) over get_section of the whole destination.
+  Do not list places from other towns unless the visitor asked about the
+  whole destination or comarca. Never invent section numbers as <poi>
+  tags — only tag ids that appeared in a tool result.
 - For outdoor, walking, or day-plan questions, call get_weather(day) \
 before recommending. When the forecast is unfavourable (>35 °C, rain, \
 storms), prefer indoor stops or early-morning windows. If the tool \
@@ -1441,7 +1450,7 @@ TOOL_DEFS = [
             "description": (
                 "Facet query.  All filters AND together.  Use for "
                 "'indispensable POIs', 'all OilMills', 'food-tourism POIs in "
-                "<section>', etc."
+                "<section>', 'events in <town>', etc."
             ),
             "parameters": {
                 "type": "object",
@@ -1461,6 +1470,13 @@ TOOL_DEFS = [
                     "section_id": {
                         "type": "string",
                         "description": "Restrict to a section.",
+                    },
+                    "locality": {
+                        "type": "string",
+                        "description": (
+                            "Town or village name (address locality), e.g. "
+                            "'Albalá'. Restricts results to that place."
+                        ),
                     },
                     "indispensable": {
                         "type": "boolean",

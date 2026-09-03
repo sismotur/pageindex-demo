@@ -335,7 +335,7 @@ line slicing.
 | `get_section(section_id, sort, limit)` | List POIs in one section (schema v2: large sections include a per-type group map), sorted by `(interest_level, zoom_level)`. |
 | `get_poi(poi_id)` | Full record of one POI by id; comma-separated ids fetch several records in one call. |
 | `find_poi_by_name(query, limit)` | Diacritic-insensitive fuzzy lookup by name. |
-| `filter_pois(interest_level, type, tourist_type, section_id, indispensable, limit)` | Facet query, all filters AND together. |
+| `filter_pois(interest_level, type, tourist_type, section_id, locality, indispensable, limit)` | Facet query, all filters AND together. `locality` is a runtime `address_locality` scan (no index facet) so multi-town destinations stay scoped. |
 | `search_pois(query, section_id, limit)` | Same-record full-text evidence search for compound visitor requests. |
 | `search_trips(query, limit)` / `get_trip(id)` | Editorial day/theme/multi-day suggestions from `/v120/trips`; never physical routes. |
 | `search_paths(query, limit)` / `get_path(id)` | Physical walking/cycling/trail routes from `/v120/paths`; never substitutes a trip. |
@@ -349,6 +349,9 @@ Typical flows handled by the model:
 - **"Indispensable POIs"** → `filter_pois(indispensable=true)`.
 - **"Indispensable food spots"** →
   `filter_pois(indispensable=true, tourist_type="FOOD TOURISM")`.
+- **"Events in Albalá"** (named town inside a multi-town destination) →
+  `filter_pois(locality="Albalá", section_id="events-and-festivals")` or
+  `find_poi_by_name("Albalá")` — not a whole-destination `get_section`.
 - **Physical route intent** is guarded deterministically: one
   `search_paths` lookup is forced, then the assistant answers once. This
   prevents repeated clarification/instruction loops on small models.
@@ -360,7 +363,13 @@ Typical flows handled by the model:
   model answers from the results.
 - **Strict grounding**: specific questions (named places, facts,
   listings) need a current-turn source-bearing retrieval; prior `<poi>`,
-  `<trip>`, and `<path>` tag selections resolve directly to `get_*`.
+  `<trip>`, and `<path>` tag selections resolve directly to `get_*`
+  (`resolve_history_selection` strips detail lead-ins such as
+  `dame el detalle de…` / `tell me about…` and scores content-token
+  overlap so a follow-up like "Feria del Ganado" after a tagged list
+  opens that POI). Final answers pass `sanitize_tourist_answer`: unknown
+  dangling `<poi id=N…>` fragments (invented section numbers) are
+  stripped, and list markers glued to `</poi>` get a newline break.
   Generic overview questions ("what can I see?") may be answered from the
   destination overview and section catalogue preloaded in the system
   prompt — that content is itself index-derived, so no tool call is

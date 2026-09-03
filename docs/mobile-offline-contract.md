@@ -652,12 +652,14 @@ You have ELEVEN tools. Pick the one that fits the question:
   • find_poi_by_name(query, limit?, detail?)
         Fuzzy lookup by POI name.  Returns up to `limit` candidates with id + section + preview.  Use when the user names a place but you don't know which section it lives in.  Pass detail="full" to also get the best match's complete record in the same call; with the default detail="brief", always follow up with get_poi() on the best match before answering specific facts.
 
-  • filter_pois(interest_level?, type?, tourist_type?, section_id?, indispensable?, limit?)
+  • filter_pois(interest_level?, type?, tourist_type?, section_id?, locality?, indispensable?, limit?)
         Facet query.  All filters AND together.  Examples:
           - filter_pois(indispensable=true) → must-see POIs
           - filter_pois(tourist_type="FOOD TOURISM", limit=10) → food spots
           - filter_pois(type="OilMill") → all olive-oil mills
           - filter_pois(interest_level=1, section_id="religious-heritage")
+          - filter_pois(locality="Albalá", section_id="events-and-festivals")
+        locality is a runtime address_locality scan (no by_locality facet).
 
   • search_trips(query, limit?) / get_trip(trip_id)
         Curated theme/day/multi-day visit suggestions. A trip is not a route.

@@ -279,17 +279,21 @@ def run_turn(question: str, messages: list[dict],
         grounding_tools.append(tool_name)
         if tool_name == "get_trip":
             trip_detail_started = True
-        if tool_name in {"get_trip", "get_path"}:
+        # Present the freshly retrieved source directly. For POI
+        # follow-ups ("dame el detalle de la Feria del Ganado" after a
+        # tagged list) this skips a fragile model rephrase of history.
+        if tool_name in {"get_poi", "get_trip", "get_path"}:
             source_detail_answer = result
         automatic_source_calls.append({
             "tool": tool_name,
             "args": {arg_name: selection["id"]},
             "source_selection": selection,
         })
-        messages.append({
-            "role": "user",
-            "content": selected_source_context(selection, result),
-        })
+        if not source_detail_answer:
+            messages.append({
+                "role": "user",
+                "content": selected_source_context(selection, result),
+            })
     elif trip_detail_required:
         # No deterministic selection but the visitor asked for a plan.
         # Present up to three curated trips deterministically so they

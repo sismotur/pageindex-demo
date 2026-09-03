@@ -474,6 +474,31 @@ class TestStrictGrounding:
         assert selection["kind"] == "poi"
         assert selection["id"] == "poi/36026"
 
+    def test_resolves_detail_followup_against_prior_poi_list(self):
+        # Montánchez chat: after listing Albalá events, "dame el detalle
+        # de la Feria del Ganado" must open poi/51530 — not trips.
+        from index_tools import resolve_history_selection
+        mont = PROJECT_ROOT / "indexes" / "montancheztamuja" / "es.json"
+        if not mont.exists():
+            pytest.skip(f"Index file not found: {mont}")
+        midx = load_index(mont)
+        history = [{
+            "role": "assistant",
+            "content": (
+                "* <poi id=60010 type=Event>Las Tablas de Albalá</poi>\n"
+                "* <poi id=46306 type=Fair>Feria del Caballo de Albalá</poi>\n"
+                "* <poi id=51530 type=Event>Feria del Ganado Selecto de Albalá</poi>"
+            ),
+        }]
+        selection = resolve_history_selection(
+            "dame el detalle de la Feria del Ganado", history, midx,
+        )
+        assert selection == {
+            "kind": "poi",
+            "id": "poi/51530",
+            "label": "Feria del Ganado Selecto de Albalá",
+        }
+
     def test_unknown_history_tag_cannot_be_selected(self, index):
         from index_tools import resolve_history_selection
         history = [{
@@ -682,6 +707,27 @@ class TestContextReduction:
         assert "Filter {" not in out
         assert "Interest Level:" not in out
         assert "Type:" not in out
+
+    def test_locality_filter_scopes_to_named_town(self):
+        # Multi-town destinations: "events in Albalá" must not spill into
+        # the rest of the comarca (issue #4 from the Montánchez chat).
+        from index_tools import filter_pois
+        mont = PROJECT_ROOT / "indexes" / "montancheztamuja" / "es.json"
+        if not mont.exists():
+            pytest.skip(f"Index file not found: {mont}")
+        midx = load_index(mont)
+        hits = filter_pois(
+            midx, locality="Albalá", section_id="events-and-festivals",
+        )
+        assert hits
+        names = {p["name"] for p in hits}
+        assert "Feria del Ganado Selecto de Albalá" in names
+        assert all(
+            (p.get("address_locality") or "") == "Albalá"
+            or "Albalá" in (p.get("name") or "")
+            for p in hits
+        )
+        assert not any("Jurramachos" in n for n in names)
 
 
 class TestEvidenceSearch:
@@ -1290,6 +1336,25 @@ class TestPoiTags:
     def test_sanitize_unknown_tag_to_plain_text(self, index):
         answer = "Visit <poi id=99999999 type=Restaurant>Ghost Place</poi>."
         assert sanitize_poi_tags(answer, index) == "Visit Ghost Place."
+
+    def test_sanitize_strips_unknown_dangling_section_style_tag(self, index):
+        # Model invents section numbers as <poi id=N type=Section Title>.
+        answer = (
+            "consulta las opciones de "
+            "<poi id=13 type=Events and Festivals> para ver más."
+        )
+        out = sanitize_tourist_answer(answer, index)
+        assert "poi id=13" not in out
+        assert "<poi" not in out
+        assert "consulta las opciones de para ver más." in out
+
+    def test_sanitize_breaks_glued_list_marker_after_poi_tag(self, index):
+        poi = next(iter((index.get("pois") or {}).values()))
+        bare = str(poi["poi_id"]).split("/", 1)[-1]
+        answer = f"*   <poi id={bare} type=City>{poi['name']}</poi>*   **Descripción**: x"
+        out = sanitize_tourist_answer(answer, index)
+        assert f"</poi>\n*" in out
+        assert out.count(poi["name"]) == 1
 
     def test_sanitize_known_tag_canonicalizes_type(self, index):
         answer = "<poi id=36694 type=Restaurant>Short label</poi>"

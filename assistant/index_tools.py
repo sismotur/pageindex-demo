@@ -322,7 +322,19 @@ _POI_BOLD_DANGLING_RE = re.compile(
     re.IGNORECASE,
 )
 # Any remaining <poi ...> opening/empty fragment (dangling model output).
-_POI_OPEN_FRAGMENT_RE = re.compile(r"<poi\b[^>]*>", re.IGNORECASE)
+# Captures bare numeric id when present so unknown section-style ids
+# (e.g. <poi id=13 type=Events and Festivals>) can be stripped.
+_POI_OPEN_FRAGMENT_RE = re.compile(
+    r"<poi\b(?=[^>]*\bid\s*=\s*\"?(?:poi/)?(\d+)\"?)[^>]*>",
+    re.IGNORECASE,
+)
+# Model list markup often glues the next bullet/label to </poi> with no
+# space or newline: "</poi>*   **Descripción**:". Insert a break so the
+# visitor-facing answer stays readable and mobile parsers stay clean.
+_POI_TAG_GLUE_RE = re.compile(
+    r"(</poi>)([*\-•#]|\*\*)",
+    re.IGNORECASE,
+)
 
 
 def sanitize_poi_tags(answer: str, index: dict) -> str:
@@ -330,6 +342,9 @@ def sanitize_poi_tags(answer: str, index: dict) -> str:
 
     This validates an ID the model supplied; it never searches names or
     guesses a replacement. Unknown tags become ordinary inner text.
+    Dangling open fragments with unknown ids (often invented section
+    numbers) are removed entirely; known dangling ids expand to a full
+    canonical tag.
     """
     def bold_dangling(match: re.Match) -> str:
         poi = get_poi(index, f"poi/{match.group('id')}")
@@ -347,11 +362,33 @@ def sanitize_poi_tags(answer: str, index: dict) -> str:
         poi = get_poi(index, f"poi/{match.group(1)}")
         return _poi_tag(poi) if poi is not None else ""
 
+    def open_fragment(match: re.Match) -> str:
+        poi = get_poi(index, f"poi/{match.group(1)}")
+        # Unknown id (section number, hallucinated) → drop the fragment.
+        return _poi_tag(poi) if poi is not None else ""
+
     sanitized = _TAG_ALIAS_OPEN_RE.sub("<poi", answer or "")
     sanitized = _TAG_ALIAS_CLOSE_RE.sub("</poi>", sanitized)
     sanitized = _POI_BOLD_DANGLING_RE.sub(bold_dangling, sanitized)
     sanitized = POI_TAG_RE.sub(full_tag, sanitized)
-    return POI_TAG_EMPTY_RE.sub(empty_tag, sanitized)
+    sanitized = POI_TAG_EMPTY_RE.sub(empty_tag, sanitized)
+    # Protect complete tags so the open-fragment pass cannot re-match
+    # their openings and duplicate the inner text.
+    protected: list[str] = []
+
+    def protect_full(match: re.Match) -> str:
+        protected.append(match.group(0))
+        return f"__INVENTRIP_FULL_POI_{len(protected) - 1}__"
+
+    sanitized = POI_TAG_RE.sub(protect_full, sanitized)
+    sanitized = _POI_OPEN_FRAGMENT_RE.sub(open_fragment, sanitized)
+    # Dropping an unknown fragment can leave a double space ("de  para").
+    sanitized = re.sub(r"[ \t]{2,}", " ", sanitized)
+    for position, tag in enumerate(protected):
+        sanitized = sanitized.replace(
+            f"__INVENTRIP_FULL_POI_{position}__", tag
+        )
+    return sanitized
 
 
 def _sanitize_collection_tags(answer: str, index: dict, *,
@@ -444,10 +481,10 @@ def sanitize_tourist_answer(answer: str, index: dict) -> str:
         return f"__INVENTRIP_POI_TAG_{len(protected_tags) - 1}__"
 
     # Do not apply prose replacements to the literal `poi` tag name or
-    # its machine-readable attributes — full tags first, then any
-    # leftover dangling/empty <poi ...> fragment a small model emitted.
+    # its machine-readable attributes. Unknown dangling fragments were
+    # already stripped by sanitize_poi_tags; protect only remaining full
+    # (known) tags.
     sanitized = POI_TAG_RE.sub(protect_tag, sanitized)
-    sanitized = _POI_OPEN_FRAGMENT_RE.sub(protect_tag, sanitized)
     replacements = (
         (r"\bPOIs\b", "places"),
         (r"\bPOI\b", "place"),
@@ -458,7 +495,8 @@ def sanitize_tourist_answer(answer: str, index: dict) -> str:
         sanitized = re.sub(pattern, replacement, sanitized, flags=re.IGNORECASE)
     for position, tag in enumerate(protected_tags):
         sanitized = sanitized.replace(f"__INVENTRIP_POI_TAG_{position}__", tag)
-    return sanitized
+    # Break glued list/markdown markers that small models stick to </poi>.
+    return _POI_TAG_GLUE_RE.sub(r"\1\n\2", sanitized)
 
 
 
@@ -499,15 +537,23 @@ def _bounded_limit(value: int | None, default: int, maximum: int) -> int:
 
 
 def _short_preview(poi: dict, max_chars: int = 120) -> str:
-    """One-line tourist-facing description preview (no catalog metadata)."""
+    """One-line tourist-facing description preview (no catalog metadata).
+
+    Prefer a complete first sentence when it fits; otherwise cut on a word
+    boundary. Avoid mid-word ellipsis so models copying the preview into
+    visitor answers leave cleaner prose.
+    """
     desc = (poi.get("description") or "").strip()
     if not desc:
         return ""
-    sent_end = re.search(r"[.!?]\s", desc)
-    snippet = desc[: sent_end.end()] if sent_end else desc[:90]
-    if len(snippet) > 90:
-        snippet = snippet[:90].rsplit(" ", 1)[0] + "…"
-    return snippet.strip()
+    budget = max(40, min(int(max_chars or 120), 160))
+    sent_end = re.search(r"[.!?](?:\s|$)", desc)
+    if sent_end and sent_end.end() <= budget:
+        return desc[: sent_end.end()].strip()
+    if len(desc) <= budget:
+        return desc
+    cut = desc[:budget].rsplit(" ", 1)[0].rstrip(",;:-")
+    return (cut or desc[:budget]).strip() + "…"
 
 
 def format_section(index: dict, section_key: str,
@@ -774,6 +820,20 @@ def _resolve_facet_ids(index: dict, facet: str, value: Any) -> set[str] | None:
     if facet == "section_id":
         section = find_section(index, str(value))
         return set(section.get("poi_ids") or []) if section else set()
+    if facet in {"locality", "address_locality"}:
+        # Runtime scan — indexes do not ship a by_locality facet. Match
+        # address_locality (and name as a weak fallback for City POIs)
+        # so "events in Albalá" does not spill into the whole comarca.
+        needle = normalize_text(str(value or ""))
+        if not needle:
+            return set()
+        hits: set[str] = set()
+        for pid, poi in (index.get("pois") or {}).items():
+            loc = normalize_text(poi.get("address_locality") or "")
+            name = normalize_text(poi.get("name") or "")
+            if needle == loc or needle in loc.split() or needle in name:
+                hits.add(pid)
+        return hits
     if facet == "interest_level":
         # Accept 1/2/3 or labels
         try:
@@ -1263,6 +1323,57 @@ def resolve_trip_query(question: str, index: dict) -> dict | None:
 _BARE_ID_TOKEN_RE = re.compile(r"^\d{3,6}$")
 
 
+# Lead-ins stripped before matching a follow-up against prior tags.
+# Longest first so "dame el detalle de" wins over bare "detalle de".
+# Covers the common "give me details about X" shape without requiring
+# the visitor to type the full tagged label alone.
+_HISTORY_FOCUS_LEADS = tuple(sorted((
+    "dame el detalle de la",
+    "dame el detalle de",
+    "dame los detalles de la",
+    "dame los detalles de",
+    "dame mas informacion sobre",
+    "dame mas info sobre",
+    "dame mas detalles de",
+    "cuentame mas sobre",
+    "cuentame sobre",
+    "dime mas sobre",
+    "dime sobre",
+    "hablame de",
+    "hablame sobre",
+    "tell me more about",
+    "tell me about",
+    "more details about",
+    "details about",
+    "detail about",
+    "detalle de la",
+    "detalle del",
+    "detalle de",
+    "detalles de la",
+    "detalles del",
+    "detalles de",
+    "mas sobre",
+    "about the",
+    "about",
+), key=len, reverse=True))
+
+
+def _history_focus_query(question: str) -> str:
+    """Strip detail/about lead-ins; return the place-name focus span."""
+    normalized = normalize_text(question)
+    if not normalized:
+        return ""
+    for lead in _HISTORY_FOCUS_LEADS:
+        if normalized.startswith(lead + " "):
+            return normalized[len(lead):].strip(" ?!.")
+        # Also allow the lead mid-phrase after a short verb ("quiero el
+        # detalle de X").
+        marker = " " + lead + " "
+        if marker in normalized:
+            return normalized.split(marker, 1)[1].strip(" ?!.")
+    return normalized
+
+
 def resolve_history_selection(question: str, messages: list[dict],
                               index: dict) -> dict | None:
     """Resolve a concise follow-up against validated prior assistant tags.
@@ -1273,14 +1384,18 @@ def resolve_history_selection(question: str, messages: list[dict],
     `{kind: "trip", id: "trip/4453", label: "…"}`.
 
     Matching is deliberately conservative: a unique normalized substring,
-    an all-token match against a shown label, or a bare numeric id token
-    that matches a shown tag id. Ambiguous references return None so the
-    grounding gate asks the model to retrieve rather than guessing.
+    an all-token match against a shown label, a focus-span match after
+    stripping "detail about" lead-ins, content-token overlap on labels,
+    or a bare numeric id token that matches a shown tag id. Ambiguous
+    references return None so the grounding gate asks the model to
+    retrieve rather than guessing.
     """
     query = normalize_text(question)
     query_tokens = set(query.split())
     if len(query) < 3 or not query_tokens:
         return None
+    focus = _history_focus_query(question)
+    focus_tokens = set(focus.split()) if focus else set()
 
     candidates: list[dict] = []
     for message in messages:
@@ -1335,10 +1450,25 @@ def resolve_history_selection(question: str, messages: list[dict],
     for item in unique.values():
         label = normalize_text(item["label"])
         label_tokens = set(label.split())
+        score = 0
         if query in label:
-            scored.append((100 + len(query), item))
+            score = max(score, 100 + len(query))
         elif query_tokens.issubset(label_tokens):
-            scored.append((50 + len(query_tokens), item))
+            score = max(score, 50 + len(query_tokens))
+        # Focus span after stripping "dame el detalle de …" etc.
+        if focus and focus != query:
+            if focus in label:
+                score = max(score, 90 + len(focus))
+            elif focus_tokens and focus_tokens.issubset(label_tokens):
+                score = max(score, 55 + len(focus_tokens))
+        # Content-token overlap: require ≥2 tokens of length ≥4 so bare
+        # "feria" alone cannot steal a unique match among several fairs.
+        content = {t for t in (focus_tokens or query_tokens) if len(t) >= 4}
+        overlap = content & label_tokens
+        if len(overlap) >= 2:
+            score = max(score, 40 + 5 * len(overlap) + sum(len(t) for t in overlap))
+        if score > 0:
+            scored.append((score, item))
 
     if not scored:
         return None
@@ -1969,7 +2099,8 @@ def format_filter_pois(index: dict, limit: int = 20, **filters: Any) -> str:
     active = {k: v for k, v in filters.items() if v not in (None, "", [], {})}
     if not active:
         return ("[INFO] filter_pois requires at least one filter "
-                "(interest_level, type, tourist_type, section_id, indispensable).")
+                "(interest_level, type, tourist_type, section_id, "
+                "locality, indispensable).")
     matches = filter_pois(index, **active)
     if not matches:
         return "No places matched this request."
