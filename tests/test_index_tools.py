@@ -519,6 +519,62 @@ class TestStrictGrounding:
             "label": "Feria del Ganado Selecto de Albalá",
         }
 
+    def test_resolves_info_followup_against_prior_worship_list(self):
+        # Montánchez chat: after sticky-locality church list, "dame info
+        # de la Parroquia" must open full get_poi(poi/9890) — not re-run
+        # filter_pois(religious-heritage, Albalá) with short previews.
+        from index_tools import resolve_history_selection
+
+        mont = PROJECT_ROOT / "indexes" / "montancheztamuja" / "es.json"
+        if not mont.exists():
+            pytest.skip(f"Index file not found: {mont}")
+        midx = load_index(mont)
+        history = [
+            {"role": "user", "content": "qué puedo hacer en Albalá?"},
+            {
+                "role": "assistant",
+                "content": (
+                    "* <poi id=51531 type=PlaceOfWorship>El Calvario</poi>\n"
+                    "* <poi id=45624 type=PlaceOfWorship>"
+                    "Ermita de San Joaquin y Santa Ana</poi>\n"
+                    "* <poi id=9890 type=PlaceOfWorship>"
+                    "Parroquia Santa María Magdalena</poi>: La Parroquia "
+                    "de Santa María Magdalena es un templo de gran valor."
+                ),
+            },
+        ]
+        for question in (
+            "dame info de la Parroquia",
+            "dame mas info sobre la Parroquia",
+            "info de la Parroquia",
+            "la Parroquia",
+        ):
+            selection = resolve_history_selection(question, history, midx)
+            assert selection == {
+                "kind": "poi",
+                "id": "poi/9890",
+                "label": "Parroquia Santa María Magdalena",
+            }, question
+
+    def test_ambiguous_feria_info_followup_stays_unresolved(self):
+        # Two fairs shown: bare "feria" / "info de la feria" must not pick.
+        from index_tools import resolve_history_selection
+
+        mont = PROJECT_ROOT / "indexes" / "montancheztamuja" / "es.json"
+        if not mont.exists():
+            pytest.skip(f"Index file not found: {mont}")
+        midx = load_index(mont)
+        history = [{
+            "role": "assistant",
+            "content": (
+                "* <poi id=46306 type=Fair>Feria del Caballo de Albalá</poi>\n"
+                "* <poi id=51530 type=Event>Feria del Ganado Selecto de Albalá</poi>"
+            ),
+        }]
+        assert resolve_history_selection(
+            "dame info de la feria", history, midx,
+        ) is None
+
     def test_unknown_history_tag_cannot_be_selected(self, index):
         from index_tools import resolve_history_selection
         history = [{

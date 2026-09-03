@@ -374,10 +374,13 @@ Typical flows handled by the model:
 - **Strict grounding**: specific questions (named places, facts,
   listings) need a current-turn source-bearing retrieval; prior `<poi>`,
   `<trip>`, and `<path>` tag selections resolve directly to `get_*`
-  (`resolve_history_selection` strips detail lead-ins such as
-  `dame el detalle de…` / `tell me about…` and scores content-token
-  overlap so a follow-up like "Feria del Ganado" after a tagged list
-  opens that POI). Final answers pass `sanitize_tourist_answer`: unknown
+  (`resolve_history_selection` strips detail/info lead-ins such as
+  `dame el detalle de…` / `dame info de…` / `tell me about…`, drops
+  leading articles, and scores content-token overlap — including a
+  unique single token of length ≥4 — so follow-ups like "Feria del
+  Ganado" or "dame info de la Parroquia" after a tagged list open full
+  `get_poi` rather than re-listing via sticky `filter_pois`). Final
+  answers pass `sanitize_tourist_answer`: unknown
   dangling `<poi id=N…>` fragments (invented section numbers) are
   stripped, and list markers glued to `</poi>` get a newline break.
   Generic overview questions ("what can I see?") may be answered from the

@@ -1384,16 +1384,29 @@ _BARE_ID_TOKEN_RE = re.compile(r"^\d{3,6}$")
 
 # Lead-ins stripped before matching a follow-up against prior tags.
 # Longest first so "dame el detalle de" wins over bare "detalle de".
-# Covers the common "give me details about X" shape without requiring
-# the visitor to type the full tagged label alone.
+# Covers "give me details/info about X" without requiring the full
+# tagged label alone. "dame info de la Parroquia" must reach get_poi,
+# not sticky category filter_pois.
 _HISTORY_FOCUS_LEADS = tuple(sorted((
     "dame el detalle de la",
     "dame el detalle de",
     "dame los detalles de la",
     "dame los detalles de",
     "dame mas informacion sobre",
+    "dame mas informacion de la",
+    "dame mas informacion de",
     "dame mas info sobre",
+    "dame mas info de la",
+    "dame mas info de",
     "dame mas detalles de",
+    "dame informacion sobre",
+    "dame informacion de la",
+    "dame informacion del",
+    "dame informacion de",
+    "dame info sobre",
+    "dame info de la",
+    "dame info del",
+    "dame info de",
     "cuentame mas sobre",
     "cuentame sobre",
     "dime mas sobre",
@@ -1402,9 +1415,21 @@ _HISTORY_FOCUS_LEADS = tuple(sorted((
     "hablame sobre",
     "tell me more about",
     "tell me about",
+    "more information about",
+    "more info about",
     "more details about",
+    "information about",
+    "info about",
     "details about",
     "detail about",
+    "informacion de la",
+    "informacion del",
+    "informacion de",
+    "informacion sobre",
+    "info de la",
+    "info del",
+    "info de",
+    "info sobre",
     "detalle de la",
     "detalle del",
     "detalle de",
@@ -1416,21 +1441,40 @@ _HISTORY_FOCUS_LEADS = tuple(sorted((
     "about",
 ), key=len, reverse=True))
 
+# Leading articles stripped from the focus span so "la Parroquia" and
+# "dame mas info sobre la Parroquia" still match label "Parroquia …".
+_HISTORY_FOCUS_ARTICLES = frozenset({
+    "a", "an", "the",
+    "el", "la", "los", "las", "un", "una", "unos", "unas",
+    "le", "les", "une", "des",
+    "o", "os", "as",
+    "il", "lo", "gli", "gl",
+    "der", "die", "das", "den", "dem",
+    "het",
+})
+
 
 def _history_focus_query(question: str) -> str:
-    """Strip detail/about lead-ins; return the place-name focus span."""
+    """Strip detail/info lead-ins and leading articles; return focus span."""
     normalized = normalize_text(question)
     if not normalized:
         return ""
+    focus = normalized
     for lead in _HISTORY_FOCUS_LEADS:
         if normalized.startswith(lead + " "):
-            return normalized[len(lead):].strip(" ?!.")
+            focus = normalized[len(lead):].strip(" ?!.")
+            break
         # Also allow the lead mid-phrase after a short verb ("quiero el
         # detalle de X").
         marker = " " + lead + " "
         if marker in normalized:
-            return normalized.split(marker, 1)[1].strip(" ?!.")
-    return normalized
+            focus = normalized.split(marker, 1)[1].strip(" ?!.")
+            break
+    # Drop leading articles left after the lead ("la parroquia" → "parroquia").
+    parts = focus.split()
+    while parts and parts[0] in _HISTORY_FOCUS_ARTICLES:
+        parts = parts[1:]
+    return " ".join(parts).strip(" ?!.")
 
 
 def resolve_history_selection(question: str, messages: list[dict],
@@ -1444,10 +1488,11 @@ def resolve_history_selection(question: str, messages: list[dict],
 
     Matching is deliberately conservative: a unique normalized substring,
     an all-token match against a shown label, a focus-span match after
-    stripping "detail about" lead-ins, content-token overlap on labels,
-    or a bare numeric id token that matches a shown tag id. Ambiguous
-    references return None so the grounding gate asks the model to
-    retrieve rather than guessing.
+    stripping "detail/info about" lead-ins and articles, content-token
+    overlap on labels, a unique single content token of length ≥4 among
+    shown labels, or a bare numeric id token that matches a shown tag id.
+    Ambiguous references return None so the grounding gate asks the model
+    to retrieve rather than guessing.
     """
     query = normalize_text(question)
     query_tokens = set(query.split())
@@ -1514,8 +1559,8 @@ def resolve_history_selection(question: str, messages: list[dict],
             score = max(score, 100 + len(query))
         elif query_tokens.issubset(label_tokens):
             score = max(score, 50 + len(query_tokens))
-        # Focus span after stripping "dame el detalle de …" etc.
-        if focus and focus != query:
+        # Focus span after stripping "dame info de la …" / articles.
+        if focus:
             if focus in label:
                 score = max(score, 90 + len(focus))
             elif focus_tokens and focus_tokens.issubset(label_tokens):
@@ -1528,6 +1573,19 @@ def resolve_history_selection(question: str, messages: list[dict],
             score = max(score, 40 + 5 * len(overlap) + sum(len(t) for t in overlap))
         if score > 0:
             scored.append((score, item))
+
+    # Unique single content token (≥4 chars) among shown labels — e.g.
+    # "Parroquia" after a worship list where only one tag carries it.
+    # Ambiguous tokens ("feria" with two fairs) stay unresolved.
+    if not scored:
+        content = {t for t in (focus_tokens or query_tokens) if len(t) >= 4}
+        for token in content:
+            hits = [
+                item for item in unique.values()
+                if token in set(normalize_text(item["label"]).split())
+            ]
+            if len(hits) == 1:
+                scored.append((30 + len(token), hits[0]))
 
     if not scored:
         return None
